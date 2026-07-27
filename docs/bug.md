@@ -4,6 +4,17 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-07-27：Ray 工作目录导致 `uv` 误建第二套 RLinf 环境
+
+- **触发：** 正式入口把 Ray `working_dir` 切换到根仓库的 RLinf 子模块，但只激活了
+  `/root/RLinf/.venv`，未声明该路径也是 `uv` 的项目环境。
+- **现象：** worker 初始化时在子模块下创建 `.venv`，并重新下载 PyTorch/CUDA 依赖；
+  GPU 训练尚未开始。
+- **处理：** 安全中断运行并保留失败 run 记录；同时设置 `RLINF_VENV` 和
+  `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv`，确认 `uv run` 解析到现有 Python。
+- **原因：** 激活 `VIRTUAL_ENV` 不会改变 `uv` 默认按当前项目选择 `.venv` 的规则；
+  Ray 改变工作目录后，两个环境路径不再一致。
+
 ## 2026-07-27：桌面工作区缺失只读挂载点导致 `apply_patch` 无法启动
 
 - **触发：** 补丁工具在 bwrap 初始化阶段尝试挂载声明存在、实际缺失的 `.git`、

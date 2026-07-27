@@ -22,5 +22,6 @@ native:
   argv: [stage2-12h]
   env:
     RLINF_VENV: /root/RLinf/.venv
+    UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
   summary_file: /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/summary.json
   primary_metrics: []
