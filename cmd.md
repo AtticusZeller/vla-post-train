@@ -25,7 +25,7 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
-## 用户验收
+## 待用户验证
 
 - **状态**：Passed（2026-07-27）。
 - **证据**：用户已确认下列只读 CLI 验收全部通过，并已通过 Explain Diff 五题理解门。
