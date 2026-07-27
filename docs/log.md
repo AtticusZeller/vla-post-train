@@ -18,7 +18,9 @@
   Diff 五题均通过。
 - Notion Explain Diff 页面：<https://app.notion.com/p/3aaf56e2b51c81008325c4f38dcbe4b1>。
 - 当前 `/mnt/data` 为只读挂载，因此未启动 GPU、W&B 在线运行或 LeRobot 代码；运行产物规则和
-  历史路径保持不变。根仓库最终提交、推送和递归 clone 复核待本次收尾完成。
+  历史路径保持不变。
+- 根仓库提交 `b9885e2` 已推送到私有远端；authenticated recursive clone 在重试初始化后恢复
+  五个顶层 method 及全部嵌套 submodule，工作树干净。
 
 ## 2026-07-27：建立首期研究工作区
 

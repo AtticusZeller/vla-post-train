@@ -111,7 +111,7 @@ vla-post-train/
 - [x] 创建 `add-method` Skill 并记录 framework 配置命名；
 - [x] 完成全量 Agent、Skill、CLI、测试和递归恢复验证；
 - [x] 完成用户验收与 Explain Diff 五题；
-- [ ] 提交并推送根 gitlink 与工作区更新。
+- [x] 提交并推送根 gitlink 与工作区更新。
 
 ## 验收
 
