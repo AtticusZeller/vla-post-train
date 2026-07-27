@@ -4,16 +4,18 @@
 结果汇总和 Agent workflow。算法与第三方框架始终保留在独立 Git 仓库中，并通过
 `methods/` submodule 固定到准确 revision。
 
-## 首期方法
+## 已接入仓库
 
-| 路径 | 分支 | 角色 |
-| --- | --- | --- |
-| `methods/flowdagger` | `dev` | FlowDAgger 官方实现 fork |
-| `methods/dsrl-pi0` | `dev` | DSRL π0 第三方复现 |
-| `methods/rlinf` | `personal-dev` | RECAP / STEAM 实验框架 |
-| `methods/starvla` | `starVLA_dev` | VLA 训练与策略框架 |
+| 路径 | 分支 | 类型 | 角色 |
+| --- | --- | --- | --- |
+| `methods/flowdagger` | `dev` | method | FlowDAgger 官方实现 fork |
+| `methods/dsrl-pi0` | `dev` | method | DSRL π0 第三方复现 |
+| `methods/rlinf` | `personal-dev` | framework | RECAP / STEAM 训练与实验框架 |
+| `methods/starvla` | `starVLA_dev` | framework | VLA 训练与策略框架 |
+| `methods/lerobot` | `workspace` | framework | 数据、策略、训练与机器人基础框架 |
 
 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
+LeRobot 当前只作为 framework 固定代码版本，尚未创建实验配置或运行手册。
 
 ## 初始化
 

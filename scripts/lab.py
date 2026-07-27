@@ -43,6 +43,10 @@ _METHODS = {
         "branch": "starVLA_dev",
         "upstream": "https://github.com/starVLA/starVLA.git",
     },
+    "lerobot": {
+        "branch": "workspace",
+        "upstream": "https://github.com/huggingface/lerobot.git",
+    },
 }
 
 

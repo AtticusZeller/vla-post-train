@@ -14,8 +14,8 @@ vla-post-train/
 ├── AGENTS.md / CLAUDE.md
 ├── README.md / cmd.md / lab
 ├── pyproject.toml / uv.lock
-├── .codex/skills/{run-experiment,summarize-experiment}/
-├── methods/{flowdagger,dsrl-pi0,rlinf,starvla}/
+├── .codex/skills/{add-method,run-experiment,summarize-experiment}/
+├── methods/{flowdagger,dsrl-pi0,rlinf,starvla,lerobot}/
 ├── scripts/
 │   ├── lab.py
 │   ├── config.py / process.py / run_record.py / monitor.py / report.py
@@ -36,6 +36,8 @@ vla-post-train/
   起也是独立私有仓库。
 - 第三方实现保留自身依赖闭包。首期不单独接入 OpenPI 或 LIBERO，也不为去重而修改嵌套依赖。
 - 根仓库使用 Python 3.12 + uv；训练环境由各 method 自行维护。
+- StarVLA、LeRobot 和 RLinf 标记为 framework。LeRobot 使用用户 fork 的干净
+  `workspace` 分支，旧 `dev` 历史保持不变；仅接入 framework 时不创建实验目录。
 
 ### 配置与启动
 
@@ -73,6 +75,8 @@ vla-post-train/
 - 方法级 `report.md` 汇总当前结论、配置比较、失败、资源、证据边界和下一步。
 - `.codex/skills/run-experiment` 与 `summarize-experiment` 只表达英文 workflow，调用根
   `lab` 和 runbook，不复制确定性 Python 逻辑。
+- `.codex/skills/add-method` 负责 fork/upstream、submodule、角色、Agent 分层和远端
+  可恢复性；method Agent 文件只保留仓库专属规则，不复制根托管块。
 - 论文笔记继续放 Obsidian；无官方实现的方法只在独立 repo 留下实现所需最小上下文。
 
 ## 历史迁移范围
@@ -98,8 +102,19 @@ vla-post-train/
 - [x] 创建私有 GitHub 远端；
 - [x] 推送根提交并验证 authenticated recursive clone。
 
+## Framework 扩展状态
+
+- [x] 清理四个旧 fork 的重复 Agent 托管块和纯空模板；
+- [x] 从官方 LeRobot `main` 创建并推送 fork `workspace` 分支；
+- [x] 添加 `methods/lerobot`，不创建实验配置或运行入口；
+- [x] 标注 StarVLA、LeRobot 和 RLinf 的 framework 角色；
+- [x] 创建 `add-method` Skill 并记录 framework 配置命名；
+- [x] 完成全量 Agent、Skill、CLI、测试和递归恢复验证；
+- [x] 完成用户验收与 Explain Diff 五题；
+- [ ] 提交并推送根 gitlink 与工作区更新。
+
 ## 验收
 
-最终必须通过 ruff format/check、ty、pytest、全部配置校验、三个代表 dry-run、根与四个
-method 的 Agent 检查、两个 Skill 校验和大文件排查。推送后在 `/tmp` 做 authenticated
-recursive clone，确认四个 gitlink 均可恢复。本任务不运行新的 GPU 实验。
+最终必须通过 ruff format/check、ty、pytest、全部配置校验、三个代表 dry-run、根 Agent
+检查、三个 Skill 校验、method Agent 去重和大文件排查。推送后在 `/tmp` 做 authenticated
+recursive clone，确认五个 gitlink 均可恢复。本任务不运行新的 GPU 实验或 LeRobot 代码。

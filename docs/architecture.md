@@ -41,3 +41,27 @@ experiments/<method>/runs/<run-id>/{run.json,summary.json}
 
 W&B collector 只解析配置中的完整 run URL，读取 summary 与 system stream；本地退出码或
 traceback 能将表面为 finished 的线上 run 判为失败。
+
+## Framework 配置命名
+
+基于 framework 的实验配置文件使用下划线，并依次写入 framework、policy/model、
+benchmark、task、关键变体或预算和 seed，例如：
+
+```text
+lerobot_pi05_libero_task0_500k_seed0.yaml
+```
+
+YAML `id` 使用相同组成部分和连字符：
+
+```text
+lerobot-pi05-libero-task0-500k-seed0
+```
+
+仅接入 framework 时不创建 `experiments/<framework>/`；出现具体运行或历史证据后再增加
+config、runbook、report 和 launcher。
+
+## Agent 指令分层
+
+根 `AGENTS.md` 提供跨仓库生命周期和实验规则。`methods/*/AGENTS.md` 只保留方法专属
+架构、测试和修改边界；不得复制根托管块。方法仓库的 `CLAUDE.md` 使用短入口或指向
+`AGENTS.md` 的 symlink。

@@ -7,6 +7,13 @@ from scripts.config import ConfigError
 from scripts.run_record import read_json
 
 
+def test_lerobot_framework_registration() -> None:
+    assert lab._METHODS["lerobot"] == {
+        "branch": "workspace",
+        "upstream": "https://github.com/huggingface/lerobot.git",
+    }
+
+
 def test_historical_resume_and_summarize_are_immutable() -> None:
     run_id = "historical__libero10-task0-medium"
     run_path = lab.ROOT / "experiments/rlinf/runs" / run_id / "run.json"

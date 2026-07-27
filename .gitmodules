@@ -14,3 +14,7 @@
 	path = methods/starvla
 	url = https://github.com/AtticusZeller/starVLA.git
 	branch = starVLA_dev
+[submodule "methods/lerobot"]
+	path = methods/lerobot
+	url = https://github.com/AtticusZeller/lerobot.git
+	branch = workspace

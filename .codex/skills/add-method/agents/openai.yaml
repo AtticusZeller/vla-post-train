@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Method"
+  short_description: "Onboard a traceable method or framework submodule."
+  default_prompt: "Use $add-method to onboard the requested repository as a traceable workspace submodule."

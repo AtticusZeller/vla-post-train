@@ -191,6 +191,7 @@ Fill module documentation **incrementally**. Create `docs/<module>.md` the first
 <!-- init-repo-agents:module-index:begin -->
 - [[docs/dsrl-pi0.md]] — dsrl-pi0 module (`methods/dsrl-pi0/`)
 - [[docs/flowdagger.md]] — flowdagger module (`methods/flowdagger/`)
+- [[docs/lerobot.md]] — lerobot module (`methods/lerobot/`)
 - [[docs/rlinf.md]] — rlinf module (`methods/rlinf/`)
 - [[docs/starvla.md]] — starvla module (`methods/starvla/`)
 <!-- init-repo-agents:module-index:end -->
@@ -259,3 +260,4 @@ Consolidate common development commands and complex experiment configuration beh
 - Archive both successful and failed runs with traceable configuration and code evidence.
 - Put deterministic reusable mechanics in `scripts/`. Add a repository-local Skill only after the agent workflow is stable and reusable.
 - Use a user-controlled fork as `origin` and the official repository as `upstream`. Use a private mirror for unpublished changes that must not enter a public fork.
+- Keep method-level Agent files method-specific. Do not copy this root managed block into a submodule; use a short `CLAUDE.md` pointer or symlink to the method's `AGENTS.md`.
