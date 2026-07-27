@@ -13,5 +13,6 @@
 - 迁移 FlowDAgger 4 条、DSRL π0 4 条、RLinf 2 条历史 run，不复制大型产物。
 - ruff、ty、20 个 pytest、全部配置、三个代表 dry-run、根与四个 method 的 Agent 检查、
   两个 Skill 校验均通过。
-- 用户完成只读 CLI 验收并通过 Explain Diff 五题；私有 GitHub 远端已创建，发布与
-  recursive clone 作为本次收尾提交后的最终门禁。
+- 用户完成只读 CLI 验收并通过 Explain Diff 五题。
+- 根提交已推送到私有 GitHub 远端；authenticated recursive clone 已从零恢复四个
+  method 及其嵌套 submodule。

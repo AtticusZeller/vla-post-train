@@ -96,7 +96,7 @@ vla-post-train/
 - [x] 完成 20 个单元测试与全量静态/CLI 验证；
 - [x] 完成用户验收与 Explain Diff 五题理解门；
 - [x] 创建私有 GitHub 远端；
-- [ ] 推送根提交并验证 authenticated recursive clone。
+- [x] 推送根提交并验证 authenticated recursive clone。
 
 ## 验收
 
