@@ -16,14 +16,14 @@
 ## 2026-07-27 · RLToken Stage 2 十二小时运行时限
 
 - **状态：** Open
-- **范围：** RLinf `e1801fd1..bf28ff64`；根仓库
+- **范围：** RLinf `e1801fd1..3fa4702d`；根仓库
   `rlt_maniskill_stage2_12h_seed2026.yaml`、RLinf launcher、runbook 与 gitlink。
 - **暂缓原因：** 用户优先在当日 GPU 预算内启动实验，选择 Type C−，将代码理解
   Review 延后；功能验证和正式运行可恢复性不延后。
 - **验证证据：** 时间上限单测 2 项通过；ruff format/check 通过；Hydra 最终配置
   展开通过；真实学习 smoke 记录每轮 8 条 transition，并执行 2 次 critic update
   与 1 次 actor update；用户已完成只读验收；外部环境绑定测试解析到
-  `/root/RLinf/.venv/bin/python3`。
+  `/root/RLinf/.venv/bin/python3`，并以 `UV_NO_SYNC=1` 禁止正式运行期间同步依赖。
 - **待理解内容：** embodied runner 如何在 step 边界检查墙钟时限，以及
   `check_progress` 如何在时限结束时强制最终评估和 checkpoint。
 - **偿还标准：** 针对上述提交运行 explain-diff-html，阅读解释并通过全部五题；

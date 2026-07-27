@@ -49,8 +49,9 @@
 - 新产物写入
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/`，W&B 项目为
   `atticux/rlt-maniskill`。当前机器复用 `/root/RLinf/.venv`，由根配置中的
-  `RLINF_VENV` 与 `UV_PROJECT_ENVIRONMENT` 显式传入，确保 Ray 切换工作目录后仍复用
-  已安装好的 `/root/RLinf/.venv`，不会临时重建环境。
+  `RLINF_VENV`、`UV_PROJECT_ENVIRONMENT` 与 `UV_NO_SYNC=1` 显式传入，确保 Ray
+  切换工作目录后仍复用已安装好的 `/root/RLinf/.venv`，且正式启动期间不会自动同步
+  或改写依赖。
 - 学习 smoke 使用 `critical_phase` 强制进入 actor 路径，仅证明 replay 与
   update 工程链路：每轮 8 条 transition，第二轮执行 2 次 critic update 和
   1 次 actor update；不作为算法收益证据。

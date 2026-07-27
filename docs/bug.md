@@ -10,8 +10,9 @@
   `/root/RLinf/.venv`，未声明该路径也是 `uv` 的项目环境。
 - **现象：** worker 初始化时在子模块下创建 `.venv`，并重新下载 PyTorch/CUDA 依赖；
   GPU 训练尚未开始。
-- **处理：** 安全中断运行并保留失败 run 记录；同时设置 `RLINF_VENV` 和
-  `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv`，确认 `uv run` 解析到现有 Python。
+- **处理：** 安全中断运行并保留失败 run 记录；设置 `RLINF_VENV`、
+  `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv` 和 `UV_NO_SYNC=1`，确认正式启动只解析
+  现有 Python，不再自动同步或改写依赖。
 - **原因：** 激活 `VIRTUAL_ENV` 不会改变 `uv` 默认按当前项目选择 `.venv` 的规则；
   Ray 改变工作目录后，两个环境路径不再一致。
 

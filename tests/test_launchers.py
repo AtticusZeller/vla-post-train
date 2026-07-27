@@ -65,4 +65,5 @@ def test_rlinf_rlt_stage2_argv_is_exact() -> None:
     assert dict(spec.environment) == {
         "RLINF_VENV": "/root/RLinf/.venv",
         "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
+        "UV_NO_SYNC": "1",
     }

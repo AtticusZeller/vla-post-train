@@ -23,5 +23,6 @@ native:
   env:
     RLINF_VENV: /root/RLinf/.venv
     UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
+    UV_NO_SYNC: "1"
   summary_file: /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/summary.json
   primary_metrics: []
