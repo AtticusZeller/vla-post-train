@@ -34,3 +34,22 @@
 - medium 中 STEAM advantage 曾发生 SIGSEGV，后以三卡继续；CFG 在 step 514 主动迁移后由
   step 500 checkpoint 在两卡恢复。
 - 结论只覆盖 LIBERO-10 task 0、seed 0，不自动扩展到 full。
+
+## RLToken ManiSkill Stage 2（12 小时预算）
+
+- 根配置：
+  `experiments/rlinf/configs/rlt_maniskill_stage2_12h_seed2026.yaml`。
+- Stage 1 输入固定为
+  `/mnt/data/atticux/rlt-maniskill/runs/full/stage1/stage1-full/checkpoints/global_step_2000/actor`；
+  本地日志已确认 `STAGE1_FULL_EXIT=0`。
+- Stage 2 保留 64 个训练环境、500-step episode、原始 replay warmup 与 BC/Q
+  schedule；只增加 11 小时原生时限、500 epochs 第二上限，并将评估环境缩为 64。
+- 原生时限到达后完成当前 step，强制最终评估和 checkpoint；tmux 启动时另加
+  11 小时 50 分硬保护，确保总墙钟预算不超过 12 小时。
+- 新产物写入
+  `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/`，W&B 项目为
+  `atticux/rlt-maniskill`。当前机器复用 `/root/RLinf/.venv`，由根配置中的
+  `RLINF_VENV` 显式传入。
+- 学习 smoke 使用 `critical_phase` 强制进入 actor 路径，仅证明 replay 与
+  update 工程链路：每轮 8 条 transition，第二轮执行 2 次 critic update 和
+  1 次 actor update；不作为算法收益证据。

@@ -27,55 +27,35 @@ uv run pytest
 
 ## 待用户验证
 
-- **状态**：Passed（2026-07-27）。
-- **证据**：用户已确认下列只读 CLI 验收全部通过，并已通过 Explain Diff 五题理解门。
-- **目的**：确认 LeRobot framework、第五个 submodule、`add-method` Skill 和 method
-  Agent 去重在用户终端中均可恢复且不影响既有实验入口。
-- **环境状态**：已确认 `/mnt/data` 当前以 `rw` 挂载且可写。可以按各方法 runbook
-  执行新实验；LeRobot 仍未接入实验配置，因此不会被 `experiment run` 自动启动。
+- **状态**：Passed（2026-07-27，用户已确认）。
+- **目的**：确认 RLToken Stage 2 的 12 小时时限配置、最终保存逻辑和真实学习 smoke
+  证据正确，再提交并启动长跑。
+- **前置条件**：`/root/RLinf` 的 `.venv` 可用；Stage 1
+  `global_step_2000` checkpoint 已存在；无需占用 GPU。
 
 请在新终端执行：
 
 ```bash
-cd /root/vla-post-train
+cd /root/RLinf
 
-./lab doctor
-./lab method status
-./lab config validate --all
-git submodule status --recursive
+PYTHONPATH=/root/RLinf .venv/bin/pytest -q \
+  tests/unit_tests/test_embodied_runner_time_limit.py
 
-./lab experiment dry-run \
-  experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml
-./lab experiment dry-run \
-  experiments/dsrl-pi0/configs/libero90_task57_smoke_seed0.yaml
-./lab experiment dry-run \
-  experiments/rlinf/configs/libero10_task0_medium_seed0.yaml
+grep -F 'rlt/critic_updates_run=2.000' \
+  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
+grep -F 'rlt/actor_updates_run=1.000' \
+  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
+grep -F 'replay/transition_count=8.000' \
+  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
 
-test ! -e experiments/lerobot
-if rg -n 'init-repo-agents:managed' \
-  methods/*/AGENTS.md methods/*/CLAUDE.md; then
-  echo "method Agent 文件仍含重复根托管块" >&2
-  exit 1
-fi
-
-uv run python \
-  /root/.codex/skills/.system/skill-creator/scripts/quick_validate.py \
-  .codex/skills/add-method
-uv run pytest
+git diff --check
 ```
 
 通过标准：
 
-1. `doctor` 的根环境、五个 method、nested submodule 和 `artifact writes` 均为 `OK`。
-2. `method status` 显示 FlowDAgger `dev`、DSRL `dev`、RLinf `personal-dev`、
-   StarVLA `starVLA_dev`、LeRobot `workspace`，且五个 checkout 均为 clean。
-3. 9 份 YAML 全部通过；三个 dry-run 的 cwd、Conda 环境与原生入口分别是
-   `train_flowdagger.py`、`python -m examples.launch_train_sim` 和
-   `run_libero10_task0_comparison.sh medium`。
-4. `git submodule status --recursive` 的顶层 LeRobot revision 为
-   `0d383d09f2051444de211739196a28cc94736861`，所有行均无 `-`、`+` 或 `U` 前缀。
-5. `experiments/lerobot` 不存在，method Agent 扫描无输出，`add-method` 显示
-   `Skill is valid!`。
-6. pytest 显示 `21 passed`。
+1. pytest 显示 `2 passed`。
+2. 三次 `grep` 分别显示 2 次 critic update、1 次 actor update 和 8 条 replay
+   transition。
+3. `git diff --check` 无输出。
 
-失败时请返回完整命令输出；本次接入工作不运行 LeRobot 或任何新的 GPU 实验。
+验证已通过。正式启动使用 11 小时原生时限与 11 小时 50 分硬保护。

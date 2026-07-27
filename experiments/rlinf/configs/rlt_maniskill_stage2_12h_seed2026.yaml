@@ -1,0 +1,26 @@
+schema_version: 1
+id: rlt-maniskill-stage2-12h-seed2026
+method: rlinf
+repository:
+  path: methods/rlinf
+  expected_branch: personal-dev
+  require_clean: true
+environment:
+  manager: none
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0, 1]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 12
+tracking:
+  backend: wandb
+  project: rlt-maniskill
+  run_urls: []
+native:
+  script: experiments/rlt-maniskill/launch.sh
+  argv: [stage2-12h]
+  env:
+    RLINF_VENV: /root/RLinf/.venv
+  summary_file: /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/summary.json
+  primary_metrics: []

@@ -51,3 +51,15 @@ def test_rlinf_argv_is_exact() -> None:
         "examples/offline_rl/run_libero10_task0_comparison.sh",
         "medium",
     )
+
+
+def test_rlinf_rlt_stage2_argv_is_exact() -> None:
+    config = load_config("experiments/rlinf/configs/rlt_maniskill_stage2_12h_seed2026.yaml")
+    spec = build_launch_spec(config)
+    assert spec.cwd == ROOT / "methods/rlinf"
+    assert spec.argv == (
+        "bash",
+        "experiments/rlt-maniskill/launch.sh",
+        "stage2-12h",
+    )
+    assert dict(spec.environment) == {"RLINF_VENV": "/root/RLinf/.venv"}
