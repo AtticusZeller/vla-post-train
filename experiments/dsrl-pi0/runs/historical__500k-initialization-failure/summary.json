@@ -1,0 +1,20 @@
+{
+  "evidence": {
+    "local_exit_code": null,
+    "local_summary": "methods/dsrl-pi0/docs/experiment-report.md",
+    "local_traceback": null,
+    "wandb_runs": []
+  },
+  "primary_metrics": [],
+  "resources": {},
+  "results": {
+    "failure_stage": "initialization attempt",
+    "optimizer_updates": 0,
+    "unknown_fields": [
+      "exact failure cause",
+      "runtime"
+    ]
+  },
+  "schema_version": 1,
+  "status": "failed"
+}

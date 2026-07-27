@@ -1,0 +1,55 @@
+{
+  "artifact_path": "/mnt/data/atticux/FlowDAgger/runs/exp-02-short-b16",
+  "code_revisions": [
+    {
+      "repository": "FlowDAgger",
+      "revision": "d2e60b5bf5d39538783f1e73d460394b21eb0f28",
+      "role": "superproject"
+    },
+    {
+      "repository": "openpi",
+      "revision": "4c5df220f794ec604d88baef386751dd36d8429f",
+      "role": "nested submodule"
+    }
+  ],
+  "config": "experiments/flowdagger/configs/metaworld_assembly_short_b16_seed42.yaml",
+  "config_sha256": null,
+  "cwd": "/root/FlowDAgger/flowdagger_pi05",
+  "exit_code": 0,
+  "finished_at": "2026-07-21T11:21:23Z",
+  "historical": true,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "name": "NVIDIA H20"
+      }
+    ],
+    "hostname": null,
+    "platform": null,
+    "python": "3.11.11"
+  },
+  "method": "flowdagger",
+  "method_code": null,
+  "pid": null,
+  "resolved_command": [],
+  "resolved_environment": {
+    "MUJOCO_GL": "egl"
+  },
+  "root": null,
+  "run_id": "20260721-111611__exp-02-short-b16",
+  "schema_version": 1,
+  "signal": null,
+  "sources": [
+    "/mnt/data/atticux/FlowDAgger/results/exp-02-short-b16.md",
+    "/mnt/data/atticux/FlowDAgger/runs/exp-02-short-b16/console.log"
+  ],
+  "started_at": "2026-07-21T11:16:11Z",
+  "tracking": {
+    "backend": "wandb",
+    "project": "flowdagger",
+    "run_urls": [
+      "https://wandb.ai/1831768457/flowdagger/runs/exp-02-short-b16_2026_07_21_19_16_21_0000--s-42"
+    ]
+  }
+}

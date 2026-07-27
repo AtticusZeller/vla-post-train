@@ -1,0 +1,29 @@
+{
+  "evidence": {
+    "local_exit_code": 1,
+    "local_summary": "/mnt/data/atticux/FlowDAgger/results/exp-02-short.md",
+    "local_traceback": true,
+    "wandb_runs": [
+      "https://wandb.ai/1831768457/flowdagger/runs/exp-02-short_2026_07_21_19_13_10_0000--s-42"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 5,
+      "name": "pre_update_success_rate",
+      "step": 0,
+      "value": 0.8
+    }
+  ],
+  "resources": {
+    "runtime_seconds": 125
+  },
+  "results": {
+    "completed_bc_steps": 0,
+    "error": "jax.errors.JaxRuntimeError: CANCELLED: Too small divisible part of the contracting dimension.",
+    "failure_stage": "first BC update",
+    "seed": 42
+  },
+  "schema_version": 1,
+  "status": "failed"
+}

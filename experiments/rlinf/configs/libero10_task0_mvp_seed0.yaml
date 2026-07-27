@@ -1,0 +1,33 @@
+schema_version: 1
+id: libero10-task0-mvp-seed0
+method: rlinf
+repository:
+  path: methods/rlinf
+  expected_branch: personal-dev
+  require_clean: true
+environment:
+  manager: conda
+  name: dsrl_pi0
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0, 1, 2, 3]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 8
+tracking:
+  backend: wandb
+  project: rlinf
+  run_urls: []
+native:
+  argv: [mvp]
+  summary_file: /mnt/data/atticux/rlinf/experiments/recap-steam-libero10-task0-mvp/summary.json
+  primary_metrics:
+    - name: baseline_success_rate
+      value: 0.32
+      episodes: 100
+    - name: recap_success_rate
+      value: 0.09
+      episodes: 100
+    - name: steam_success_rate
+      value: 0.14
+      episodes: 100

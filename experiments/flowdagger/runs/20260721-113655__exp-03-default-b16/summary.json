@@ -1,0 +1,83 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/FlowDAgger/results/exp-03-default-b16.md",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/1831768457/flowdagger/runs/exp-03-default-b16_2026_07_21_19_37_04_0000--s-42"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "step": 4000,
+      "value": 0.8
+    },
+    {
+      "episodes": 25,
+      "name": "peak_success_rate",
+      "step": 1500,
+      "value": 1.0
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "runtime_seconds": 3228
+  },
+  "results": {
+    "bc_loss_final": 0.01125,
+    "completed_bc_steps": 4000,
+    "environment_steps": 4552,
+    "evaluations": [
+      {
+        "episodes": 25,
+        "step": 0,
+        "success_rate": 0.64
+      },
+      {
+        "episodes": 25,
+        "step": 500,
+        "success_rate": 0.68
+      },
+      {
+        "episodes": 25,
+        "step": 1000,
+        "success_rate": 0.76
+      },
+      {
+        "episodes": 25,
+        "step": 1500,
+        "success_rate": 1.0
+      },
+      {
+        "episodes": 25,
+        "step": 2000,
+        "success_rate": 0.8
+      },
+      {
+        "episodes": 25,
+        "step": 2500,
+        "success_rate": 0.72
+      },
+      {
+        "episodes": 25,
+        "step": 3000,
+        "success_rate": 0.72
+      },
+      {
+        "episodes": 25,
+        "step": 3500,
+        "success_rate": 0.88
+      },
+      {
+        "episodes": 25,
+        "step": 4000,
+        "success_rate": 0.8
+      }
+    ],
+    "seed": 42
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

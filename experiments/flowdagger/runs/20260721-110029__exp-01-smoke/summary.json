@@ -1,0 +1,28 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/FlowDAgger/results/exp-01-smoke.md",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/1831768457/flowdagger/runs/exp-01-smoke_2026_07_21_19_00_38_0000--s-42"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 1,
+      "name": "success_rate",
+      "step": 1,
+      "value": 0.0
+    }
+  ],
+  "resources": {
+    "runtime_seconds": 651
+  },
+  "results": {
+    "engineering_scope": "checkpoint, environment, policy, intervention, inversion, one BC update, and evaluation",
+    "online_rollout_reward": 1.0,
+    "seed": 42
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

@@ -1,0 +1,44 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "methods/dsrl-pi0/docs/experiment-report.md",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/atticux/DSRL_pi0_Libero/runs/dsrl_pi0_libero_2026_07_14_15_20_44_0000--s-0"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 10,
+      "name": "baseline_success_rate",
+      "step": 0,
+      "value": 0.2
+    },
+    {
+      "episodes": 10,
+      "name": "final_success_rate",
+      "step": 500000,
+      "value": 1.0
+    }
+  ],
+  "resources": {
+    "gpu_count": 4,
+    "gpu_hours": 75.47,
+    "gpu_memory_peak_gib": [
+      85.3,
+      76.5,
+      76.5,
+      76.5
+    ],
+    "runtime_seconds": 67925
+  },
+  "results": {
+    "environment_steps": 494089,
+    "final_average_episode_length": 165.4,
+    "final_average_return": 1.0,
+    "optimizer_updates": 500200,
+    "seed": 0
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

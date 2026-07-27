@@ -1,0 +1,29 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/FlowDAgger/results/exp-02-short-b16.md",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/1831768457/flowdagger/runs/exp-02-short-b16_2026_07_21_19_16_21_0000--s-42"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 5,
+      "name": "success_rate",
+      "step": 100,
+      "value": 0.8
+    }
+  ],
+  "resources": {
+    "runtime_seconds": 312
+  },
+  "results": {
+    "bc_loss": 0.15013,
+    "completed_bc_steps": 100,
+    "environment_steps": 1100,
+    "seed": 42
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

@@ -1,0 +1,40 @@
+{
+  "artifact_path": "/mnt/data/atticux/rlinf/experiments/recap-steam-libero10-task0-mvp",
+  "code_revisions": [],
+  "config": "experiments/rlinf/configs/libero10_task0_mvp_seed0.yaml",
+  "config_sha256": null,
+  "cwd": "/root/RLinf",
+  "exit_code": 0,
+  "finished_at": null,
+  "historical": true,
+  "host": {
+    "gpus": [],
+    "hostname": null,
+    "platform": null,
+    "python": null
+  },
+  "method": "rlinf",
+  "method_code": null,
+  "pid": null,
+  "resolved_command": [],
+  "resolved_environment": {},
+  "root": null,
+  "run_id": "historical__libero10-task0-mvp",
+  "schema_version": 1,
+  "signal": null,
+  "sources": [
+    "methods/rlinf/docs/experiment-log.md",
+    "/mnt/data/atticux/rlinf/experiments/recap-steam-libero10-task0-mvp/summary.json"
+  ],
+  "started_at": null,
+  "tracking": {
+    "backend": "wandb",
+    "project": "rlinf",
+    "run_urls": []
+  },
+  "unknown_fields": [
+    "exact UTC start and finish",
+    "code revisions",
+    "stage-specific W&B run URLs"
+  ]
+}

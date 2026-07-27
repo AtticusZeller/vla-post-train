@@ -1,0 +1,48 @@
+{
+  "artifact_path": "/mnt/data/atticux/dsrl_pi0/logs/DSRL_pi0_Libero_smoke",
+  "code_revisions": [],
+  "config": "experiments/dsrl-pi0/configs/libero90_task57_smoke_seed0.yaml",
+  "config_sha256": null,
+  "cwd": "/root/dsrl_pi0",
+  "exit_code": 0,
+  "finished_at": null,
+  "historical": true,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "name": "NVIDIA H20"
+      }
+    ],
+    "hostname": null,
+    "platform": null,
+    "python": "3.11.11"
+  },
+  "method": "dsrl-pi0",
+  "method_code": null,
+  "pid": null,
+  "resolved_command": [],
+  "resolved_environment": {
+    "MUJOCO_GL": "egl"
+  },
+  "root": null,
+  "run_id": "20260714-134147__smoke",
+  "schema_version": 1,
+  "signal": null,
+  "sources": [
+    "methods/dsrl-pi0/docs/experiment-report.md",
+    "/mnt/data/atticux/dsrl_pi0/logs/DSRL_pi0_Libero_smoke/launcher-smoke-20260714-134139.log"
+  ],
+  "started_at": null,
+  "tracking": {
+    "backend": "wandb",
+    "project": "DSRL_pi0_Libero_smoke",
+    "run_urls": [
+      "https://wandb.ai/atticux/DSRL_pi0_Libero_smoke/runs/smoke_dsrl_pi0_libero_2026_07_14_13_41_47_0000--s-0"
+    ]
+  },
+  "unknown_fields": [
+    "exact UTC start and finish",
+    "code revision"
+  ]
+}

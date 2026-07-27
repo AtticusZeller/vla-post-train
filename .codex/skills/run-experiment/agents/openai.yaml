@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Experiment"
+  short_description: "Run a traceable VLA experiment through the root lab workflow."
+  default_prompt: "Use $run-experiment to validate and launch the requested experiment safely."

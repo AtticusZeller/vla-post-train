@@ -1,0 +1,16 @@
+[submodule "methods/flowdagger"]
+	path = methods/flowdagger
+	url = https://github.com/AtticusZeller/FlowDAgger.git
+	branch = dev
+[submodule "methods/dsrl-pi0"]
+	path = methods/dsrl-pi0
+	url = https://github.com/AtticusZeller/dsrl_pi0.git
+	branch = dev
+[submodule "methods/rlinf"]
+	path = methods/rlinf
+	url = https://github.com/AtticusZeller/RLinf.git
+	branch = personal-dev
+[submodule "methods/starvla"]
+	path = methods/starvla
+	url = https://github.com/AtticusZeller/starVLA.git
+	branch = starVLA_dev

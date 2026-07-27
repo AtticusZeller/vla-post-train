@@ -1,0 +1,65 @@
+schema_version: 1
+id: metaworld-assembly-short-b16-seed42
+method: flowdagger
+repository:
+  path: methods/flowdagger
+  expected_branch: dev
+  require_clean: true
+environment:
+  manager: conda
+  name: dsrl_pi0
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 1
+tracking:
+  backend: wandb
+  project: flowdagger
+  run_urls:
+    - https://wandb.ai/1831768457/flowdagger/runs/exp-02-short-b16_2026_07_21_19_16_21_0000--s-42
+native:
+  env:
+    EXP: "{artifact_path}"
+    MUJOCO_GL: egl
+    WANDB_MODE: online
+  argv:
+    - --env
+    - metaworld
+    - --task_key
+    - metaworld_assembly
+    - --seed
+    - "42"
+    - --wandb_entity
+    - "1831768457"
+    - --wandb_project
+    - flowdagger
+    - --max_steps
+    - "100"
+    - --seed_expert_episodes
+    - "1"
+    - --bc_steps_per_episode
+    - "10"
+    - --bc_batch_size
+    - "16"
+    - --eval_episodes
+    - "5"
+    - --eval_interval
+    - "100"
+    - --log_interval
+    - "10"
+    - --checkpoint_interval
+    - "100"
+    - --save_eval_video
+    - "0"
+    - --render
+    - "0"
+    - --inversion_method
+    - perstep_fp
+    - --prefix
+    - exp-02-short-b16
+  primary_metrics:
+    - name: success_rate
+      value: 0.8
+      episodes: 5

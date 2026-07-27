@@ -1,0 +1,105 @@
+# Development Plan
+
+> VLA 后训练研究仓库实施计划与当前状态。
+
+## 目标
+
+在 `/root/vla-post-train` 建立私有研究工作区。根仓库只管理 method submodule、实验配置、
+运行证据、汇总文档和 Agent workflow，不包含算法源码，也不建立覆盖所有方法的训练环境。
+
+## 最终结构
+
+```text
+vla-post-train/
+├── AGENTS.md / CLAUDE.md
+├── README.md / cmd.md / lab
+├── pyproject.toml / uv.lock
+├── .codex/skills/{run-experiment,summarize-experiment}/
+├── methods/{flowdagger,dsrl-pi0,rlinf,starvla}/
+├── scripts/
+│   ├── lab.py
+│   ├── config.py / process.py / run_record.py / monitor.py / report.py
+│   └── launchers/{command,flowdagger,dsrl_pi0,rlinf}.py
+├── experiments/<method>/{runbook.md,report.md,configs/,runs/}
+└── docs/{plan,architecture,log,bug,cognitive-debt}.md
+```
+
+## 已确认的设计
+
+### 仓库与依赖
+
+- 四个首期 method 均使用 HTTPS 用户 fork submodule，并固定准确 gitlink：
+  FlowDAgger `dev`、DSRL π0 `dev`、RLinf `personal-dev`、StarVLA `starVLA_dev`。
+- `origin` 指向用户 fork，`upstream` 指向官方仓库。未公开算法修改应进入普通私有 mirror，
+  不得推送公共 fork。
+- 所有外部算法、复现、framework 和 benchmark 代码统一放 `methods/`。自研方法从第一天
+  起也是独立私有仓库。
+- 第三方实现保留自身依赖闭包。首期不单独接入 OpenPI 或 LIBERO，也不为去重而修改嵌套依赖。
+- 根仓库使用 Python 3.12 + uv；训练环境由各 method 自行维护。
+
+### 配置与启动
+
+- YAML 使用 `schema_version: 1`。根层只解释 `id`、`method`、`repository`、
+  `environment`、`runtime`、`tracking`，`native` 由方法 launcher 解释。
+- 通用 launcher 只接受 argv 列表，不执行 shell 字符串。
+- FlowDAgger 入口为 `train_flowdagger.py`；DSRL 为
+  `python -m examples.launch_train_sim`；RLinf 为
+  `run_libero10_task0_comparison.sh`。
+- `lab` 只进入根目录并执行 `uv run python -m scripts.lab`。Python 负责校验、snapshot、
+  进程、W&B 和报告更新。
+- `experiment run` 前台执行，实时 tee 外部 console log，并在正常退出、异常或信号时补全
+  `run.json` 与终态 summary。长跑由 Skill 放入 tmux。
+- `resume` 只有在 launcher 明确声明支持时才执行；否则不创建任何新状态。
+
+### 正式运行与证据
+
+- 正式运行要求根 config 与 method code 均已提交、工作树干净，并能从配置的远端恢复。
+  smoke/debug 可显式允许 dirty，但不能进入正式结论。
+- `run.json` 记录 config 哈希、根和 method revision、cwd、argv、环境、主机/GPU、时间、
+  PID、退出码、信号、产物路径和明确的 W&B run URL。
+- 历史聚合实验使用 `historical: true` 与 `code_revisions[]`。未知值保留 `null` 并写入
+  `unknown_fields`，不伪造时间或单一 revision。
+- `summary.json` 统一包含 status、`primary_metrics[]`、resources、evidence 和
+  method-specific results。W&B 只查询配置列出的 run，优先 summary；GPU 资源来自 system
+  stream；本地退出码和 traceback 优先于 W&B 状态。
+- `report build` 只替换 `report.md` 的标记表格，保留人工结论和证据边界。
+- 新产物写入 `/mnt/data/atticux/vla-post-train/<method>/<run-id>/`；历史记录直接引用旧路径，
+  不复制 checkpoint、视频或完整日志。
+
+### 文档与 Agent workflow
+
+- 根 `AGENTS.md` / `CLAUDE.md` 管跨仓库规则并保持字节一致；method 规则保留在其独立仓库。
+- 方法级 `runbook.md` 维护环境、数据、原生命令、smoke/short/full 门槛、恢复、资源与故障。
+- 方法级 `report.md` 汇总当前结论、配置比较、失败、资源、证据边界和下一步。
+- `.codex/skills/run-experiment` 与 `summarize-experiment` 只表达英文 workflow，调用根
+  `lab` 和 runbook，不复制确定性 Python 逻辑。
+- 论文笔记继续放 Obsidian；无官方实现的方法只在独立 repo 留下实现所需最小上下文。
+
+## 历史迁移范围
+
+- FlowDAgger：smoke、batch-64 失败 short、batch-16 short、batch-16 full；full 保留每个
+  checkpoint 的 25 回合结果，修正“仅 5 回合”的过时描述。
+- DSRL π0：smoke、10k、500k、初始化失败；500k 代码基线为
+  `7f48937d4553e95244cd81c79236a3256df80597`，其他未知 revision 不推测。
+- RLinf：MVP 与 medium 聚合实验；保留 source summary 的全部方法指标，medium 用多个已知
+  code revision 和 stage W&B URL 表达迁移与恢复事实。
+
+## 实施状态
+
+- [x] 新建本地 Git / uv 项目并接入四个 submodule；
+- [x] 更新并推送四个 method 的 Agent 基线；
+- [x] 生成根 Agent 托管块与 VLA 专属规则；
+- [x] 实现 CLI、schema、launchers、运行记录、W&B 汇总和标记表格更新；
+- [x] 迁移 9 份配置与 10 条历史 run；
+- [x] 创建三份 runbook 与方法级报告；
+- [x] 创建并验证两个本地 Skill；
+- [x] 完成 20 个单元测试与全量静态/CLI 验证；
+- [x] 完成用户验收与 Explain Diff 五题理解门；
+- [x] 创建私有 GitHub 远端；
+- [ ] 推送根提交并验证 authenticated recursive clone。
+
+## 验收
+
+最终必须通过 ruff format/check、ty、pytest、全部配置校验、三个代表 dry-run、根与四个
+method 的 Agent 检查、两个 Skill 校验和大文件排查。推送后在 `/tmp` 做 authenticated
+recursive clone，确认四个 gitlink 均可恢复。本任务不运行新的 GPU 实验。

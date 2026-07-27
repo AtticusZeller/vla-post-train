@@ -1,0 +1,90 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/rlinf/experiments/recap-steam-libero10-task0-mvp/summary.json",
+    "local_traceback": false,
+    "wandb_runs": []
+  },
+  "primary_metrics": [
+    {
+      "episodes": 100,
+      "name": "baseline_success_rate",
+      "value": 0.32
+    },
+    {
+      "episodes": 100,
+      "name": "recap_success_rate",
+      "value": 0.09
+    },
+    {
+      "episodes": 100,
+      "name": "steam_success_rate",
+      "value": 0.14
+    }
+  ],
+  "resources": {
+    "runtime_seconds_approximate": 18000
+  },
+  "results": {
+    "benchmark": "LIBERO-10 Task 0",
+    "expected_trajectories_per_evaluation": 100,
+    "methods": {
+      "baseline": {
+        "delta_vs_baseline_pp": null,
+        "mean_success_rate": 0.32,
+        "seeds": [
+          {
+            "num_successes": 32,
+            "num_trajectories": 100,
+            "seed": 0,
+            "success_rate": 0.32
+          }
+        ],
+        "std_success_rate": 0.0,
+        "total_trajectories": 100,
+        "wilson_95_ci": [
+          0.2366901081545688,
+          0.4166280225367919
+        ]
+      },
+      "recap": {
+        "delta_vs_baseline_pp": -23.0,
+        "mean_success_rate": 0.09,
+        "seeds": [
+          {
+            "num_successes": 9,
+            "num_trajectories": 100,
+            "seed": 0,
+            "success_rate": 0.09
+          }
+        ],
+        "std_success_rate": 0.0,
+        "total_trajectories": 100,
+        "wilson_95_ci": [
+          0.04807199516388488,
+          0.16226374696643667
+        ]
+      },
+      "steam": {
+        "delta_vs_baseline_pp": -18.0,
+        "mean_success_rate": 0.14,
+        "seeds": [
+          {
+            "num_successes": 14,
+            "num_trajectories": 100,
+            "seed": 0,
+            "success_rate": 0.14
+          }
+        ],
+        "std_success_rate": 0.0,
+        "total_trajectories": 100,
+        "wilson_95_ci": [
+          0.08526265754464905,
+          0.22137360383807236
+        ]
+      }
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

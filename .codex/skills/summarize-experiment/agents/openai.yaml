@@ -1,0 +1,4 @@
+interface:
+  display_name: "Summarize Experiment"
+  short_description: "Reconcile local and W&B evidence into the method report."
+  default_prompt: "Use $summarize-experiment to reconcile one run and update its method report."

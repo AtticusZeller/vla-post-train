@@ -1,0 +1,65 @@
+schema_version: 1
+id: libero90-task57-10k-seed0
+method: dsrl-pi0
+repository:
+  path: methods/dsrl-pi0
+  expected_branch: dev
+  require_clean: true
+environment:
+  manager: conda
+  name: dsrl_pi0
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 2
+tracking:
+  backend: wandb
+  project: DSRL_pi0_Libero_10k
+  run_urls:
+    - https://wandb.ai/atticux/DSRL_pi0_Libero_10k/runs/dsrl_pi0_libero_10k_2026_07_14_14_20_03_0000--s-0
+native:
+  env:
+    EXP: "{artifact_path}"
+    MUJOCO_GL: egl
+    PYOPENGL_PLATFORM: egl
+  argv:
+    - --algorithm
+    - pixel_sac
+    - --env
+    - libero
+    - --prefix
+    - dsrl_pi0_libero_10k
+    - --wandb_project
+    - DSRL_pi0_Libero_10k
+    - --batch_size
+    - "256"
+    - --discount
+    - "0.999"
+    - --seed
+    - "0"
+    - --max_steps
+    - "10020"
+    - --eval_interval
+    - "10000"
+    - --log_interval
+    - "500"
+    - --eval_episodes
+    - "10"
+    - --multi_grad_step
+    - "20"
+    - --start_online_updates
+    - "500"
+    - --resize_image
+    - "64"
+    - --action_magnitude
+    - "1.0"
+    - --query_freq
+    - "20"
+    - --hidden_dims
+    - "128"
+  primary_metrics:
+    - name: success_rate
+      value: 0.5
+      episodes: 10

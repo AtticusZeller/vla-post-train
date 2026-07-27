@@ -1,0 +1,31 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "methods/dsrl-pi0/docs/experiment-report.md",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/atticux/DSRL_pi0_Libero_smoke/runs/smoke_dsrl_pi0_libero_2026_07_14_13_41_47_0000--s-0"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 1,
+      "name": "success_rate",
+      "value": 0.0
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 0.05,
+    "runtime_seconds": 161
+  },
+  "results": {
+    "environment_steps": 400,
+    "optimizer_updates": 20,
+    "replay_transitions": 20,
+    "scope": "engineering smoke only",
+    "seed": 0
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

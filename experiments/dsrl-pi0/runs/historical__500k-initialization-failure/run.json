@@ -1,0 +1,41 @@
+{
+  "artifact_path": "/mnt/data/atticux/dsrl_pi0/logs/DSRL_pi0_Libero",
+  "code_revisions": [],
+  "config": "experiments/dsrl-pi0/configs/libero90_task57_500k_seed0.yaml",
+  "config_sha256": null,
+  "cwd": "/root/dsrl_pi0",
+  "exit_code": null,
+  "finished_at": null,
+  "historical": true,
+  "host": {
+    "gpus": [],
+    "hostname": null,
+    "platform": null,
+    "python": null
+  },
+  "method": "dsrl-pi0",
+  "method_code": null,
+  "pid": null,
+  "resolved_command": [],
+  "resolved_environment": {},
+  "root": null,
+  "run_id": "historical__500k-initialization-failure",
+  "schema_version": 1,
+  "signal": null,
+  "sources": [
+    "methods/dsrl-pi0/docs/experiment-report.md",
+    "/mnt/data/atticux/dsrl_pi0/logs/DSRL_pi0_Libero/launcher-20260714-151346.log"
+  ],
+  "started_at": null,
+  "tracking": {
+    "backend": "wandb",
+    "project": "DSRL_pi0_Libero",
+    "run_urls": []
+  },
+  "unknown_fields": [
+    "exact UTC start and finish",
+    "exit code",
+    "code revision",
+    "W&B run URL"
+  ]
+}
