@@ -31,8 +31,8 @@ uv run pytest
 - **证据**：用户已确认下列只读 CLI 验收全部通过，并已通过 Explain Diff 五题理解门。
 - **目的**：确认 LeRobot framework、第五个 submodule、`add-method` Skill 和 method
   Agent 去重在用户终端中均可恢复且不影响既有实验入口。
-- **环境限制**：当前 `/mnt/data` 是只读挂载；恢复为 `rw` 前不要执行
-  `experiment run`、W&B 在线汇总或任何 GPU 长跑。
+- **环境状态**：已确认 `/mnt/data` 当前以 `rw` 挂载且可写。可以按各方法 runbook
+  执行新实验；LeRobot 仍未接入实验配置，因此不会被 `experiment run` 自动启动。
 
 请在新终端执行：
 
@@ -66,8 +66,7 @@ uv run pytest
 
 通过标准：
 
-1. `doctor` 的根环境、五个 method 和 nested submodule 均为 `OK`；`artifact writes`
-   因当前只读挂载显示 `WARN` 是已知环境状态。
+1. `doctor` 的根环境、五个 method、nested submodule 和 `artifact writes` 均为 `OK`。
 2. `method status` 显示 FlowDAgger `dev`、DSRL `dev`、RLinf `personal-dev`、
    StarVLA `starVLA_dev`、LeRobot `workspace`，且五个 checkout 均为 clean。
 3. 9 份 YAML 全部通过；三个 dry-run 的 cwd、Conda 环境与原生入口分别是
@@ -79,4 +78,4 @@ uv run pytest
    `Skill is valid!`。
 6. pytest 显示 `21 passed`。
 
-失败时请返回完整命令输出；本次不运行 LeRobot 或任何 GPU 实验。
+失败时请返回完整命令输出；本次接入工作不运行 LeRobot 或任何新的 GPU 实验。

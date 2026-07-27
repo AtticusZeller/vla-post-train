@@ -18,3 +18,8 @@
 - **影响：** 历史证据可读取，但新 `experiment run` 无法创建外部产物目录。
 - **处理：** `lab doctor` 显示 WARN；运行入口在创建 metadata 前检查可写性并报错。
 - **恢复标准：** DSW 将 OSS 重新以 `rw` 挂载后再启动任何新训练。
+
+## 2026-07-27：`/mnt/data` 已恢复可写
+
+- **验证：** `findmnt -T /mnt/data` 显示 `rw`，并通过 `test -w /mnt/data`。
+- **影响：** 新实验可以创建 `/mnt/data/atticux/vla-post-train/<method>/<run-id>/` 产物目录。

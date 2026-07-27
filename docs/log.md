@@ -4,6 +4,11 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-27：恢复实验产物挂载写权限
+
+- 用户已恢复 `/mnt/data` 的写权限；`findmnt -T /mnt/data` 显示 `rw`，且路径可写。
+- 后续新实验可以按方法 runbook 执行；LeRobot 尚未创建实验配置，因此不会被自动启动。
+
 ## 2026-07-27：接入 LeRobot framework 与统一 method onboarding
 
 - 保留旧 LeRobot `dev` 分支不变；从官方 `main` 创建并推送用户 fork 的干净 `workspace`
