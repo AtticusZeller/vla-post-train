@@ -4,6 +4,23 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-27：启动 RLToken ManiSkill Stage 2 十二小时实验
+
+- Stage 1 正式运行以 `STAGE1_FULL_EXIT=0` 完成，使用
+  `global_step_2000/actor` checkpoint 作为 Stage 2 初始化权重。
+- 将 Stage 2 调整为最多 500 epochs、64 个训练环境、64 个评估环境、每 25 轮评估与
+  保存；内部墙钟上限 11 小时，结束当前 step 后强制最终评估和 checkpoint，外层
+  11 小时 50 分钟发送 `INT` 作为保险，整体控制在 12 小时预算内。
+- 真实 learning smoke 已观测每轮 8 条 transition、2 次 critic update 和 1 次
+  actor update；时间上限单测、ruff、ty、22 项根测试、配置展开及用户验收均通过。
+- 正式 run
+  `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已在 tmux
+  `rlt-maniskill:10` 启动，W&B：
+  <https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>。Ray workers 已注册，
+  两张 H20 已进入 rollout。
+- 运行代码证据为根仓库 `57c4e7c`、RLinf `3fa4702d`；此前两次未进入 GPU 训练的
+  初始化失败均已停止并保留独立 run 记录。
+
 ## 2026-07-27：恢复实验产物挂载写权限
 
 - 用户已恢复 `/mnt/data` 的写权限；`findmnt -T /mnt/data` 显示 `rw`，且路径可写。

@@ -8,8 +8,9 @@
 
 - **触发：** 正式入口把 Ray `working_dir` 切换到根仓库的 RLinf 子模块，但只激活了
   `/root/RLinf/.venv`，未声明该路径也是 `uv` 的项目环境。
-- **现象：** worker 初始化时在子模块下创建 `.venv`，并重新下载 PyTorch/CUDA 依赖；
-  GPU 训练尚未开始。
+- **现象：** 第一次 worker 初始化在子模块下创建 `.venv` 并准备重新下载
+  PyTorch/CUDA；改绑外部环境后，自动 sync 又改写了该环境并造成
+  `huggingface-hub`/Transformers 版本冲突。两次均未进入 GPU 训练。
 - **处理：** 安全中断运行并保留失败 run 记录；设置 `RLINF_VENV`、
   `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv` 和 `UV_NO_SYNC=1`，确认正式启动只解析
   现有 Python，不再自动同步或改写依赖。
