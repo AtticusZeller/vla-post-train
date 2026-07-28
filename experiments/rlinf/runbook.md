@@ -39,12 +39,19 @@
   summary 仅汇总 baseline、STEAM step 500 和 step 1,000。
 - `RLINF_NPROC=2`，复用 `/root/RLinf/.venv`，并设置 `UV_NO_SYNC=1` 与
   `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv`，避免 Ray worker 切换目录后触发
-  uv 重建环境。
+  uv 重建环境。另设置 `RAY_ENABLE_UV_RUN_RUNTIME_ENV=0`，禁止 Ray 从根
+  `lab` 的 `uv run` 祖先进程自动构造 working-dir runtime env；当前单节点 worker
+  直接使用共享的已提交 RLinf 源码。
 - 2026-07-28 的两卡 2-step value smoke 已通过：
   `20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu`，
   W&B <https://wandb.ai/atticux/rlinf/runs/n28avawi>。此前
   `20260728-080217__libero10-task0-medium-steam-value-smoke-2gpu` 因缺少上述 uv
   环境约束在进入 GPU 优化前中断，作为失败工程证据保留。
+- 首次正式启动
+  `20260728-093657__libero10-task0-medium-steam-seed1-2gpu` 在 baseline
+  EnvWorker 初始化时退出：Ray 的 `uv run` 自动 working-dir 包遗漏
+  `rlinf/envs/venv`。该 run 未进入 GPU 训练；禁用上述自动 hook 后，短 Ray worker
+  probe 已从共享源码成功导入 `rlinf.envs.venv`。
 
 ## 恢复、评测与故障
 

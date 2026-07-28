@@ -23,6 +23,7 @@ native:
     RLINF_MEDIUM_EXPERIMENT_ROOT: "{artifact_path}/native"
     RLINF_NPROC: "2"
     RLINF_VENV_PATH: /root/RLinf/.venv
+    RAY_ENABLE_UV_RUN_RUNTIME_ENV: "0"
     UV_NO_SYNC: "1"
     UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
     WANDB_RUN_GROUP: steam-medium-seed1-2gpu

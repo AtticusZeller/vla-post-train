@@ -4,6 +4,22 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-07-28：Ray 从根 `uv run` 继承 working dir 后遗漏源码目录
+
+- **触发：** 根 `lab` 通过 `uv run` 启动 RLinf 子进程，子进程再调用
+  `ray.init()`；当前 Ray 默认启用 `RAY_ENABLE_UV_RUN_RUNTIME_ENV`。
+- **现象：** Ray 自动将方法仓作为 working dir 打包，worker 从
+  `/tmp/ray/.../working_dir_files/` 导入代码；LIBERO EnvWorker 报
+  `ModuleNotFoundError: No module named 'rlinf.envs.venv'`，即使该目录在提交后的
+  方法仓中存在。
+- **处理：** 单节点共享源码实验在根配置中设置
+  `RAY_ENABLE_UV_RUN_RUNTIME_ENV=0`，同时继续显式固定方法
+  `UV_PROJECT_ENVIRONMENT`、`UV_NO_SYNC=1` 和方法入口；短 Ray worker probe
+  已确认从提交后的 `methods/rlinf/rlinf/envs/venv/` 成功导入模块。
+- **原因：** Ray 的 uv runtime-env hook 根据祖先 `uv run` 自动复制 driver
+  环境；它与本项目“根 uv 环境只做编排、方法使用独立环境”的边界冲突，生成的
+  working-dir 包并不等价于方法仓源码。
+
 ## 2026-07-27：Ray 工作目录导致 `uv` 误建第二套 RLinf 环境
 
 - **触发：** 正式入口把 Ray `working_dir` 切换到根仓库的 RLinf 子模块，但只激活了

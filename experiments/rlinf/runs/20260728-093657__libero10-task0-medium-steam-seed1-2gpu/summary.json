@@ -1,0 +1,16 @@
+{
+  "evidence": {
+    "local_exit_code": 255,
+    "local_summary": "/mnt/data/atticux/vla-post-train/rlinf/20260728-093657__libero10-task0-medium-steam-seed1-2gpu/native/summary.json",
+    "local_traceback": false,
+    "wandb_runs": []
+  },
+  "primary_metrics": [],
+  "resources": {},
+  "results": {
+    "local": {},
+    "wandb_summary": {}
+  },
+  "schema_version": 1,
+  "status": "failed"
+}

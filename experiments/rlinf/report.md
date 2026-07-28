@@ -21,6 +21,7 @@ RLToken ManiSkill Stage 2 在 12 小时预算下运行到 87 个 global step，�
 | `20260727-070549__rlt-maniskill-stage2-12h-seed2026` | failed | eval/success_once=0.671875 (64 episodes)<br>eval/reward=0.010207230225205421 (64 episodes)<br>eval/episode_len=211.265625 (64 episodes)<br>global_step=87 | 2026-07-27T07:05:50.276934Z |
 | `20260728-080217__libero10-task0-medium-steam-value-smoke-2gpu` | failed | — | 2026-07-28T08:02:17.251867Z |
 | `20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu` | completed | — | 2026-07-28T08:05:18.917781Z |
+| `20260728-093657__libero10-task0-medium-steam-seed1-2gpu` | failed | — | 2026-07-28T09:36:58.527145Z |
 | `historical__libero10-task0-medium` | completed | baseline_success_rate=0.35 (100 episodes)<br>recap_step1000_success_rate=0.6 (100 episodes)<br>steam_step500_success_rate=0.55 (100 episodes) | unknown |
 | `historical__libero10-task0-mvp` | completed | baseline_success_rate=0.32 (100 episodes)<br>recap_success_rate=0.09 (100 episodes)<br>steam_success_rate=0.14 (100 episodes) | unknown |
 <!-- lab:results:end -->

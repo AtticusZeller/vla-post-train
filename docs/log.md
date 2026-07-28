@@ -14,6 +14,10 @@
   <https://wandb.ai/atticux/rlinf/runs/n28avawi> 正常结束。首次 smoke 因 Ray
   工作目录触发 uv 同步而中断，补齐 `UV_NO_SYNC=1` 和固定
   `UV_PROJECT_ENVIRONMENT` 后通过，两次记录均保留。
+- 首次正式启动在 baseline EnvWorker 初始化阶段发现 Ray 会从根 `lab` 的
+  `uv run` 祖先进程自动打包 RLinf 工作目录，并遗漏 `rlinf/envs/venv`；该 run
+  未进入训练。正式配置现禁用此自动 hook，短 Ray worker probe 已成功从共享源码
+  导入目标模块。
 - 验证通过：根仓 monitor 测试 3 项、RLinf 针对性测试 5 项、ruff、局部 ty、
   全量配置校验、正式 dry-run、checkpoint/退出码和 diff 检查。用户明确授权
   Agent 代验后继续启动；此处仅证明工程路径，不构成 STEAM seed 1 效果结论。
