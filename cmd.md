@@ -27,35 +27,45 @@ uv run pytest
 
 ## 待用户验证
 
-- **状态**：Passed（2026-07-27，用户已确认）。
-- **目的**：确认 RLToken Stage 2 的 12 小时时限配置、最终保存逻辑和真实学习 smoke
-  证据正确，再提交并启动长跑。
-- **前置条件**：`/root/RLinf` 的 `.venv` 可用；Stage 1
-  `global_step_2000` checkpoint 已存在；无需占用 GPU。
+- **状态**：Passed（2026-07-28，用户明确授权 Agent 按原样命令代验）。
+- **目的**：确认 STEAM medium 的训练 seed 与评测 seed 已解耦、两卡启动配置正确，
+  且真实 value-training smoke 已完成优化并保存 checkpoint。
+- **前置条件**：`/root/RLinf/.venv` 可用；无需重新占用 GPU，smoke 产物已保存在
+  `/mnt/data/atticux/vla-post-train/rlinf/`。
+- **命令**：
 
 请在新终端执行：
 
 ```bash
-cd /root/RLinf
+cd /root/vla-post-train
 
-PYTHONPATH=/root/RLinf .venv/bin/pytest -q \
-  tests/unit_tests/test_embodied_runner_time_limit.py
+uv run pytest -q tests/test_monitor.py
 
-grep -F 'rlt/critic_updates_run=2.000' \
-  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
-grep -F 'rlt/actor_updates_run=1.000' \
-  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
-grep -F 'replay/transition_count=8.000' \
-  /mnt/data/atticux/rlt-maniskill/logs/stage2-learning-smoke.log
+(
+  cd methods/rlinf
+  /root/RLinf/.venv/bin/python -m pytest -q \
+    tests/unit_tests/test_recap_steam_summary.py \
+    tests/unit_tests/test_recap_steam_medium_configs.py
+)
+
+./lab experiment dry-run \
+  experiments/rlinf/configs/libero10_task0_medium_steam_seed1_2gpu.yaml
+
+test -f \
+  /mnt/data/atticux/vla-post-train/rlinf/20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu/native/smoke-seed-1/steam/steam-medium-value-2gpu-smoke/checkpoints/global_step_2/actor/model_state_dict/full_weights.pt
+grep -F '"exit_code": 0' \
+  experiments/rlinf/runs/20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu/run.json
 
 git diff --check
+git -C methods/rlinf diff --check
 ```
 
-通过标准：
+- **通过标准**：根仓测试显示 `3 passed`，RLinf 测试显示 `5 passed`；dry-run
+  显示 `steam-medium-replication 1 0`、`CUDA_VISIBLE_DEVICES=0,1` 和
+  `RLINF_NPROC=2`；checkpoint 检查成功；`grep` 显示 `"exit_code": 0`；
+  两次 diff 检查均无输出。
+- **失败时返回**：完整命令输出；若 checkpoint 检查失败，再返回
+  `ls -lah` 对应的 `global_step_2/actor/model_state_dict/` 目录。
 
-1. pytest 显示 `2 passed`。
-2. 三次 `grep` 分别显示 2 次 critic update、1 次 actor update 和 8 条 replay
-   transition。
-3. `git diff --check` 无输出。
-
-验证已通过。正式启动使用 11 小时原生时限与 11 小时 50 分硬保护。
+验证结果：根仓 `3 passed`、RLinf `5 passed`；dry-run、checkpoint、退出码及
+两次 diff 检查均通过。

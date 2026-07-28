@@ -13,6 +13,24 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-07-28 · STEAM Medium 固定评测 seed 的两卡复现
+
+- **状态：** Open
+- **范围：** RLinf medium launcher、结果汇总器与测试；根仓两卡 smoke/formal
+  配置、artifact-relative summary 解析及运行证据。
+- **暂缓原因：** 用户优先启动当前两张 H20 上的 seed 1 复现实验，选择 Type C−，
+  将 Explain Diff 理解 Review 延后；代码、配置和真实 GPU smoke 验证不延后。
+- **验证证据：** 根仓 monitor 测试 3 项、RLinf 针对性测试 5 项、ruff
+  format/check、范围内 ty、全量配置校验和正式 dry-run 通过；两卡 value smoke
+  完成 2 个优化步并以 exit code 0 保存 `global_step_2` checkpoint；用户明确授权
+  Agent 执行 `cmd.md` 验证并继续运行。
+- **待理解内容：** 训练 seed 与 eval seed 的路径隔离方式、固定评测初始状态对
+  paired comparison 的意义，以及 native summary 如何通过 `{artifact_path}` 绑定
+  单次正式 run。
+- **偿还标准：** 针对本次 RLinf 与根仓提交运行 explain-diff-html，阅读解释并通过
+  全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-07-27 · RLToken Stage 2 十二小时运行时限
 
 - **状态：** Open

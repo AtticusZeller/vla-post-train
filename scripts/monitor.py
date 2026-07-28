@@ -80,11 +80,15 @@ def build_summary(
     local_results: dict[str, Any] = {}
     local_summary = native.get("summary_file")
     if isinstance(local_summary, str):
-        source = Path(local_summary)
+        resolved_summary = local_summary.replace(
+            "{artifact_path}", str(run_record.get("artifact_path", ""))
+        )
+        source = Path(resolved_summary)
         if not source.is_absolute():
             source = config.repository_path / source
         if source.is_file():
             local_results = read_json(source)
+        local_summary = str(source)
 
     wandb_data = collect_wandb(config.run_urls, api=api)
     exit_code = run_record.get("exit_code")

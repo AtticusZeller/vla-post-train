@@ -57,3 +57,26 @@ def test_local_summary_import_and_traceback_priority(tmp_path: Path) -> None:
     assert summary["status"] == "failed"
     assert summary["evidence"]["local_traceback"] is True
     assert summary["results"]["local"]["methods"]["baseline"]["success_rate"] == 0.5
+
+
+def test_local_summary_resolves_artifact_path_placeholder(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "artifacts" / "run-id"
+    source = artifact_path / "native" / "summary.json"
+    write_json(source, {"methods": {"steam": {"success_rate": 0.6}}})
+    config_path = write_config(
+        tmp_path,
+        native={
+            "command": ["python", "-c", "print('ok')"],
+            "summary_file": "{artifact_path}/native/summary.json",
+            "primary_metrics": [],
+        },
+    )
+    config = load_config(config_path, root=tmp_path)
+
+    summary = build_summary(
+        config,
+        {"exit_code": 0, "artifact_path": str(artifact_path)},
+    )
+
+    assert summary["results"]["local"]["methods"]["steam"]["success_rate"] == 0.6
+    assert summary["evidence"]["local_summary"] == str(source)

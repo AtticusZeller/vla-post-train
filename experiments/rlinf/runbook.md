@@ -26,9 +26,31 @@
 长跑必须先 dry-run，再由 Skill 放入 tmux。脚本自身负责阶段幂等和原生路径；根 launcher
 只选择 `mvp` 或 `medium` argv。
 
+## STEAM Medium seed 1 两卡复现
+
+- 正式配置：
+  `experiments/rlinf/configs/libero10_task0_medium_steam_seed1_2gpu.yaml`。
+- 训练使用 seed 1；baseline 与 STEAM step 500/1,000 均使用 eval seed 0。
+  不同评测 seed 会写入 checkpoint 方法目录下的 `eval-seed-<seed>/`，避免覆盖训练
+  seed 同名结果。
+- 数据与预算保持 Medium 不变：30 条 SFT、固定清单中的 256 条 rollout、500-step
+  STEAM ensemble value、1,000-step CFG、每个 checkpoint 100 回合评测。
+- 本轮只复现 STEAM，不重复 RECAP；baseline 在本轮独立 artifact 中重新评测，
+  summary 仅汇总 baseline、STEAM step 500 和 step 1,000。
+- `RLINF_NPROC=2`，复用 `/root/RLinf/.venv`，并设置 `UV_NO_SYNC=1` 与
+  `UV_PROJECT_ENVIRONMENT=/root/RLinf/.venv`，避免 Ray worker 切换目录后触发
+  uv 重建环境。
+- 2026-07-28 的两卡 2-step value smoke 已通过：
+  `20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu`，
+  W&B <https://wandb.ai/atticux/rlinf/runs/n28avawi>。此前
+  `20260728-080217__libero10-task0-medium-steam-value-smoke-2gpu` 因缺少上述 uv
+  环境约束在进入 GPU 优化前中断，作为失败工程证据保留。
+
 ## 恢复、评测与故障
 
 - 当前根 launcher 不声明通用 resume。阶段恢复继续使用方法脚本的原生命令并先写入 runbook。
+- seed 1 正式复现的各阶段在同一 artifact 下幂等：存在完整 value 或 policy
+  checkpoint 时复用；评测重跑前应先检查对应 `eval.log`，根层不提供自动 resume。
 - medium 是跨多次执行和机器迁移的聚合实验，必须保留 `code_revisions[]`，不能压缩为单 commit。
 - W&B 只读取配置列出的 stage runs；本地 summary 和退出/traceback 具有更高判定优先级。
 - medium 中 STEAM advantage 曾发生 SIGSEGV，后以三卡继续；CFG 在 step 514 主动迁移后由

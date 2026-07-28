@@ -4,6 +4,20 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-28：准备 STEAM Medium seed 1 两卡复现实验
+
+- 将 medium 训练 seed 与评测 seed 解耦；本轮训练使用 seed 1，baseline 与两档
+  STEAM checkpoint 均固定在 eval seed 0，避免把初始化分布变化混入训练 seed 比较。
+- 新增正式两卡配置和 2-step value smoke 配置；原生 summary 支持从当前 run 的
+  `{artifact_path}` 读取，确保每次正式运行的结果留在独立产物目录。
+- 两卡真实 smoke 已完成 2 个优化步并保存 checkpoint；W&B run
+  <https://wandb.ai/atticux/rlinf/runs/n28avawi> 正常结束。首次 smoke 因 Ray
+  工作目录触发 uv 同步而中断，补齐 `UV_NO_SYNC=1` 和固定
+  `UV_PROJECT_ENVIRONMENT` 后通过，两次记录均保留。
+- 验证通过：根仓 monitor 测试 3 项、RLinf 针对性测试 5 项、ruff、局部 ty、
+  全量配置校验、正式 dry-run、checkpoint/退出码和 diff 检查。用户明确授权
+  Agent 代验后继续启动；此处仅证明工程路径，不构成 STEAM seed 1 效果结论。
+
 ## 2026-07-28：归档 RLToken ManiSkill Stage 2 结果并暂停后续投入
 
 - 正式 run `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已结束；外层 11 小时

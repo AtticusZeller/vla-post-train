@@ -1,0 +1,29 @@
+schema_version: 1
+id: libero10-task0-medium-steam-value-smoke-2gpu
+method: rlinf
+repository:
+  path: methods/rlinf
+  expected_branch: personal-dev
+  require_clean: false
+environment:
+  manager: none
+runtime:
+  formal: false
+  allow_dirty: true
+  gpus: [0, 1]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 1
+tracking:
+  backend: wandb
+  project: rlinf
+  run_urls: []
+native:
+  argv: [steam-medium-value-smoke, "1"]
+  env:
+    RLINF_MEDIUM_EXPERIMENT_ROOT: "{artifact_path}/native"
+    RLINF_NPROC: "2"
+    RLINF_VENV_PATH: /root/RLinf/.venv
+    UV_NO_SYNC: "1"
+    UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
+    WANDB_RUN_GROUP: steam-medium-seed1-2gpu-smoke
+  primary_metrics: []
