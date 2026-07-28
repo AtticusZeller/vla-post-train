@@ -1,0 +1,69 @@
+{
+  "evidence": {
+    "local_exit_code": 130,
+    "local_summary": null,
+    "local_traceback": true,
+    "wandb_runs": [
+      {
+        "url": "https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo",
+        "source": "/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/wandb/wandb/run-20260727_150611-umh3vuuo/files/wandb-summary.json",
+        "state": "finished_with_budget_interrupt"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 64,
+      "name": "eval/success_once",
+      "value": 0.671875
+    },
+    {
+      "episodes": 64,
+      "name": "eval/reward",
+      "value": 0.010207230225205421
+    },
+    {
+      "episodes": 64,
+      "name": "eval/episode_len",
+      "value": 211.265625
+    },
+    {
+      "name": "global_step",
+      "value": 87
+    }
+  ],
+  "resources": {
+    "gpu_count": 2,
+    "gpu_hours": 23.65,
+    "wall_time_hours": 11.83
+  },
+  "results": {
+    "local": {
+      "checkpoint_steps": [
+        25,
+        50,
+        75,
+        87
+      ],
+      "checkpoint_root": "/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/stage2-12h/checkpoints",
+      "console_log": "/mnt/data/atticux/vla-post-train/rlinf/20260727-070549__rlt-maniskill-stage2-12h-seed2026/logs/console.log",
+      "global_steps_completed": 87,
+      "metrics_log": "/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/metrics.log",
+      "traceback_kind": "KeyboardInterrupt from outer budget signal while saving step 87 checkpoint",
+      "termination": "outer 11h50m budget interrupt during step 87 checkpoint wait"
+    },
+    "wandb_summary": {
+      "eval/episode_len": 211.265625,
+      "eval/num_trajectories": 64,
+      "eval/reward": 0.010207230225205421,
+      "eval/success_once": 0.671875,
+      "train/replay_buffer/total_samples": 42447,
+      "train/rlt/actor_updates_run": 100,
+      "train/rlt/critic_updates_run": 400,
+      "train/rlt/global_total_transitions_added": 42447,
+      "wandb_runtime_seconds": 42575
+    }
+  },
+  "schema_version": 1,
+  "status": "failed"
+}

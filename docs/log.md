@@ -4,6 +4,17 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-28：归档 RLToken ManiSkill Stage 2 结果并暂停后续投入
+
+- 正式 run `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已结束；外层 11 小时
+  50 分钟预算信号在 step 87 checkpoint 等待阶段触发，run.json 保留退出码 130，不能
+  视为完整 500-step 正常退出。
+- 结果证据：W&B 最终评估 64 条轨迹的 `eval/success_once=0.671875`、
+  `eval/reward=0.010207`；累计 87 step、42,447 条 transition，保留
+  `global_step_{25,50,75,87}` checkpoint；总运行约 11.83 小时、约 23.65 GPU·小时。
+- 该结果仅覆盖 ManiSkill 单任务、seed 2026、缩短预算和 64 条评估轨迹；效果一般，
+  不作为方法级收益结论。按用户决定，RLToken 暂不进入后续主线实验和预算分配。
+
 ## 2026-07-27：启动 RLToken ManiSkill Stage 2 十二小时实验
 
 - Stage 1 正式运行以 `STAGE1_FULL_EXIT=0` 完成，使用

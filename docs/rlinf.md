@@ -13,6 +13,10 @@
 - 12 小时 Stage 2 根配置为
   `experiments/rlinf/configs/rlt_maniskill_stage2_12h_seed2026.yaml`；方法配置位于
   `methods/rlinf/experiments/rlt-maniskill/`。
+- Stage 2 run `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已归档：87 个
+  global step，最终 64 条轨迹评估 `success_once=0.671875`、`reward=0.010207`，
+  约 11.83 小时后在 step 87 checkpoint 等待阶段被外层预算中断。结果一般，按当前研究
+  决策暂不继续 RLToken 主线实验。
 
 ## RLToken Stage 2 边界
 
@@ -32,3 +36,5 @@
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/`。
 - W&B 项目为 `atticux/rlt-maniskill`；本地退出码和 traceback 的判定优先级高于
   W&B 状态。
+- W&B run：<https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>；完整结果见根仓库
+  `experiments/rlinf/runs/20260727-070549__rlt-maniskill-stage2-12h-seed2026/summary.json`。

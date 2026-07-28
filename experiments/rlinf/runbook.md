@@ -55,3 +55,11 @@
 - 学习 smoke 使用 `critical_phase` 强制进入 actor 路径，仅证明 replay 与
   update 工程链路：每轮 8 条 transition，第二轮执行 2 次 critic update 和
   1 次 actor update；不作为算法收益证据。
+
+### Stage 2 结果与当前决策
+
+- `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 在 11 小时 50 分预算结束时完成
+  87 个 global step，并保留 step 25、50、75、87 checkpoint；最终 step 87 checkpoint
+  等待阶段收到外层中断，run 状态保持 `failed`/budget interrupt。
+- 最终 64 条轨迹评估为 `success_once=0.671875`、`reward=0.010207`。这只是单任务、
+  单 seed、缩短预算的方向性结果；效果一般，RLToken 暂不继续投入后续主线预算。

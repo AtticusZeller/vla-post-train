@@ -4,8 +4,8 @@
   "config": "experiments/rlinf/configs/rlt_maniskill_stage2_12h_seed2026.yaml",
   "config_sha256": "033035d07e5d55f7a08e5dd3d1eabfca0b2b2edfae3a37b923d6a0263d750cc3",
   "cwd": "/root/vla-post-train/methods/rlinf",
-  "exit_code": null,
-  "finished_at": null,
+  "exit_code": 130,
+  "finished_at": "2026-07-27T18:55:55.998482Z",
   "historical": false,
   "host": {
     "gpus": [
@@ -52,11 +52,13 @@
   },
   "run_id": "20260727-070549__rlt-maniskill-stage2-12h-seed2026",
   "schema_version": 1,
-  "signal": null,
+  "signal": 2,
   "started_at": "2026-07-27T07:05:50.276934Z",
   "tracking": {
     "backend": "wandb",
     "project": "rlt-maniskill",
-    "run_urls": []
+    "run_urls": [
+      "https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo"
+    ]
   }
 }

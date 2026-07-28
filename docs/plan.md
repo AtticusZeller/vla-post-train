@@ -102,6 +102,12 @@ vla-post-train/
 - [x] 创建私有 GitHub 远端；
 - [x] 推送根提交并验证 authenticated recursive clone。
 
+## 当前研究决策
+
+- RLToken ManiSkill Stage 2 已完成一次 12 小时预算方向性实验；结果一般，暂不进入后续
+  主线实验或新增预算。运行记录、W&B、本地 metrics 和 checkpoint 保留，仅供复核或未来
+  方法筛选时参考。
+
 ## Framework 扩展状态
 
 - [x] 清理四个旧 fork 的重复 Agent 托管块和纯空模板；
