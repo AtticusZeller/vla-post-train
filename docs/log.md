@@ -4,6 +4,20 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-29：将 RLToken 调整为 progressive 中等预算
+
+- 5,000-step unlimited run
+  `20260729-013931__rlt-maniskill-stage2-unlimited-seed2026` 实测首轮 rollout
+  6 分 19 秒；按用户决定在约 32 分钟后以 SIGINT 中止，run.json/summary 和 W&B
+  `o1ya9qaw` 均保留。该 run 没有正式评测，不支持算法结论。
+- 新增 100-step progressive 配置，不设置墙钟限制；64-env 训练、64-env 固定评测，
+  每 20 steps 评测/保存并录制前 4 路视频，预计约 11–14 小时自然完成。
+- 将 replay/RLT warmup 缩为 5,000 transitions / 10,000 updates，确保预算内跨过
+  online gate；官方 update cadence、critic:actor、gamma、BC/Q schedule 和训练期
+  simulated expert takeover 保持不变。
+- 验证通过：Hydra resolved config、bash 语法、RLinf 配置单测、根 ruff/ty、
+  25 个 pytest、config validate/dry-run 和 diff check。
+
 ## 2026-07-29：验证 RLToken 无墙钟长跑配置与评测视频
 
 - 新增无墙钟正式配置：保留上游 5,000 epochs 算法上限，不设置根 launcher 或原生

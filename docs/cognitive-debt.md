@@ -13,6 +13,22 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-07-29 · RLToken progressive 中等预算
+
+- **状态：** Open
+- **范围：** RLinf progressive budget/launcher；根仓正式配置、launcher 测试、
+  unlimited 中断记录与运行文档。
+- **暂缓原因：** 用户优先在当前两张 H20 上启动约 11–14 小时的渐进实验，选择
+  Type C−，将 Explain Diff 理解 Review 延后；配置验证、正式可恢复性和运行监控不延后。
+- **验证证据：** Hydra resolved config 明确为 100 steps、64/64 train/eval、
+  5,000/10,000 replay/RLT warmup，且不存在 `max_run_duration`；RLinf 配置单测、
+  根 ruff、ty、25 个 pytest、config validate/dry-run 和 diff check 通过。
+- **待理解内容：** update-step gate 如何控制 actor/reference 路由、缩短 warmup 对
+  官方可比性的影响，以及 step 20/40/60/80/100 五档评测的证据边界。
+- **偿还标准：** 针对本次 RLinf 与根仓提交运行 explain-diff-html，阅读解释并通过
+  全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-07-29 · RLToken upstream-aligned 无墙钟长跑
 
 - **状态：** Open

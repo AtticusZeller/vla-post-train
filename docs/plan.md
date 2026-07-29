@@ -113,8 +113,10 @@ vla-post-train/
   收尾；论文使用 30,000-step policy optimization，故不声称已经训练饱和。
 - RLToken ManiSkill Stage 2 的 12 小时运行结束于 learner update 25,200，
   ``ready_for_online=0``，没有跨过 30,000-update warmup；此前“效果一般”的判断撤销。
-  下一轮复用 Stage 1 step 2,000，按 RLinf upstream ManiSkill 配置从头运行 Stage 2，
-  恢复 256-env eval 与 simulated expert takeover，不设置墙钟限制，并录制固定评测子集。
+  5,000-step unlimited run 仅用于验证官方参数和耗时，随后按用户决定中止。当前采用
+  100-step progressive baseline：复用 Stage 1 step 2,000，保持官方 update cadence、
+  critic:actor 和 BC/Q schedule，将 replay/warmup 缩为 5,000/10,000，使用 64-env
+  固定评测每 20 steps 输出逐步结果；不设置墙钟限制。
 
 ## Framework 扩展状态
 

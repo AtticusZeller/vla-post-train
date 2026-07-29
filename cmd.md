@@ -106,3 +106,33 @@ ffprobe -v error \
 
 验证结果：根 launcher 测试 5 项、录像单测 3 项、Hydra 展开、ruff 和 dry-run
 均通过；真实两卡 smoke `ifrzd3ve` 正常退出，两个 MP4 均为 H.264、11 帧、1.1 秒。
+
+## RLToken progressive 中等预算验证
+
+- **状态**：Passed（2026-07-29，用户要求 Agent 验证后直接启动）。
+- **目的**：确认新 run 以 100 steps 自然结束、没有墙钟 timeout，并能在中等预算内
+  跨过缩短后的 10,000-update online gate。
+- **前置条件**：`/root/RLinf/.venv`、Stage 1 step 2,000 checkpoint、两张 H20 和
+  可写 `/mnt/data`。
+- **命令**：
+
+```bash
+cd /root/vla-post-train
+
+./lab config validate \
+  experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml
+./lab experiment dry-run \
+  experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml
+
+grep -E \
+  'max_epochs: 100|warmup_min_size: 5000|warmup_post_collect_updates: 10000|total_num_envs: 64' \
+  /tmp/rlt-progressive.yaml
+! grep -q max_run_duration /tmp/rlt-progressive.yaml
+```
+
+- **通过标准**：dry-run 仅解析为 `stage2-progressive`；resolved config 包含目标数值，
+  不含 `max_run_duration`；根测试、静态检查和 diff check 全部通过。
+- **失败时返回**：完整命令输出、resolved config 和对应 run 的本地 console 尾部。
+
+验证结果：Hydra 展开、bash 语法、RLinf 配置单测、根 ruff/ty、25 个 pytest、
+config validate/dry-run 及两层 diff check 均通过。

@@ -117,3 +117,24 @@
 - 必须在 W&B 同时观察 `train/rlt/ready_for_online=1`、
   `train/replay/actor_switch_rate>0` 和跨 gate 后的 `eval/success_once`，才进入
   方法效果判断。
+- run `20260729-013931__rlt-maniskill-stage2-unlimited-seed2026` 实测单个完整
+  rollout 约 6 分 19 秒。用户决定不把 5,000 steps 作为首轮预算后，该 run 在约
+  32 分钟处中止并保留为工程/耗时证据，不支持算法结论。
+
+## RLToken ManiSkill Stage 2（progressive 中等预算）
+
+- 根配置：
+  `experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml`；
+  原生入口：`experiments/rlt-maniskill/launch.sh stage2-progressive`。
+- 不设置根或原生墙钟 timeout；以 100 global steps 作为算法终止条件，按已观测
+  6–8 分钟/step 估计约 11–14 小时。
+- 训练环境保持 64；固定评测环境为 64，每 20 steps 评测和保存，预计得到
+  step 20/40/60/80/100 五档成功率与 checkpoint。录像取固定前 4 路。
+- 为确保中等预算内进入 online control，只缩短两项预热：
+  `warmup_min_size=5000`、`warmup_post_collect_updates=10000`。仍保留官方
+  `max_updates_per_train_step=400`、`update_epoch=5`、critic:actor=4、
+  gamma=0.96 和完整 BC/Q weight schedule。
+- 预期 step 20 仍处于 base/reference 路由；约 step 35–40 时
+  `rlt/update_step>=10000`、`ready_for_online=1`，后续评测才用于判断 RLT actor
+  接管后的方向性效果。该结果必须标记为 accelerated-warmup progressive baseline，
+  不能等同于官方 30,000-update warmup full reproduction。

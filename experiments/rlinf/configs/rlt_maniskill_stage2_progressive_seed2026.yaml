@@ -1,0 +1,27 @@
+schema_version: 1
+id: rlt-maniskill-stage2-progressive-seed2026
+method: rlinf
+repository:
+  path: methods/rlinf
+  expected_branch: personal-dev
+  require_clean: true
+environment:
+  manager: none
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0, 1]
+  artifact_root: /mnt/data/atticux/vla-post-train
+tracking:
+  backend: wandb
+  project: rlt-maniskill
+  run_urls: []
+native:
+  script: experiments/rlt-maniskill/launch.sh
+  argv: [stage2-progressive]
+  env:
+    RLINF_VENV: /root/RLinf/.venv
+    UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
+    UV_NO_SYNC: "1"
+  summary_file: /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-progressive/summary.json
+  primary_metrics: []

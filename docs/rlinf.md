@@ -23,12 +23,16 @@
   约 11.83 小时后在 step 87 checkpoint 等待阶段被外层预算中断。最终 learner
   `update_step=25,200`、`ready_for_online=0`，尚未跨过 30,000-update warmup，
   因而不能评价在线 actor 收益。
-- 下一轮使用无墙钟限制的 upstream-aligned Stage 2：复用 Stage 1 step 2,000，
-  64 个训练环境、256 个固定评测环境、simulated expert takeover，并录制固定评测子集。
-- 无墙钟正式配置为
-  `experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml`。评测指标仍覆盖
-  全部 256 个固定环境，MP4 只拼接前 4 路；录像先在本地完成 MP4 封装再复制到 OSSFS。
-  两卡 smoke `ifrzd3ve` 已验证 expert 初始化、train/eval 和可播放 H.264 文件。
+- 5,000-step unlimited run
+  `20260729-013931__rlt-maniskill-stage2-unlimited-seed2026` 已按用户决定在约 32 分钟后
+  中止；它验证了官方参数路径和单轮约 6 分 19 秒的耗时，不作为算法结果。
+- 当前 progressive 配置为
+  `experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml`：100 steps、
+  64 个训练环境、64 个固定评测环境、每 20 steps 评测/保存、5,000 replay warmup 和
+  10,000 RLT warmup update。它不设置墙钟限制，目标是在约 11–14 小时内获得 base、
+  RLT 接管初期和后续 online 更新的逐步成功率。
+- progressive 仍启用 simulated expert takeover；评测阶段不允许 expert。MP4 只拼接
+  前 4 路，并沿用本地封装后复制到 OSSFS 的可靠写入方式。
 
 ## RLToken 十二小时运行边界
 
@@ -50,6 +54,8 @@
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/`。
 - 无墙钟长跑的原生产物写入
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-unlimited/`。
+- progressive 产物写入
+  `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-progressive/`。
 - W&B 项目为 `atticux/rlt-maniskill`；本地退出码和 traceback 的判定优先级高于
   W&B 状态。
 - W&B run：<https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>；完整结果见根仓库
