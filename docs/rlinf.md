@@ -20,10 +20,13 @@
   `methods/rlinf/experiments/rlt-maniskill/`。
 - Stage 2 run `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已归档：87 个
   global step，最终 64 条轨迹评估 `success_once=0.671875`、`reward=0.010207`，
-  约 11.83 小时后在 step 87 checkpoint 等待阶段被外层预算中断。结果一般，按当前研究
-  决策暂不继续 RLToken 主线实验。
+  约 11.83 小时后在 step 87 checkpoint 等待阶段被外层预算中断。最终 learner
+  `update_step=25,200`、`ready_for_online=0`，尚未跨过 30,000-update warmup，
+  因而不能评价在线 actor 收益。
+- 下一轮使用无墙钟限制的 upstream-aligned Stage 2：复用 Stage 1 step 2,000，
+  64 个训练环境、256 个固定评测环境、simulated expert takeover，并录制固定评测子集。
 
-## RLToken Stage 2 边界
+## RLToken 十二小时运行边界
 
 - 保留 64 个训练环境、500-step episode、原始 replay warmup、update budget 和
   BC/Q 权重 schedule，不把时间缩量伪装成算法等价的 full 结果。
@@ -32,6 +35,8 @@
 - 评估环境缩为 64；结果只能作为单任务、单 seed、12 小时预算证据。
 - 学习 smoke 强制从 critical phase 开始，只证明 replay ingestion 和
   actor/critic update 链路，不证明任务成功率或算法收益。
+- step 87 checkpoint 保存模型、优化器、target model 与 replay buffer，但未保存
+  worker `update_step`；不能直接作为保持 warmup 进度的正式 resume 入口。
 
 ## 恢复与证据
 

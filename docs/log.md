@@ -4,6 +4,17 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-29：收尾 STEAM 并纠正 RLToken Stage 2 结论
+
+- STEAM Medium seed 1 保留 baseline 40%、step 500 51%、step 1,000 66% 的
+  单任务方向性结果；当前在 1,000-step CFG 预算处收尾。论文采用 30,000-step
+  policy training，因此不把当前 checkpoint 描述为已经饱和。
+- 复核 W&B ``umh3vuuo`` 和本地 metrics：RLToken 12 小时运行结束时
+  ``update_step=25,200``、``ready_for_online=0``，尚未跨过 30,000-update
+  warmup；67.2% 最终评测不能用于判断在线 actor 收益。
+- 对照 RLinf upstream ManiSkill 示例确认现有 Stage 1 step 2,000 合规；下一轮
+  Stage 2 将取消墙钟限制，恢复 256-env eval 和 simulated expert takeover。
+
 ## 2026-07-28：准备 STEAM Medium seed 1 两卡复现实验
 
 - 将 medium 训练 seed 与评测 seed 解耦；本轮训练使用 seed 1，baseline 与两档
@@ -26,7 +37,7 @@
   全量配置校验、正式 dry-run、checkpoint/退出码和 diff 检查。用户明确授权
   Agent 代验后继续启动；此处仅证明工程路径，不构成 STEAM seed 1 效果结论。
 
-## 2026-07-28：归档 RLToken ManiSkill Stage 2 结果并暂停后续投入
+## 2026-07-28：归档 RLToken ManiSkill Stage 2 十二小时运行
 
 - 正式 run `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 已结束；外层 11 小时
   50 分钟预算信号在 step 87 checkpoint 等待阶段触发，run.json 保留退出码 130，不能
@@ -34,8 +45,9 @@
 - 结果证据：W&B 最终评估 64 条轨迹的 `eval/success_once=0.671875`、
   `eval/reward=0.010207`；累计 87 step、42,447 条 transition，保留
   `global_step_{25,50,75,87}` checkpoint；总运行约 11.83 小时、约 23.65 GPU·小时。
-- 该结果仅覆盖 ManiSkill 单任务、seed 2026、缩短预算和 64 条评估轨迹；效果一般，
-  不作为方法级收益结论。按用户决定，RLToken 暂不进入后续主线实验和预算分配。
+- 该结果仅覆盖 ManiSkill 单任务、seed 2026、缩短预算和 64 条评估轨迹；当时尚未
+  确认 learner warmup 状态。2026-07-29 复核后确认 ``ready_for_online=0``，
+  因此该运行不构成在线 RLT 效果结论。
 
 ## 2026-07-27：启动 RLToken ManiSkill Stage 2 十二小时实验
 

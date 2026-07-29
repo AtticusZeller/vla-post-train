@@ -9,11 +9,14 @@ STEAM step 500 为 55%；STEAM step 1000 回落到 52%。
 STEAM Medium 第二个训练 seed 已完成：固定 eval seed 0 下，baseline 为 40%，
 STEAM step 500 为 51%（+11 pp），step 1000 为 66%（+26 pp）。这支持继续检查
 STEAM 的跨 seed 稳定性，但仍是单任务、单训练 seed、每配置 100 回合的方向性结果。
+当前在 1,000-step CFG 预算处收尾；论文采用 30,000-step policy training，因此
+不声称当前结果已饱和。
 
 RLToken ManiSkill Stage 2 在 12 小时预算下运行到 87 个 global step，最终 64 条轨迹
-评估 `success_once=67.2%`、`reward=0.0102`；该结果仅为单任务、单 seed、缩短预算的
-方向性证据，效果一般。按当前研究决策，RLToken 暂不进入后续主线实验或预算分配；运行
-产物与 checkpoint 保留供复核。
+评估 `success_once=67.2%`、`reward=0.0102`。复核发现结束时 learner
+`update_step=25,200`、`ready_for_online=0`，尚未达到 30,000-update warmup，
+所以这不是在线 RLT 效果结果。下一轮将复用 Stage 1 step 2,000，按 RLinf upstream
+ManiSkill 配置无墙钟限制重跑 Stage 2。
 
 ## 结果索引
 
@@ -42,3 +45,4 @@ evaluation 和迁移恢复阶段，`run.json` 保留四个已知代码 revision 
 正向结果来自单任务、单训练 seed、每配置 100 回合；baseline 与 policy eval 固定使用
 eval seed 0。它支持继续研究 medium 配置，但不是论文级统计结论。当前第二个 seed 的
 step 1000 优于 step 500，后续仍应扩展训练 seed 与 benchmark，并同时保留两档 checkpoint。
+当前两卡转入 RL Token；STEAM 不继续消耗本轮预算。

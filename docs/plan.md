@@ -105,14 +105,16 @@ vla-post-train/
 ## 当前研究决策
 
 - SARM / RA-BC 的 LIBERO clean-expert 验证暂缓，不保留未执行的实验草案；当前两卡预算
-  优先用于 STEAM Medium 的第二个训练 seed。
+  已完成 STEAM Medium 的第二个训练 seed，后续优先用于 RL Token 长跑。
 - STEAM Medium seed 1 使用与历史 seed 0 相同的 30 条 SFT、256 条固定 rollout、
   500-step ensemble value 和 1,000-step CFG；评测固定为 seed 0，并比较 step
   500/1,000 与同一 seed 0 baseline。已完成：baseline 40%、STEAM step 500 51%、
-  step 1,000 66%；该结果仍是单任务、单训练 seed 的方向性证据。
-- RLToken ManiSkill Stage 2 已完成一次 12 小时预算方向性实验；结果一般，暂不进入后续
-  主线实验或新增预算。运行记录、W&B、本地 metrics 和 checkpoint 保留，仅供复核或未来
-  方法筛选时参考。
+  step 1,000 66%；该结果仍是单任务、单训练 seed 的方向性证据。当前在 1,000 steps
+  收尾；论文使用 30,000-step policy optimization，故不声称已经训练饱和。
+- RLToken ManiSkill Stage 2 的 12 小时运行结束于 learner update 25,200，
+  ``ready_for_online=0``，没有跨过 30,000-update warmup；此前“效果一般”的判断撤销。
+  下一轮复用 Stage 1 step 2,000，按 RLinf upstream ManiSkill 配置从头运行 Stage 2，
+  恢复 256-env eval 与 simulated expert takeover，不设置墙钟限制，并录制固定评测子集。
 
 ## Framework 扩展状态
 

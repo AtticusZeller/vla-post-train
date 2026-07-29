@@ -90,5 +90,23 @@
 - `20260727-070549__rlt-maniskill-stage2-12h-seed2026` 在 11 小时 50 分预算结束时完成
   87 个 global step，并保留 step 25、50、75、87 checkpoint；最终 step 87 checkpoint
   等待阶段收到外层中断，run 状态保持 `failed`/budget interrupt。
-- 最终 64 条轨迹评估为 `success_once=0.671875`、`reward=0.010207`。这只是单任务、
-  单 seed、缩短预算的方向性结果；效果一般，RLToken 暂不继续投入后续主线预算。
+- 最终 64 条轨迹评估为 `success_once=0.671875`、`reward=0.010207`。结束时 learner
+  `update_step=25,200`、`ready_for_online=0`，尚未达到
+  `warmup_post_collect_updates=30,000`；该成功率不能用于判断在线 actor 收益。
+- step 87 checkpoint 保存模型、优化器、target model 和 38,852 条 replay
+  transition，但 worker `update_step` 没有持久化；直接 `resume_dir` 会重置
+  learner gate，因此下一轮从 Stage 2 头部按 upstream 配置运行。
+
+## RLToken ManiSkill Stage 2（无墙钟限制）
+
+- 复用 Stage 1 `global_step_2000/actor`，不重复训练 Stage 1。
+- 算法与 RLinf upstream `maniskill_rlt_stage2_ac_mlp.yaml` 对齐：64 个训练环境、
+  30,000-update warmup、BC/Q schedule、simulated expert takeover、256 个固定
+  reset-state 评测环境、5,000 epochs 算法上限。
+- 根 launcher 和 native runner 均不设置墙钟 timeout；5,000 epochs 是可复现的
+  算法终止条件，不是时间预算。
+- 正式成功率使用全部 256 个评测环境。录像仅选固定环境子集拼成 MP4，避免视频编码
+  改变评测样本数或训练算法参数。
+- 必须在 W&B 同时观察 `train/rlt/ready_for_online=1`、
+  `train/replay/actor_switch_rate>0` 和跨 gate 后的 `eval/success_once`，才进入
+  方法效果判断。
