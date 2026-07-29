@@ -1,0 +1,68 @@
+{
+  "artifact_path": "/mnt/data/atticux/vla-post-train/rlinf/20260728-094321__libero10-task0-medium-steam-seed1-2gpu",
+  "code_revisions": [],
+  "config": "experiments/rlinf/configs/libero10_task0_medium_steam_seed1_2gpu.yaml",
+  "config_sha256": "317774398cfd3642e516cfe419586ea9d2609bbe284b6dc9a4a70bc59e03736d",
+  "cwd": "/root/vla-post-train/methods/rlinf",
+  "exit_code": 0,
+  "finished_at": "2026-07-28T17:59:20.427803Z",
+  "historical": false,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-d9507a8c-f26e-c047-08e1-bb405c25ab9a"
+      },
+      {
+        "index": "1",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-6cc04fc6-7c5a-25e0-b2d4-2b3e223ee938"
+      }
+    ],
+    "hostname": "dsw-462170-85f979966-2mj8w",
+    "platform": "Linux-5.10.134-013.8.2.kangaroo.al8.x86_64-x86_64-with-glibc2.35",
+    "python": "3.12.13"
+  },
+  "method": "rlinf",
+  "method_code": {
+    "branch": "personal-dev",
+    "dirty": false,
+    "repository": "/root/vla-post-train/methods/rlinf",
+    "revision": "819bf7f2d16a2047a63a8f7f0b107c07465b5a9b"
+  },
+  "pid": 2447554,
+  "resolved_command": [
+    "bash",
+    "examples/offline_rl/run_libero10_task0_comparison.sh",
+    "steam-medium-replication",
+    "1",
+    "0"
+  ],
+  "resolved_environment": {
+    "RAY_ENABLE_UV_RUN_RUNTIME_ENV": "0",
+    "RLINF_MEDIUM_EXPERIMENT_ROOT": "/mnt/data/atticux/vla-post-train/rlinf/20260728-094321__libero10-task0-medium-steam-seed1-2gpu/native",
+    "RLINF_NPROC": "2",
+    "RLINF_VENV_PATH": "/root/RLinf/.venv",
+    "UV_NO_SYNC": "1",
+    "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
+    "WANDB_RUN_GROUP": "steam-medium-seed1-2gpu"
+  },
+  "root": {
+    "branch": "main",
+    "dirty": false,
+    "repository": "/root/vla-post-train",
+    "revision": "742002942a848069dee98099486ce180faa53072"
+  },
+  "run_id": "20260728-094321__libero10-task0-medium-steam-seed1-2gpu",
+  "schema_version": 1,
+  "signal": null,
+  "started_at": "2026-07-28T09:43:21.784990Z",
+  "tracking": {
+    "backend": "wandb",
+    "project": "rlinf",
+    "run_urls": []
+  }
+}
