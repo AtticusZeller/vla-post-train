@@ -18,3 +18,7 @@
 	path = methods/lerobot
 	url = https://github.com/AtticusZeller/lerobot.git
 	branch = workspace
+[submodule "methods/expo-ft"]
+	path = methods/expo-ft
+	url = https://github.com/AtticusZeller/expo-ft.git
+	branch = dev
