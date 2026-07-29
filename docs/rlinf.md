@@ -10,7 +10,8 @@
 - STEAM Medium seed 1 两卡复现配置为
   `experiments/rlinf/configs/libero10_task0_medium_steam_seed1_2gpu.yaml`：
   训练 seed 1，固定 eval seed 0，复用历史 Medium 的固定数据清单，独立产物目录由
-  根 launcher 注入。两卡 2-step value smoke 已通过；正式结果待运行完成后回填。
+  根 launcher 注入。两卡 2-step value smoke 已通过；正式结果为 baseline 40%、
+  STEAM step 500 51%、step 1,000 66%（各 100 回合）。
 - RLToken ManiSkill：Stage 1 已完成 2,000 steps，本地退出标记为
   `STAGE1_FULL_EXIT=0`，最终特征模型位于
   `/mnt/data/atticux/rlt-maniskill/runs/full/stage1/stage1-full/checkpoints/global_step_2000/actor`。

@@ -18,6 +18,10 @@
   `uv run` 祖先进程自动打包 RLinf 工作目录，并遗漏 `rlinf/envs/venv`；该 run
   未进入训练。正式配置现禁用此自动 hook，短 Ray worker probe 已成功从共享源码
   导入目标模块。
+- 正式 run `20260728-094321__libero10-task0-medium-steam-seed1-2gpu` 已完成：
+  baseline 40%，STEAM step 500 为 51%，step 1,000 为 66%，每项 100 回合；W&B
+  runs 为 `dsj2xjay`、`pvious9w`、`ljh0y3rr`、`um33wjj3`。结果只覆盖 LIBERO-10
+  Task 0、训练 seed 1 和固定 eval seed 0，不作为 suite 或论文级结论。
 - 验证通过：根仓 monitor 测试 3 项、RLinf 针对性测试 5 项、ruff、局部 ty、
   全量配置校验、正式 dry-run、checkpoint/退出码和 diff 检查。用户明确授权
   Agent 代验后继续启动；此处仅证明工程路径，不构成 STEAM seed 1 效果结论。

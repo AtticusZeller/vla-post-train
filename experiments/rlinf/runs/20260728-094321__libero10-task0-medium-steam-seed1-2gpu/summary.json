@@ -1,0 +1,96 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/rlinf/20260728-094321__libero10-task0-medium-steam-seed1-2gpu/native/summary.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      "https://wandb.ai/atticux/rlinf/runs/dsj2xjay",
+      "https://wandb.ai/atticux/rlinf/runs/pvious9w",
+      "https://wandb.ai/atticux/rlinf/runs/ljh0y3rr",
+      "https://wandb.ai/atticux/rlinf/runs/um33wjj3"
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 100,
+      "name": "baseline_success_rate",
+      "value": 0.4
+    },
+    {
+      "episodes": 100,
+      "name": "steam_step500_success_rate",
+      "value": 0.51
+    },
+    {
+      "episodes": 100,
+      "name": "steam_step1000_success_rate",
+      "value": 0.66
+    }
+  ],
+  "resources": {},
+  "results": {
+    "local": {
+      "benchmark": "LIBERO-10 Task 0",
+      "expected_trajectories_per_evaluation": 100,
+      "methods": {
+        "baseline": {
+          "delta_vs_baseline_pp": null,
+          "mean_success_rate": 0.4,
+          "seeds": [
+            {
+              "num_successes": 40,
+              "num_trajectories": 100,
+              "seed": 0,
+              "success_rate": 0.4
+            }
+          ],
+          "std_success_rate": 0.0,
+          "total_trajectories": 100,
+          "wilson_95_ci": [
+            0.3093997461136028,
+            0.4979992153815976
+          ]
+        },
+        "steam_step1000": {
+          "delta_vs_baseline_pp": 26.0,
+          "mean_success_rate": 0.66,
+          "seeds": [
+            {
+              "num_successes": 66,
+              "num_trajectories": 100,
+              "seed": 1,
+              "success_rate": 0.66
+            }
+          ],
+          "std_success_rate": 0.0,
+          "total_trajectories": 100,
+          "wilson_95_ci": [
+            0.5627754565831095,
+            0.74538620502457
+          ]
+        },
+        "steam_step500": {
+          "delta_vs_baseline_pp": 10.999999999999998,
+          "mean_success_rate": 0.51,
+          "seeds": [
+            {
+              "num_successes": 51,
+              "num_trajectories": 100,
+              "seed": 1,
+              "success_rate": 0.51
+            }
+          ],
+          "std_success_rate": 0.0,
+          "total_trajectories": 100,
+          "wilson_95_ci": [
+            0.4134784047743415,
+            0.6057816990761385
+          ]
+        }
+      }
+    },
+    "wandb_summary": {}
+  },
+  "schema_version": 1,
+  "status": "completed"
+}

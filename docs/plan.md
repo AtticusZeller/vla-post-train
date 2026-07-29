@@ -108,7 +108,8 @@ vla-post-train/
   优先用于 STEAM Medium 的第二个训练 seed。
 - STEAM Medium seed 1 使用与历史 seed 0 相同的 30 条 SFT、256 条固定 rollout、
   500-step ensemble value 和 1,000-step CFG；评测固定为 seed 0，并比较 step
-  500/1,000 与同一 seed 0 baseline。正式结果尚未产生。
+  500/1,000 与同一 seed 0 baseline。已完成：baseline 40%、STEAM step 500 51%、
+  step 1,000 66%；该结果仍是单任务、单训练 seed 的方向性证据。
 - RLToken ManiSkill Stage 2 已完成一次 12 小时预算方向性实验；结果一般，暂不进入后续
   主线实验或新增预算。运行记录、W&B、本地 metrics 和 checkpoint 保留，仅供复核或未来
   方法筛选时参考。
