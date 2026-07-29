@@ -25,6 +25,10 @@
   因而不能评价在线 actor 收益。
 - 下一轮使用无墙钟限制的 upstream-aligned Stage 2：复用 Stage 1 step 2,000，
   64 个训练环境、256 个固定评测环境、simulated expert takeover，并录制固定评测子集。
+- 无墙钟正式配置为
+  `experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml`。评测指标仍覆盖
+  全部 256 个固定环境，MP4 只拼接前 4 路；录像先在本地完成 MP4 封装再复制到 OSSFS。
+  两卡 smoke `ifrzd3ve` 已验证 expert 初始化、train/eval 和可播放 H.264 文件。
 
 ## RLToken 十二小时运行边界
 
@@ -44,6 +48,8 @@
   检查 runbook、对应根配置和本地退出码。
 - 完整日志、checkpoint、W&B 本地目录和后续 summary 写入
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-12h/`。
+- 无墙钟长跑的原生产物写入
+  `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-unlimited/`。
 - W&B 项目为 `atticux/rlt-maniskill`；本地退出码和 traceback 的判定优先级高于
   W&B 状态。
 - W&B run：<https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>；完整结果见根仓库

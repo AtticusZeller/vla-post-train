@@ -13,6 +13,23 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-07-29 · RLToken upstream-aligned 无墙钟长跑
+
+- **状态：** Open
+- **范围：** RLinf 无墙钟/冒烟配置、视频环境上限与 OSSFS MP4 封装；根仓正式配置、
+  launcher 测试和运行文档。
+- **暂缓原因：** 用户要求完成 Agent 侧验证、提交后立即占用当前两张 H20 启动长跑，
+  因此将 Explain Diff 理解 Review 延后；配置、真实 GPU smoke、视频验证和远端可恢复性
+  不延后。
+- **验证证据：** RLinf 录像单测 3 项和 ruff 通过；Hydra resolved config 不含
+  `max_run_duration`；根 launcher 测试 5 项、config validate/dry-run 通过；真实两卡
+  smoke `ifrzd3ve` 完成 expert 初始化和 train/eval，两个 MP4 均通过 `ffprobe`。
+- **待理解内容：** warm-up gate 与 simulated expert takeover 的交互、256-env 评测和
+  4-env 视频子集的统计边界，以及 MP4 在 FUSE/OSSFS 上需要本地 finalize 的原因。
+- **偿还标准：** 针对本次 RLinf 与根仓提交运行 explain-diff-html，阅读解释并通过
+  全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-07-28 · STEAM Medium 固定评测 seed 的两卡复现
 
 - **状态：** Open

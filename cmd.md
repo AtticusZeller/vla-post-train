@@ -69,3 +69,40 @@ git -C methods/rlinf diff --check
 
 验证结果：根仓 `3 passed`、RLinf `5 passed`；dry-run、checkpoint、退出码及
 两次 diff 检查均通过。
+
+## RLToken 无墙钟长跑验证
+
+- **状态**：Passed（2026-07-29，用户要求 Agent 完成验证后直接启动）。
+- **目的**：确认正式配置无墙钟限制、关键参数与 RLinf upstream 对齐、Stage 1
+  checkpoint 可作为 expert 加载，且 OSSFS 上生成的视频可播放。
+- **前置条件**：两张 H20、`/root/RLinf/.venv`、Stage 1 step 2,000 checkpoint 和
+  `/mnt/data` 可写。
+- **命令**：
+
+```bash
+cd /root/vla-post-train
+
+./lab config validate \
+  experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml
+./lab experiment dry-run \
+  experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml
+
+(
+  cd methods/rlinf
+  /root/RLinf/.venv/bin/python -m pytest -q \
+    tests/unit_tests/test_record_video.py
+)
+
+ffprobe -v error \
+  -show_entries stream=codec_name,width,height,nb_frames \
+  -show_entries format=duration,size -of json \
+  /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/smoke/stage2-unlimited/video/eval/seed_2026/0.mp4
+```
+
+- **通过标准**：dry-run 只解析为 `stage2-unlimited` 且 runtime 不含
+  `timeout_hours`；录像单测 3 项通过；`ffprobe` 返回 H.264、非零帧数与时长。
+- **失败时返回**：完整终端输出、对应 W&B run URL，以及视频文件大小和
+  `ffprobe -v trace` 尾部。
+
+验证结果：根 launcher 测试 5 项、录像单测 3 项、Hydra 展开、ruff 和 dry-run
+均通过；真实两卡 smoke `ifrzd3ve` 正常退出，两个 MP4 均为 H.264、11 帧、1.1 秒。

@@ -4,6 +4,18 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-29：验证 RLToken 无墙钟长跑配置与评测视频
+
+- 新增无墙钟正式配置：保留上游 5,000 epochs 算法上限，不设置根 launcher 或原生
+  runner 墙钟 timeout；恢复 64/256 train/eval env 和 simulated expert takeover。
+- 评测成功率继续覆盖全部 256 个固定环境，视频只拼接前 4 路，避免录像规模改变统计口径。
+- 修复 OSSFS 上直接封装 MP4 时无法回写 `moov` trailer 的问题：先在本地临时文件
+  完成编码，再复制到持久化目录。
+- 两卡 smoke `ifrzd3ve` 已加载 Stage 1 step 2,000 expert 并完成 train/eval；
+  两个 H.264 视频均通过 `ffprobe`（4096×1024、11 帧、1.1 秒）。
+- 验证通过：RLinf 录像单测 3 项、ruff format/check、根 launcher 测试 5 项、
+  Hydra resolved config、根 config validate/dry-run 和 diff check。
+
 ## 2026-07-29：收尾 STEAM 并纠正 RLToken Stage 2 结论
 
 - STEAM Medium seed 1 保留 baseline 40%、step 500 51%、step 1,000 66% 的

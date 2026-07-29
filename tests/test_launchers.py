@@ -67,3 +67,20 @@ def test_rlinf_rlt_stage2_argv_is_exact() -> None:
         "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
         "UV_NO_SYNC": "1",
     }
+
+
+def test_rlinf_rlt_stage2_unlimited_argv_is_exact() -> None:
+    config = load_config("experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml")
+    spec = build_launch_spec(config)
+    assert spec.cwd == ROOT / "methods/rlinf"
+    assert spec.argv == (
+        "bash",
+        "experiments/rlt-maniskill/launch.sh",
+        "stage2-unlimited",
+    )
+    assert dict(spec.environment) == {
+        "RLINF_VENV": "/root/RLinf/.venv",
+        "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
+        "UV_NO_SYNC": "1",
+    }
+    assert "timeout_hours" not in config.runtime

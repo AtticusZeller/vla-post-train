@@ -99,6 +99,9 @@
 
 ## RLToken ManiSkill Stage 2（无墙钟限制）
 
+- 根配置：
+  `experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml`；
+  原生入口：`experiments/rlt-maniskill/launch.sh stage2-unlimited`。
 - 复用 Stage 1 `global_step_2000/actor`，不重复训练 Stage 1。
 - 算法与 RLinf upstream `maniskill_rlt_stage2_ac_mlp.yaml` 对齐：64 个训练环境、
   30,000-update warmup、BC/Q schedule、simulated expert takeover、256 个固定
@@ -106,7 +109,11 @@
 - 根 launcher 和 native runner 均不设置墙钟 timeout；5,000 epochs 是可复现的
   算法终止条件，不是时间预算。
 - 正式成功率使用全部 256 个评测环境。录像仅选固定环境子集拼成 MP4，避免视频编码
-  改变评测样本数或训练算法参数。
+  改变评测样本数或训练算法参数；正式配置录制前 4 路，写入
+  `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-unlimited/video/eval/`。
+- OSSFS 不支持 MP4 编码器可靠地回写 trailer；录像先在本地临时文件完成封装，再复制到
+  `/mnt/data`。两卡真实 smoke `ifrzd3ve` 已加载 Stage 1 expert 并完成 train/eval；
+  两个 H.264 文件均通过 `ffprobe`（4096×1024、11 帧、1.1 秒）。
 - 必须在 W&B 同时观察 `train/rlt/ready_for_online=1`、
   `train/replay/actor_switch_rate>0` 和跨 gate 后的 `eval/success_once`，才进入
   方法效果判断。
