@@ -1,5 +1,5 @@
 {
-  "completed_runs": 12,
+  "completed_runs": 13,
   "expected_runs": 36,
   "macro_delta_success_rate": null,
   "protocol": "metaworld12-v1",
@@ -182,12 +182,20 @@
       "task": "metaworld_lever_pull"
     },
     {
-      "base_success_rate": null,
-      "completed_seeds": 0,
-      "delta_success_rate": null,
+      "base_success_rate": 0.72,
+      "completed_seeds": 1,
+      "delta_success_rate": 0.0,
       "expected_seeds": 3,
-      "final_success_rate": null,
-      "seeds": [],
+      "final_success_rate": 0.72,
+      "seeds": [
+        {
+          "base_success_rate": 0.72,
+          "delta_success_rate": 0.0,
+          "final_success_rate": 0.72,
+          "run_id": "20260730-193057__metaworld12-pick-place-full-seed0",
+          "seed": 0
+        }
+      ],
       "task": "metaworld_pick_place"
     },
     {
