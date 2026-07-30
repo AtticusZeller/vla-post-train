@@ -1,0 +1,377 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-201806__metaworld12-soccer-full-seed0/flowdagger_result.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      {
+        "state": "finished",
+        "summary_keys": [
+          "_runtime",
+          "_step",
+          "_timestamp",
+          "_wandb",
+          "autonomous_buffer_size",
+          "env_steps",
+          "episode_return (exploration)",
+          "eval_video/0",
+          "eval_video/1",
+          "evaluation/Reward >= 0",
+          "evaluation/Reward >= 1",
+          "evaluation/avg_episode_len",
+          "evaluation/avg_return",
+          "evaluation/success_rate",
+          "intervention/episode_rate",
+          "intervention/expert_steps",
+          "intervention/intervened_episodes",
+          "intervention/step_rate",
+          "intervention/total_episodes",
+          "intervention/total_steps",
+          "intervention/trigger_distance_mean",
+          "intervention_rate",
+          "inversion/7d_mse",
+          "inversion/inv_w_max",
+          "inversion/inv_w_mean_abs",
+          "inversion/inv_w_p99",
+          "inversion/inv_w_p99_threshold",
+          "inversion/seed_on_manifold",
+          "inversion/seed_p99_max",
+          "inversion/seed_p99_mean",
+          "is_success (exploration)",
+          "num_online_samples",
+          "num_online_trajs",
+          "replay_buffer_size",
+          "rollout/all_succ_rate_w100",
+          "rollout/wInt_count_w100",
+          "rollout/wInt_succ_rate_w100",
+          "training/bc_loss"
+        ],
+        "url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-soccer-full_2026_07_31_04_18_17_0000--s-0"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "base_success_rate",
+      "value": 0.32
+    },
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "value": 0.36
+    },
+    {
+      "episodes": 25,
+      "name": "delta_success_rate",
+      "value": 0.03999999999999998
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 2.9166668339570365,
+    "wandb_system_samples": 500
+  },
+  "results": {
+    "local": {
+      "evaluations": [
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.04,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 224.56,
+          "avg_return": 0.32,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 500,
+          "success_rate": 0.32,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 230.6,
+          "avg_return": 0.28,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 1000,
+          "success_rate": 0.28,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 216.12,
+          "avg_return": 0.4,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 1500,
+          "success_rate": 0.4,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 212.36,
+          "avg_return": 0.4,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 2000,
+          "success_rate": 0.4,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 213.68,
+          "avg_return": 0.4,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 2500,
+          "success_rate": 0.4,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 193.92,
+          "avg_return": 0.48,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 3000,
+          "success_rate": 0.48,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 217.24,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 3500,
+          "success_rate": 0.36,
+          "task_key": "metaworld_soccer"
+        },
+        {
+          "avg_episode_len": 219.76,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-soccer-full",
+          "seed": 0,
+          "step": 4000,
+          "success_rate": 0.36,
+          "task_key": "metaworld_soccer"
+        }
+      ],
+      "output_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-201806__metaworld12-soccer-full-seed0/mw12-soccer-full_2026_07_31_04_18_17_0000--s-0",
+      "primary_metrics": [
+        {
+          "episodes": 25,
+          "name": "base_success_rate",
+          "value": 0.32
+        },
+        {
+          "episodes": 25,
+          "name": "final_success_rate",
+          "value": 0.36
+        },
+        {
+          "episodes": 25,
+          "name": "delta_success_rate",
+          "value": 0.03999999999999998
+        }
+      ],
+      "schema_version": 1,
+      "seed": 0,
+      "task_key": "metaworld_soccer",
+      "task_name": "soccer",
+      "training": {
+        "completed_bc_steps": 4000,
+        "environment_steps": 6151,
+        "episodes": 61,
+        "final_update": {
+          "bc_loss": 0.049371253699064255
+        }
+      },
+      "video": {
+        "camera_name": "corner",
+        "fps": 30,
+        "height": 480,
+        "width": 640
+      },
+      "video_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-201806__metaworld12-soccer-full-seed0/mw12-soccer-full_2026_07_31_04_18_17_0000--s-0/videos",
+      "wandb_run_url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-soccer-full_2026_07_31_04_18_17_0000--s-0"
+    },
+    "wandb_summary": {
+      "_runtime": 10525.175786504,
+      "_step": 4000,
+      "_timestamp": 1785453221.5329492,
+      "_wandb": {
+        "runtime": 10525
+      },
+      "autonomous_buffer_size": 26,
+      "env_steps": 6151,
+      "episode_return (exploration)": 1,
+      "eval_video/0": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/0_4000_7769555fa69000fb63af.mp4",
+        "sha256": "7769555fa69000fb63afce664c94767ba23ec21e5a524e53193e771d02edd5f8",
+        "size": 316210,
+        "width": 640
+      },
+      "eval_video/1": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/1_4000_9ac7693759862446d141.mp4",
+        "sha256": "9ac7693759862446d14142b82adb689b65217b6ed272d5e15fa1a63804303324",
+        "size": 345633,
+        "width": 640
+      },
+      "evaluation/Reward >= 0": 1,
+      "evaluation/Reward >= 1": 0.36,
+      "evaluation/avg_episode_len": 219.76,
+      "evaluation/avg_return": 0.36,
+      "evaluation/success_rate": 0.36,
+      "intervention/episode_rate": 0.8360655737704918,
+      "intervention/expert_steps": 5590,
+      "intervention/intervened_episodes": 51,
+      "intervention/step_rate": 0.9087953178344984,
+      "intervention/total_episodes": 61,
+      "intervention/total_steps": 6151,
+      "intervention/trigger_distance_mean": 0.11347667836383275,
+      "intervention_rate": 0.8333333333333334,
+      "inversion/7d_mse": 7.278359407791868e-05,
+      "inversion/inv_w_max": 3.6983699798583984,
+      "inversion/inv_w_mean_abs": 0.21749886870384216,
+      "inversion/inv_w_p99": 1.7263439893722534,
+      "inversion/inv_w_p99_threshold": 3,
+      "inversion/seed_on_manifold": 1,
+      "inversion/seed_p99_max": 1.9053341150283811,
+      "inversion/seed_p99_mean": 1.595678162574768,
+      "is_success (exploration)": 1,
+      "num_online_samples": 343,
+      "num_online_trajs": 61,
+      "replay_buffer_size": 343,
+      "rollout/all_succ_rate_w100": 0.8524590163934426,
+      "rollout/wInt_count_w100": 61,
+      "rollout/wInt_succ_rate_w100": 0.8524590163934426,
+      "training/bc_loss": 0.049371253699064255
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
