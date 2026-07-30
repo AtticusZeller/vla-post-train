@@ -39,6 +39,7 @@ progressive 中等预算 run 已跑满 100/100 steps 并正常退出，用时约
 | `20260728-094321__libero10-task0-medium-steam-seed1-2gpu` | completed | baseline_success_rate=0.4 (100 episodes)<br>steam_step500_success_rate=0.51 (100 episodes)<br>steam_step1000_success_rate=0.66 (100 episodes) | 2026-07-28T09:43:21.784990Z |
 | `20260729-013931__rlt-maniskill-stage2-unlimited-seed2026` | failed | — | 2026-07-29T01:39:32.515334Z |
 | `20260729-021706__rlt-maniskill-stage2-progressive-seed2026` | completed | eval/success_once=0.703125 (64 episodes)<br>eval/reward=0.0119717912748456 (64 episodes)<br>eval/episode_len=191.578125 (64 episodes)<br>global_step=100<br>rlt/update_step=35600<br>rlt/actor_weight_ramp_progress=0.3159799873828888 | 2026-07-29T02:17:07.310053Z |
+| `20260730-015126__libero10-task0-medium-steam-seed1-continue10k-2gpu` | failed | — | 2026-07-30T01:51:26.889044Z |
 | `historical__libero10-task0-medium` | completed | baseline_success_rate=0.35 (100 episodes)<br>recap_step1000_success_rate=0.6 (100 episodes)<br>steam_step500_success_rate=0.55 (100 episodes) | unknown |
 | `historical__libero10-task0-mvp` | completed | baseline_success_rate=0.32 (100 episodes)<br>recap_success_rate=0.09 (100 episodes)<br>steam_success_rate=0.14 (100 episodes) | unknown |
 <!-- lab:results:end -->

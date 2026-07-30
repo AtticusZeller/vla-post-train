@@ -14,6 +14,8 @@
 - 根配置为
   `experiments/rlinf/configs/libero10_task0_medium_steam_seed1_continue10k_2gpu.yaml`；
   输出写入新的 formal run artifact，不改写原始 step 1,000 实验。
+- 2026-07-30 首次 continuation 已验证恢复链路并运行至 step 1243，随后按用户要求
+  为 FlowDAgger 释放两张卡而中断；未到 3k checkpoint，后续从 step 1000 重启。
 
 ## 目标
 

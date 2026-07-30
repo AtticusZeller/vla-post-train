@@ -4,6 +4,17 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-30：按用户要求暂停 STEAM 10k continuation
+
+- formal run `20260730-015126__libero10-task0-medium-steam-seed1-continue10k-2gpu`
+  已验证从原 `global_step_1000` DCP 恢复，双卡稳定训练到 step 1243；两张 H20
+  各约占用 77 GiB，正常 step 用时约 21 秒，loss/grad norm 均为有限值。
+- 为释放两张卡给 FlowDAgger，用户要求暂停后以 SIGINT 正常终止；run 记录为
+  exit 130 / signal 2，所有 Ray worker 均退出，GPU 显存归零。
+- 本轮尚未到 step 3000 保存点，因此没有新 checkpoint；后续继续时仍从原 step
+  1000 恢复，重跑 1001–1243。W&B run
+  <https://wandb.ai/atticux/rlinf/runs/oa1lo7sb> 仅作为中断运行证据，不构成评测结果。
+
 ## 2026-07-29：归档 RLToken progressive 中预算运行并修复汇总工具
 
 - 正式 run `20260729-021706__rlt-maniskill-stage2-progressive-seed2026` 已跑满
