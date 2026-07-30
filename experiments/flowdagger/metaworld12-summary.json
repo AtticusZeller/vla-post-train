@@ -1,5 +1,5 @@
 {
-  "completed_runs": 5,
+  "completed_runs": 6,
   "expected_runs": 36,
   "macro_delta_success_rate": null,
   "protocol": "metaworld12-v1",
@@ -63,12 +63,20 @@
       "task": "metaworld_bin_picking"
     },
     {
-      "base_success_rate": null,
-      "completed_seeds": 0,
-      "delta_success_rate": null,
+      "base_success_rate": 0.32,
+      "completed_seeds": 1,
+      "delta_success_rate": -0.2,
       "expected_seeds": 3,
-      "final_success_rate": null,
-      "seeds": [],
+      "final_success_rate": 0.12,
+      "seeds": [
+        {
+          "base_success_rate": 0.32,
+          "delta_success_rate": -0.2,
+          "final_success_rate": 0.12,
+          "run_id": "20260730-113531__metaworld12-box-close-full-seed0",
+          "seed": 0
+        }
+      ],
       "task": "metaworld_box_close"
     },
     {
