@@ -1,0 +1,267 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-180228__metaworld12-lever-pull-full-seed0/flowdagger_result.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      {
+        "state": "finished",
+        "summary_keys": [
+          "_runtime",
+          "_step",
+          "_timestamp",
+          "_wandb",
+          "autonomous_buffer_size",
+          "env_steps",
+          "episode_return (exploration)",
+          "eval_video/0",
+          "eval_video/1",
+          "evaluation/Reward >= 0",
+          "evaluation/Reward >= 1",
+          "evaluation/avg_episode_len",
+          "evaluation/avg_return",
+          "evaluation/success_rate",
+          "intervention/episode_rate",
+          "intervention/expert_steps",
+          "intervention/intervened_episodes",
+          "intervention/step_rate",
+          "intervention/total_episodes",
+          "intervention/total_steps",
+          "intervention/trigger_distance_mean",
+          "intervention_rate",
+          "inversion/7d_mse",
+          "inversion/inv_w_max",
+          "inversion/inv_w_mean_abs",
+          "inversion/inv_w_p99",
+          "inversion/inv_w_p99_threshold",
+          "inversion/seed_on_manifold",
+          "inversion/seed_p99_max",
+          "inversion/seed_p99_mean",
+          "is_success (exploration)",
+          "num_online_samples",
+          "num_online_trajs",
+          "replay_buffer_size",
+          "rollout/all_succ_rate_w100",
+          "rollout/wInt_count_w100",
+          "rollout/wInt_succ_rate_w100",
+          "training/bc_loss"
+        ],
+        "url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-lever-pull-full_2026_07_31_02_02_40_0000--s-0"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "base_success_rate",
+      "value": 0.16
+    },
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "value": 0.16
+    },
+    {
+      "episodes": 25,
+      "name": "delta_success_rate",
+      "value": 0.0
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 1.4583335381746292,
+    "wandb_system_samples": 500
+  },
+  "results": {
+    "local": {
+      "evaluations": [
+        {
+          "avg_episode_len": 263.64,
+          "avg_return": 0.16,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.16,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 238.4,
+          "avg_return": 0.28,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 500,
+          "success_rate": 0.28,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 221.32,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 1000,
+          "success_rate": 0.36,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 241.36,
+          "avg_return": 0.28,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 1500,
+          "success_rate": 0.28,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 241.0,
+          "avg_return": 0.28,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 2000,
+          "success_rate": 0.28,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 259.92,
+          "avg_return": 0.2,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 2500,
+          "success_rate": 0.2,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 259.44,
+          "avg_return": 0.2,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 3000,
+          "success_rate": 0.2,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 224.84,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 3500,
+          "success_rate": 0.36,
+          "task_key": "metaworld_lever_pull"
+        },
+        {
+          "avg_episode_len": 266.4,
+          "avg_return": 0.16,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-lever-pull-full",
+          "seed": 0,
+          "step": 4000,
+          "success_rate": 0.16,
+          "task_key": "metaworld_lever_pull"
+        }
+      ],
+      "output_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-180228__metaworld12-lever-pull-full-seed0/mw12-lever-pull-full_2026_07_31_02_02_40_0000--s-0",
+      "primary_metrics": [
+        {
+          "episodes": 25,
+          "name": "base_success_rate",
+          "value": 0.16
+        },
+        {
+          "episodes": 25,
+          "name": "final_success_rate",
+          "value": 0.16
+        },
+        {
+          "episodes": 25,
+          "name": "delta_success_rate",
+          "value": 0.0
+        }
+      ],
+      "schema_version": 1,
+      "seed": 0,
+      "task_key": "metaworld_lever_pull",
+      "task_name": "lever_pull",
+      "training": {
+        "completed_bc_steps": 4000,
+        "environment_steps": 4153,
+        "episodes": 50,
+        "final_update": {
+          "bc_loss": 0.03856102004647255
+        }
+      },
+      "video": {
+        "camera_name": "corner",
+        "fps": 30,
+        "height": 480,
+        "width": 640
+      },
+      "video_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-180228__metaworld12-lever-pull-full-seed0/mw12-lever-pull-full_2026_07_31_02_02_40_0000--s-0/videos",
+      "wandb_run_url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-lever-pull-full_2026_07_31_02_02_40_0000--s-0"
+    },
+    "wandb_summary": {
+      "_runtime": 5275.240041492,
+      "_step": 4000,
+      "_timestamp": 1785439833.554732,
+      "_wandb": {
+        "runtime": 5275
+      },
+      "autonomous_buffer_size": 24,
+      "env_steps": 4153,
+      "episode_return (exploration)": 1,
+      "eval_video/0": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/0_4000_78fe746250d3f780add6.mp4",
+        "sha256": "78fe746250d3f780add651b502bf848d97e3d6c9a9da8500b0ff73ba3360e2be",
+        "size": 309634,
+        "width": 640
+      },
+      "eval_video/1": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/1_4000_b37cc4f85a61e0260f77.mp4",
+        "sha256": "b37cc4f85a61e0260f778f0cdfffabc4814725350b7b5b7920b64f27f9ba2c53",
+        "size": 278402,
+        "width": 640
+      },
+      "evaluation/Reward >= 0": 1,
+      "evaluation/Reward >= 1": 0.16,
+      "evaluation/avg_episode_len": 266.4,
+      "evaluation/avg_return": 0.16,
+      "evaluation/success_rate": 0.16,
+      "intervention/episode_rate": 0.8,
+      "intervention/expert_steps": 3753,
+      "intervention/intervened_episodes": 40,
+      "intervention/step_rate": 0.9036840837948472,
+      "intervention/total_episodes": 50,
+      "intervention/total_steps": 4153,
+      "intervention/trigger_distance_mean": 0.1643461799249053,
+      "intervention_rate": 0.8,
+      "inversion/7d_mse": 2.9047288990113884e-05,
+      "inversion/inv_w_max": 3.1331515312194824,
+      "inversion/inv_w_mean_abs": 0.24089007079601288,
+      "inversion/inv_w_p99": 1.9413145780563352,
+      "inversion/inv_w_p99_threshold": 3,
+      "inversion/seed_on_manifold": 1,
+      "inversion/seed_p99_max": 1.9491623640060425,
+      "inversion/seed_p99_mean": 1.6517735242843627,
+      "is_success (exploration)": 1,
+      "num_online_samples": 412,
+      "num_online_trajs": 50,
+      "replay_buffer_size": 412,
+      "rollout/all_succ_rate_w100": 1,
+      "rollout/wInt_count_w100": 50,
+      "rollout/wInt_succ_rate_w100": 1,
+      "training/bc_loss": 0.03856102004647255
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
