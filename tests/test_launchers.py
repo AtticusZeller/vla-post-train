@@ -1,5 +1,9 @@
 """Method launcher argv tests."""
 
+import os
+import shutil
+from pathlib import Path
+
 from scripts.config import ROOT, load_config
 from scripts.launchers import build_launch_spec
 
@@ -18,6 +22,11 @@ def test_flowdagger_argv_is_exact() -> None:
         "train_flowdagger.py",
         *config.native["argv"],
     )
+    environment = dict(spec.environment)
+    conda_bin = Path(shutil.which("conda") or "").resolve()
+    expected_env_bin = conda_bin.parents[1] / "envs/dsrl_pi0/bin"
+    assert environment["PATH"].startswith(f"{expected_env_bin}:")
+    assert environment["PATH"].endswith(os.environ["PATH"])
 
 
 def test_dsrl_argv_is_exact() -> None:

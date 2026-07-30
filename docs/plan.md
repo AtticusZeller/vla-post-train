@@ -2,6 +2,20 @@
 
 > VLA 后训练研究仓库实施计划与当前状态。
 
+## FlowDAgger MetaWorld-12 正式实验
+
+- 已确认 12 tasks × 3 seeds 的独立 steering-policy 协议；每个 run 使用 50 条
+  adaptation rollout、4,000 BC steps、dual buffer 50/50 和每评估点 25 episodes。
+- 已生成 12 份 smoke 与 36 份 formal YAML；正式汇总只在每个 task 三个 seed 完成后
+  计算 task mean，并在 12 个 task 都完整时给出 macro Δ success rate。
+- 已完成 12-task expert 预检、Assembly 端到端 dirty smoke、640×480 `corner`
+  视频视觉验收、Explain Diff 与用户 5/5 理解门禁。
+- 下一步：提交并推送 FlowDAgger method 与根仓库，使正式配置和代码可从远端恢复；
+  随后启动正式 run。大型 checkpoint、日志与视频继续写入
+  `/mnt/data/atticux/vla-post-train/flowdagger/`。
+- 旧 Assembly batch-16 full 保留为历史单任务证据，不进入本 suite；当前正式进度以
+  `experiments/flowdagger/metaworld12-report.md` 为准。
+
 ## STEAM Medium · seed 1 续训至 10k
 
 - 从已完成的 seed 1 `global_step_1000` DCP checkpoint 恢复模型、optimizer 与

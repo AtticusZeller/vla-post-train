@@ -17,8 +17,16 @@ class FakeRun:
         assert stream == "system"
         assert pandas is False
         return [
-            {"_timestamp": 0.0, "system.gpu.0.gpu": 50.0},
-            {"_timestamp": 3600.0, "system.gpu.0.gpu": 80.0},
+            {
+                "_timestamp": 0.0,
+                "system.gpu.0.gpu": 50.0,
+                "system.gpu.1.gpu": 20.0,
+            },
+            {
+                "_timestamp": 3600.0,
+                "system.gpu.0.gpu": 80.0,
+                "system.gpu.1.gpu": 30.0,
+            },
         ]
 
 
@@ -36,6 +44,16 @@ def test_wandb_reads_only_explicit_run_and_system_stream() -> None:
     result = collect_wandb(["https://wandb.ai/entity/project/runs/run-id"], api=api)
     assert api.paths == ["entity/project/run-id"]
     assert result["summary"] == {"success_rate": 0.75}
+    assert result["resources"]["gpu_hours"] == 2.0
+    assert result["resources"]["gpu_count"] == 2
+
+
+def test_wandb_resources_only_count_configured_gpus() -> None:
+    result = collect_wandb(
+        ["https://wandb.ai/entity/project/runs/run-id"],
+        api=FakeApi(),
+        gpu_indices=[0],
+    )
     assert result["resources"]["gpu_hours"] == 1.0
     assert result["resources"]["gpu_count"] == 1
 
@@ -81,3 +99,40 @@ def test_local_summary_resolves_artifact_path_placeholder(tmp_path: Path) -> Non
 
     assert summary["results"]["local"]["methods"]["steam"]["success_rate"] == 0.6
     assert summary["evidence"]["local_summary"] == str(source)
+
+
+def test_dynamic_local_metrics_use_run_record_wandb_url(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "artifacts" / "run-id"
+    source = artifact_path / "flowdagger_result.json"
+    write_json(
+        source,
+        {"primary_metrics": [{"name": "final_success_rate", "value": 0.75, "episodes": 25}]},
+    )
+    config_path = write_config(
+        tmp_path,
+        native={
+            "command": ["python", "-c", "print('ok')"],
+            "summary_file": "{artifact_path}/flowdagger_result.json",
+            "primary_metrics": [],
+        },
+        runtime={"gpus": [0]},
+        tracking={"backend": "wandb", "project": "test", "run_urls": []},
+    )
+    config = load_config(config_path, root=tmp_path)
+    api = FakeApi()
+
+    summary = build_summary(
+        config,
+        {
+            "exit_code": 0,
+            "artifact_path": str(artifact_path),
+            "tracking": {"run_urls": ["https://wandb.ai/entity/project/runs/run-id"]},
+        },
+        api=api,
+    )
+
+    assert summary["primary_metrics"] == [
+        {"name": "final_success_rate", "value": 0.75, "episodes": 25}
+    ]
+    assert api.paths == ["entity/project/run-id"]
+    assert summary["resources"]["gpu_count"] == 1

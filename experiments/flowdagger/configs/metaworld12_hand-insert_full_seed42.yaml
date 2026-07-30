@@ -1,0 +1,95 @@
+schema_version: 1
+id: metaworld12-hand-insert-full-seed42
+method: flowdagger
+repository:
+  path: methods/flowdagger
+  expected_branch: dev
+  require_clean: true
+environment:
+  manager: conda
+  name: dsrl_pi0
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus:
+  - 0
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 4
+tracking:
+  backend: wandb
+  project: flowdagger
+  run_urls: []
+native:
+  env:
+    CUDA_VISIBLE_DEVICES: '0'
+    EXP: '{artifact_path}'
+    MUJOCO_GL: egl
+    WANDB_MODE: online
+  suite:
+    protocol: metaworld12-v1
+    phase: full
+    task: metaworld_hand_insert
+    seed: 42
+    adaptation_rollouts: 50
+  argv:
+  - --env
+  - metaworld
+  - --task_key
+  - metaworld_hand_insert
+  - --seed
+  - '42'
+  - --wandb_entity
+  - '1831768457'
+  - --wandb_project
+  - flowdagger
+  - --launch_group_id
+  - metaworld12-v1
+  - --max_steps
+  - '4000'
+  - --seed_expert_episodes
+  - '10'
+  - --bc_steps_per_episode
+  - '100'
+  - --bc_batch_size
+  - '16'
+  - --eval_episodes
+  - '25'
+  - --eval_interval
+  - '500'
+  - --log_interval
+  - '100'
+  - --checkpoint_interval
+  - '500'
+  - --save_eval_video
+  - '1'
+  - --eval_video_episodes
+  - '2'
+  - --eval_video_fps
+  - '30'
+  - --render
+  - '0'
+  - --inversion_method
+  - perstep_fp
+  - --fp_per_step
+  - '5'
+  - --dual_buffer
+  - '1'
+  - --dual_buffer_auto_frac
+  - '0.5'
+  - --filter_failures
+  - '1'
+  - --takeover_min
+  - '0'
+  - --takeover_max
+  - '25'
+  - --beta_start
+  - '1.0'
+  - --beta_end
+  - '1.0'
+  - --beta_decay_episodes
+  - '1'
+  - --prefix
+  - mw12-hand-insert-full
+  result_file: '{artifact_path}/flowdagger_result.json'
+  summary_file: '{artifact_path}/flowdagger_result.json'
+  primary_metrics: []

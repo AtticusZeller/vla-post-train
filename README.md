@@ -36,6 +36,9 @@ Conda、uv、venv 或 Docker 环境。
 ```bash
 ./lab config validate --all
 ./lab experiment dry-run experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml
+./lab experiment suite-configs flowdagger
+./lab experiment dry-run experiments/flowdagger/configs/metaworld12_assembly_full_seed42.yaml
+./lab report suite flowdagger
 ./lab experiment status <run-id>
 ./lab experiment summarize <run-id>
 ./lab report build <method>

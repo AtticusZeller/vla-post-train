@@ -25,39 +25,25 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
-## 待用户验证
+## 最近用户验证
 
-- **状态**：Pending
-- **目的**：确认修复后的 `lab experiment summarize` 能在当前 `wandb==0.28.1` 上
-  正常抓取 W&B summary 与 GPU system metrics，并写出可序列化的 `summary.json`。
-- **前置条件**：`/root/.netrc` 中的 W&B 凭据可用；无需占用 GPU。
+- **状态**：Passed（2026-07-30，用户确认 `corner` 视角与 640×480 清晰度可用）
+- **目的**：人工确认 FlowDAgger MetaWorld-12 冒烟运行生成的视频可播放，
+  且画面确实是 Assembly 任务而非黑屏、静帧或错误任务。
+- **前置条件**：可在 Codex 桌面端播放本次回复中的视频，或本机可使用 `ffplay`。
 - **命令**：
 
 ```bash
-cd /root/vla-post-train
+ffplay -autoexit \
+  /mnt/data/atticux/vla-post-train/flowdagger/20260730-035402__metaworld12-assembly-smoke-seed42/mw12-assembly-smoke_2026_07_30_11_54_14_0000--s-42/videos/eval_step0_rollout0.mp4
 
-uv run pytest -q tests/test_monitor.py
-
-uv run python - <<'PY'
-import json
-from scripts.monitor import collect_wandb
-
-data = collect_wandb(["https://wandb.ai/atticux/rlt-maniskill/runs/jmqtnoox"])
-print("state:", data["runs"][0]["state"])
-print("gpu_hours:", data["resources"].get("gpu_hours"))
-print("eval/success_once:", data["summary"]["eval/success_once"])
-json.dumps(data)
-print("json-serializable: OK")
-PY
-
-git diff --check
+ffplay -autoexit \
+  /mnt/data/atticux/vla-post-train/flowdagger/20260730-035402__metaworld12-assembly-smoke-seed42/mw12-assembly-smoke_2026_07_30_11_54_14_0000--s-42/videos/eval_step1_rollout0.mp4
 ```
 
-- **通过标准**：`tests/test_monitor.py` 显示 `3 passed`；脚本输出
-  `state: finished`、非空 `gpu_hours`、`eval/success_once: 0.703125` 和
-  `json-serializable: OK`，且不抛 `TypeError`；`git diff --check` 无输出。
-- **失败时返回**：完整命令输出与 traceback，以及
-  `uv run python -c "import wandb; print(wandb.__version__)"` 的结果。
+- **通过标准**：两段视频都能完整播放约 10 秒；可见 MetaWorld Assembly 场景和机械臂
+  连续运动；无黑屏、静帧、花屏或截断。Smoke 成功率不作为本次视觉验收标准。
+- **失败时返回**：失败视频名、播放器报错，或能说明异常的时间戳/截图。
 
 ## 历史验证记录
 

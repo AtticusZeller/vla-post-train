@@ -1,0 +1,119 @@
+{
+  "completed_runs": 0,
+  "expected_runs": 36,
+  "macro_delta_success_rate": null,
+  "protocol": "metaworld12-v1",
+  "schema_version": 1,
+  "status": "running",
+  "suite": "metaworld12-flowdagger-v1",
+  "tasks": [
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_assembly"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_bin_picking"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_box_close"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_coffee_pull"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_dial_turn"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_door_lock"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_hammer"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_hand_insert"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_lever_pull"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_pick_place"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_soccer"
+    },
+    {
+      "base_success_rate": null,
+      "completed_seeds": 0,
+      "delta_success_rate": null,
+      "expected_seeds": 3,
+      "final_success_rate": null,
+      "seeds": [],
+      "task": "metaworld_stick_push"
+    }
+  ]
+}

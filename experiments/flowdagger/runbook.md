@@ -3,35 +3,92 @@
 ## 定位与环境
 
 - 代码：`methods/flowdagger`，`origin` 为用户 fork，`upstream` 为微软官方仓库。
-- 入口：在 `methods/flowdagger/flowdagger_pi05` 中执行 `train_flowdagger.py`。
-- 已验证环境：Conda `dsrl_pi0`、Python 3.11.11、JAX/JAXLIB 0.8.0、MetaWorld 3.0.0。
-- 持久化根目录：新运行使用 `/mnt/data/atticux/vla-post-train/flowdagger/<run-id>`；
-  历史产物仍位于 `/mnt/data/atticux/FlowDAgger/`。
+- 原生入口：`methods/flowdagger/flowdagger_pi05/train_flowdagger.py`。
+- 已验证环境：Conda `dsrl_pi0`、Python 3.11、JAX/JAXLIB 0.8.0、
+  MetaWorld 3.0.0。
+- 新产物：`/mnt/data/atticux/vla-post-train/flowdagger/<run-id>/`。
+- 历史 Assembly 产物：`/mnt/data/atticux/FlowDAgger/`，只作为旧实验依据。
 
-先确认 `/mnt/data` 为可写挂载、Conda 环境可用、W&B 已登录，再执行：
+运行前必须确认：
 
 ```bash
-./lab config validate experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml
-./lab experiment dry-run experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml
+cd /root/vla-post-train
+findmnt -T /mnt/data
+./lab doctor
+./lab method status
 ```
 
-## 执行顺序与通过条件
+`/mnt/data` 必须为 `rw`；W&B 标准凭据必须可用。正式 run 还要求根仓与 method
+工作树干净、配置已提交，且两个 revision 都能从远端恢复。
 
-1. smoke：完成 checkpoint、环境、策略、专家接管、反演、一次 BC update 和评测；
-2. short b16：完成 100 BC steps、step 0/100 评测和 checkpoint100；
-3. full b16：完成 4,000 BC steps和每 500 step 的 25 回合评测。
+## MetaWorld-12 协议
 
-`bc_batch_size=64` 已在首次 BC update 触发 JAX contracting-dimension 错误。当前机器
-的稳定化配置为 16；它不是源码默认值 256。
+协议真身是 `experiments/flowdagger/metaworld12_suite.yaml`：
 
-正式长跑先完成 dry-run，再由 `run-experiment` Skill 放入 tmux。`./lab experiment run`
-自身是前台命令并将 console 实时写入外部产物目录。
+- 12 个任务，每个任务单独训练一个 steering policy；
+- seeds `0, 1, 42`，共 36 个正式 run；
+- 10 条 seed-expert + 40 条在线轨迹，共 50 条 adaptation rollout；
+- 4,000 BC steps，每条在线轨迹后 100 steps，batch size 16；
+- dual buffer intervention/autonomous 50/50；
+- step 0 与每 500 steps 评估 25 episodes；
+- 每个评估点保存前 2 个 640×480、30 FPS 视频。
 
-## 评测、恢复与故障
+生成和检查配置：
 
-- W&B 项目：`flowdagger`；本地退出码和 traceback 优先于 W&B 的 `finished`。
-- full 每个 checkpoint 使用 25 个 episode。历史 full 的最终值为 0.8，step 1500 峰值
-  为 1.0；不得写成 5 回合评测。
-- 当前 launcher 不声明 resume 支持；`./lab experiment resume` 会无副作用报错。
-- JAX/CUDA 注册与 `ptxas` 警告只有在进程失败或 traceback 出现时才判为故障。
-- 单任务、seed 42 的结果仅用于当前实现验证和方向性判断。
+```bash
+./lab experiment suite-configs flowdagger
+./lab config validate --all
+./lab experiment dry-run \
+  experiments/flowdagger/configs/metaworld12_assembly_full_seed42.yaml
+```
+
+## Smoke 与正式运行
+
+每个任务只有一份 seed-42 smoke。Smoke 允许 dirty checkout，只证明任务注册、checkpoint、
+专家、反演、BC、评估和视频链路，不进入 suite 汇总：
+
+```bash
+./lab experiment run \
+  experiments/flowdagger/configs/metaworld12_assembly_smoke_seed42.yaml
+```
+
+正式运行使用对应 `*_full_seed*.yaml`。`experiment run` 是前台命令；长跑由
+`run-experiment` Skill 放入 tmux。示例：
+
+```bash
+./lab experiment run \
+  experiments/flowdagger/configs/metaworld12_assembly_full_seed42.yaml
+```
+
+当前根工作树会在启动后写入新的 `run.json`，因此同一工作树中的下一个正式 run 必须在
+前一个 run 完成、汇总、提交并推送运行记录后再启动。不要在 dirty root 上绕过正式门禁。
+
+## 评估、视频与汇总
+
+- 策略观察保持 `corner3`、256×256；人类视频使用独立 `corner` renderer，
+  640×480、30 FPS。
+- 每个正式评估点的统计口径始终是 25 episodes；只录前 2 个，不改变统计样本数。
+- 本地退出码和 traceback 优先于 W&B 的 run state。
+- 成功运行必须存在 `{artifact_path}/flowdagger_result.json`，且 `run.json` 的
+  `sources` 与 `tracking.run_urls` 已动态回填。
+
+完成一个 run 后：
+
+```bash
+./lab experiment summarize <run-id>
+./lab report suite flowdagger
+```
+
+`experiments/flowdagger/metaworld12-report.md` 显示当前进度。一个任务的 3 个 seed
+全部完成后才进入 task mean；12 个任务全部完整后才给出 macro Δ success rate。
+
+## 已知故障与边界
+
+- batch size 64 曾在首次 BC update 触发 JAX contracting-dimension 错误；当前正式配置
+  固定为已验证的 16，不声称是严格源码默认配置。
+- 根 `uv run` 的 `.venv/bin` 曾抢占 Conda Python；launcher 现在将目标 Conda env
+  的 `bin` 放到 PATH 首位。
+- JAX/CUDA 注册与旧 `ptxas` 警告只有在进程失败或出现 traceback 时才判为故障。
+- 当前 launcher 不支持恢复；`experiment resume` 会无副作用报错。中断前应确认最近
+  checkpoint，任何重跑都使用新的 run ID。
+- 旧 Assembly 单 seed full 与所有 smoke 都不能外推为 MetaWorld-12 结论。

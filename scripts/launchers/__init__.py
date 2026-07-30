@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -47,7 +49,20 @@ def _native_environment(config: ExperimentConfig) -> tuple[tuple[str, str], ...]
         isinstance(key, str) and isinstance(item, str) for key, item in value.items()
     ):
         raise ConfigError("native.env must be a string-to-string mapping")
-    return tuple(sorted((str(key), str(item)) for key, item in value.items()))
+    environment = {str(key): str(item) for key, item in value.items()}
+    if config.environment.get("manager") == "conda":
+        name = str(config.environment.get("name", ""))
+        conda = shutil.which("conda")
+        if not conda or not name:
+            raise ConfigError("conda executable and environment.name are required")
+        conda_root = Path(conda).resolve().parents[1]
+        environment_bin = conda_root / "envs" / name / "bin"
+        if not environment_bin.is_dir():
+            raise ConfigError(f"conda environment does not exist: {environment_bin.parent}")
+        # `lab` itself runs under uv, whose .venv/bin otherwise remains ahead
+        # of the target Conda environment even after `conda run`.
+        environment["PATH"] = f"{environment_bin}:{os.environ.get('PATH', '')}"
+    return tuple(sorted(environment.items()))
 
 
 def build_launch_spec(config: ExperimentConfig) -> LaunchSpec:

@@ -4,6 +4,29 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-07-30：根 `uv run` 的 PATH 抢占目标 Conda Python
+
+- **触发：** `./lab experiment run` 自身由根 `.venv` 的 `uv run` 启动，再通过
+  `conda run -n dsrl_pi0 python ...` 进入 FlowDAgger。
+- **现象：** 第一次 MetaWorld-12 smoke 实际执行根 Python 3.12，导入阶段报
+  `ModuleNotFoundError: No module named 'jax'`；尚未进入 GPU。
+- **处理：** launcher 根据 `conda` 可执行文件与配置的环境名解析目标
+  `<conda-root>/envs/<name>/bin`，将它显式放到子进程 PATH 首位。诊断确认实际 Python
+  变为 `dsrl_pi0/bin/python`、JAX 0.8.0；后续 smoke 正常完成。
+- **原因：** 当前环境中 `conda run` 不会可靠覆盖祖先进程显式传入且以根
+  `.venv/bin` 开头的 PATH；不能仅凭命令包含 `conda run` 推断目标 Python 已生效。
+
+## 2026-07-30：评估视频误用了 steering 的低清策略帧
+
+- **触发：** `perform_control_eval` 将 `obs_to_img()` 的输出直接加入视频；该函数会按
+  `resize_image=128` 缩放给 steering 网络使用，且沿用策略的 `corner3` 视角。
+- **现象：** MP4 只有 128×128，画面偏俯视，无法清楚判断机械臂与对象交互。
+- **处理：** 在 MetaWorld adapter 中新增共享同一 model/data 的独立 MuJoCo renderer；
+  策略仍用 `corner3`，视频改用 `corner`、640×480、30 FPS，并只渲染配置要求保存的
+  episode。用户已确认新视角与清晰度。
+- **原因：** 模型输入和人类证据的优化目标不同；复用预处理帧会把模型分辨率和相机约束
+  错误地施加到实验视频上。
+
 ## 2026-07-29：`lab experiment summarize` 因 wandb SDK API 变更而失败
 
 - **触发：** `scripts/monitor.py::collect_wandb` 用 `run.scan_history(stream="system")`

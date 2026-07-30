@@ -1,0 +1,52 @@
+schema_version: 1
+id: metaworld12-flowdagger-v1
+method: flowdagger
+protocol: metaworld12-v1
+seeds: [0, 1, 42]
+smoke_seed: 42
+tasks:
+  - key: metaworld_assembly
+    slug: assembly
+  - key: metaworld_bin_picking
+    slug: bin-picking
+  - key: metaworld_box_close
+    slug: box-close
+  - key: metaworld_coffee_pull
+    slug: coffee-pull
+  - key: metaworld_dial_turn
+    slug: dial-turn
+  - key: metaworld_door_lock
+    slug: door-lock
+  - key: metaworld_hammer
+    slug: hammer
+  - key: metaworld_hand_insert
+    slug: hand-insert
+  - key: metaworld_lever_pull
+    slug: lever-pull
+  - key: metaworld_pick_place
+    slug: pick-place
+  - key: metaworld_soccer
+    slug: soccer
+  - key: metaworld_stick_push
+    slug: stick-push
+protocol_args:
+  max_steps: 4000
+  seed_expert_episodes: 10
+  bc_steps_per_episode: 100
+  bc_batch_size: 16
+  eval_episodes: 25
+  eval_interval: 500
+  checkpoint_interval: 500
+  eval_video_episodes: 2
+  eval_video_fps: 30
+  dual_buffer_auto_frac: 0.5
+  takeover_min: 0
+  takeover_max: 25
+smoke_args:
+  max_steps: 1
+  seed_expert_episodes: 1
+  bc_steps_per_episode: 1
+  eval_episodes: 1
+  eval_interval: 1
+  checkpoint_interval: 1
+  eval_video_episodes: 1

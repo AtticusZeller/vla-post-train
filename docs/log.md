@@ -4,6 +4,26 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-30：完成 FlowDAgger MetaWorld-12 正式实验准备
+
+- 将 method 的任务与 scripted-expert registry 从 Assembly 扩展到论文 12 tasks；
+  每个任务使用 MT50 对应 prompt，并通过固定 seed 的 5/5 expert 预检。
+- 新增 `metaworld12-v1` suite manifest、12 份 smoke 和 36 份 formal YAML。正式协议为
+  seeds `0/1/42`、50 条 adaptation rollout、4,000 BC steps、dual buffer 50/50、
+  batch size 16 和每评估点 25 episodes。
+- 方法运行现在写出 `flowdagger_result.json`；根 `lab` 自动接回真实 W&B URL，
+  suite 汇总只纳入成功且协议匹配的正式 run。
+- 修复训练循环多做一步的边界；修复根 `uv run` 的 PATH 抢占 Conda Python 问题。
+  第一次失败 smoke 与后续成功 smoke 都保留为运行证据。
+- 将策略相机与视频相机解耦：π0.5 保持 `corner3` 观察，视频使用独立 `corner`
+  renderer，输出 640×480、30 FPS。Assembly smoke 已生成两段 300 帧视频并通过
+  `ffprobe` 与用户视觉验收。
+- 验证通过：根 ruff/format/ty、28 个 pytest、FlowDAgger 3 个 pytest、全部配置解析、
+  正式 dry-run、W&B summary 和结构化结果核对。
+- 用户完成 Explain Diff 5/5；Notion 页面：
+  <https://app.notion.com/p/3adf56e2b51c8136be73eb0b7ff0f273>。
+- 本条仅表示正式实验准备完成；36 个 formal run 尚未启动，当前进度为 0/36。
+
 ## 2026-07-30：按用户要求暂停 STEAM 10k continuation
 
 - formal run `20260730-015126__libero10-task0-medium-steam-seed1-continue10k-2gpu`

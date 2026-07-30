@@ -22,7 +22,11 @@ def _wandb_path(url: str) -> str:
     return "/".join(match.groups())
 
 
-def collect_wandb(run_urls: list[str], api: Any | None = None) -> dict[str, Any]:
+def collect_wandb(
+    run_urls: list[str],
+    api: Any | None = None,
+    gpu_indices: list[int] | None = None,
+) -> dict[str, Any]:
     """Read only explicitly configured W&B runs, preferring run summaries."""
 
     if not run_urls:
@@ -56,6 +60,9 @@ def collect_wandb(run_urls: list[str], api: Any | None = None) -> dict[str, Any]
         for key in row
         if key.startswith("system.gpu.") and key.endswith(".gpu")
     }
+    if gpu_indices is not None:
+        configured_gpu_keys = {f"system.gpu.{index}.gpu" for index in gpu_indices}
+        gpu_keys &= configured_gpu_keys
     timestamps = [
         float(row["_timestamp"])
         for row in system_rows
@@ -91,7 +98,18 @@ def build_summary(
             local_results = read_json(source)
         local_summary = str(source)
 
-    wandb_data = collect_wandb(config.run_urls, api=api)
+    recorded_urls = run_record.get("tracking", {}).get("run_urls", config.run_urls)
+    if not isinstance(recorded_urls, list):
+        recorded_urls = config.run_urls
+    configured_gpus = config.runtime.get("gpus")
+    gpu_indices = (
+        [int(index) for index in configured_gpus] if isinstance(configured_gpus, list) else None
+    )
+    wandb_data = collect_wandb(
+        [str(url) for url in recorded_urls],
+        api=api,
+        gpu_indices=gpu_indices,
+    )
     exit_code = run_record.get("exit_code")
     traceback_found = False
     if log_path and log_path.is_file():
@@ -105,7 +123,7 @@ def build_summary(
     else:
         status = "running"
 
-    primary_metrics = native.get("primary_metrics", [])
+    primary_metrics = local_results.get("primary_metrics", native.get("primary_metrics", []))
     if not isinstance(primary_metrics, list):
         raise ConfigError("native.primary_metrics must be a list")
     resources = dict(wandb_data["resources"])

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from scripts.config import ROOT, ConfigError, find_configs, load_config
+from scripts.config import ROOT, ConfigError, ExperimentConfig, find_configs, load_config
 from scripts.launchers import build_launch_spec
 from scripts.monitor import build_summary
 from scripts.process import run_foreground
@@ -211,6 +211,27 @@ def _terminal_summary(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _record_native_result(config: ExperimentConfig, record: dict[str, Any]) -> None:
+    """Attach dynamic evidence emitted by a method to its run record."""
+    result_file = config.native.get("result_file")
+    if not isinstance(result_file, str):
+        return
+    result_path = Path(result_file.replace("{artifact_path}", str(record.get("artifact_path", ""))))
+    if not result_path.is_absolute():
+        result_path = config.repository_path / result_path
+    if not result_path.is_file():
+        return
+    result = read_json(result_path)
+    sources = record.setdefault("sources", [])
+    if str(result_path) not in sources:
+        sources.append(str(result_path))
+    run_url = result.get("wandb_run_url")
+    if isinstance(run_url, str) and run_url:
+        urls = record.setdefault("tracking", {}).setdefault("run_urls", [])
+        if run_url not in urls:
+            urls.append(run_url)
+
+
 def _run(path: str) -> int:
     config = load_config(path)
     spec = build_launch_spec(config)
@@ -268,6 +289,7 @@ def _run(path: str) -> int:
     finally:
         if record["finished_at"] is None:
             record["finished_at"] = utc_now()
+        _record_native_result(config, record)
         write_json(record_path, record)
         write_json(metadata_dir / "summary.json", _terminal_summary(record))
     return int(record["exit_code"])
@@ -325,6 +347,28 @@ def _all_configs() -> int:
     return 0
 
 
+def _suite_configs(method: str) -> int:
+    if method != "flowdagger":
+        raise ConfigError(f"no suite config materializer for method: {method}")
+    from scripts.flowdagger_suite import materialize_configs
+
+    paths = materialize_configs()
+    for path in paths:
+        load_config(path)
+    print(f"materialized {len(paths)} configs")
+    return 0
+
+
+def _suite_report(method: str) -> int:
+    if method != "flowdagger":
+        raise ConfigError(f"no suite report builder for method: {method}")
+    from scripts.flowdagger_suite import build_suite_report
+
+    for path in build_suite_report():
+        print(path)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the stable root command hierarchy."""
 
@@ -350,11 +394,15 @@ def build_parser() -> argparse.ArgumentParser:
     for name in ("resume", "status", "summarize"):
         child = experiment_commands.add_parser(name)
         child.add_argument("run_id")
+    suite_configs = experiment_commands.add_parser("suite-configs")
+    suite_configs.add_argument("method")
 
     report = commands.add_parser("report")
     report_commands = report.add_subparsers(dest="report_command", required=True)
     build = report_commands.add_parser("build")
     build.add_argument("method")
+    suite = report_commands.add_parser("suite")
+    suite.add_argument("method")
     return parser
 
 
@@ -372,6 +420,8 @@ def dispatch(args: argparse.Namespace) -> int:
             raise ConfigError("provide a config path or --all")
         return _validate(args.config)
     if args.command == "experiment":
+        if args.experiment_command == "suite-configs":
+            return _suite_configs(args.method)
         if args.experiment_command == "dry-run":
             return _dry_run(args.config)
         if args.experiment_command == "run":
@@ -381,6 +431,8 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.experiment_command == "status":
             return _status(args.run_id)
         return _summarize(args.run_id)
+    if args.report_command == "suite":
+        return _suite_report(args.method)
     return _report(args.method)
 
 
