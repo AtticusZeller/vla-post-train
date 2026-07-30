@@ -1,0 +1,33 @@
+schema_version: 1
+id: libero10-task0-medium-steam-seed1-continue10k-2gpu
+method: rlinf
+repository:
+  path: methods/rlinf
+  expected_branch: personal-dev
+  require_clean: true
+environment:
+  manager: none
+runtime:
+  formal: true
+  allow_dirty: false
+  gpus: [0, 1]
+  artifact_root: /mnt/data/atticux/vla-post-train
+  timeout_hours: 36
+tracking:
+  backend: wandb
+  project: rlinf
+  run_urls: []
+native:
+  argv: [steam-medium-continuation, "1", "0"]
+  env:
+    RLINF_MEDIUM_EXPERIMENT_ROOT: "{artifact_path}/native"
+    RLINF_NPROC: "2"
+    RLINF_STEAM_MEDIUM_RESUME_DIR: /mnt/data/atticux/vla-post-train/rlinf/20260728-094321__libero10-task0-medium-steam-seed1-2gpu/native/seed-1/steam/steam-medium-policy/checkpoints/global_step_1000
+    RLINF_STEAM_MEDIUM_BASELINE_ROOT: /mnt/data/atticux/vla-post-train/rlinf/20260728-094321__libero10-task0-medium-steam-seed1-2gpu/native
+    RLINF_VENV_PATH: /root/RLinf/.venv
+    RAY_ENABLE_UV_RUN_RUNTIME_ENV: "0"
+    UV_NO_SYNC: "1"
+    UV_PROJECT_ENVIRONMENT: /root/RLinf/.venv
+    WANDB_RUN_GROUP: steam-medium-seed1-continue10k-2gpu
+  summary_file: "{artifact_path}/native/summary.json"
+  primary_metrics: []

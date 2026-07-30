@@ -2,6 +2,19 @@
 
 > VLA 后训练研究仓库实施计划与当前状态。
 
+## STEAM Medium · seed 1 续训至 10k
+
+- 从已完成的 seed 1 `global_step_1000` DCP checkpoint 恢复模型、optimizer 与
+  scheduler，使用两张 H20 依次训练到 cumulative step 3,000、5,000、10,000。
+- 三段训练统一把 cosine schedule 的 `total_training_steps` 延长为 10,000；这会在
+  step 1,000 后重新进入延长后的学习率曲线，因此属于 continuation probe，不等同于
+  从 step 0 使用 10k/30k schedule 的官方 full run。
+- 每个目标 checkpoint 完成后立即在固定 eval seed 0 上评测 100 回合，并与原始
+  40% baseline 对比。三个 checkpoint 均保留，用于判断能否稳定超过 70%。
+- 根配置为
+  `experiments/rlinf/configs/libero10_task0_medium_steam_seed1_continue10k_2gpu.yaml`；
+  输出写入新的 formal run artifact，不改写原始 step 1,000 实验。
+
 ## 目标
 
 在 `/root/vla-post-train` 建立私有研究工作区。根仓库只管理 method submodule、实验配置、
