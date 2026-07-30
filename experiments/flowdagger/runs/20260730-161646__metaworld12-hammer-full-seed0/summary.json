@@ -1,0 +1,287 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-161646__metaworld12-hammer-full-seed0/flowdagger_result.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      {
+        "state": "finished",
+        "summary_keys": [
+          "_runtime",
+          "_step",
+          "_timestamp",
+          "_wandb",
+          "autonomous_buffer_size",
+          "env_steps",
+          "episode_return (exploration)",
+          "eval_video/0",
+          "eval_video/1",
+          "evaluation/Reward >= 0",
+          "evaluation/Reward >= 1",
+          "evaluation/avg_episode_len",
+          "evaluation/avg_return",
+          "evaluation/success_rate",
+          "intervention/episode_rate",
+          "intervention/expert_steps",
+          "intervention/intervened_episodes",
+          "intervention/step_rate",
+          "intervention/total_episodes",
+          "intervention/total_steps",
+          "intervention/trigger_distance_mean",
+          "intervention_rate",
+          "inversion/7d_mse",
+          "inversion/inv_w_max",
+          "inversion/inv_w_mean_abs",
+          "inversion/inv_w_p99",
+          "inversion/inv_w_p99_threshold",
+          "inversion/seed_on_manifold",
+          "inversion/seed_p99_max",
+          "inversion/seed_p99_mean",
+          "is_success (exploration)",
+          "num_online_samples",
+          "num_online_trajs",
+          "replay_buffer_size",
+          "rollout/all_succ_rate_w100",
+          "rollout/wInt_count_w100",
+          "rollout/wInt_succ_rate_w100",
+          "training/bc_loss"
+        ],
+        "url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-hammer-full_2026_07_31_00_16_57_0000--s-0"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "base_success_rate",
+      "value": 0.36
+    },
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "value": 0.76
+    },
+    {
+      "episodes": 25,
+      "name": "delta_success_rate",
+      "value": 0.4
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 1.1541668301820756,
+    "wandb_system_samples": 500
+  },
+  "results": {
+    "local": {
+      "evaluations": [
+        {
+          "avg_episode_len": 215.84,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.36,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 215.84,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.36,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 215.84,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.36,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 96.8,
+          "avg_return": 0.88,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 500,
+          "success_rate": 0.88,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 141.72,
+          "avg_return": 0.72,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 1000,
+          "success_rate": 0.72,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 126.04,
+          "avg_return": 0.76,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 1500,
+          "success_rate": 0.76,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 106.68,
+          "avg_return": 0.84,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 2000,
+          "success_rate": 0.84,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 91.64,
+          "avg_return": 0.92,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 2500,
+          "success_rate": 0.92,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 143.24,
+          "avg_return": 0.68,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 3000,
+          "success_rate": 0.68,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 116.6,
+          "avg_return": 0.8,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 3500,
+          "success_rate": 0.8,
+          "task_key": "metaworld_hammer"
+        },
+        {
+          "avg_episode_len": 124.12,
+          "avg_return": 0.76,
+          "launch_group_id": "metaworld12-v1",
+          "prefix": "mw12-hammer-full",
+          "seed": 0,
+          "step": 4000,
+          "success_rate": 0.76,
+          "task_key": "metaworld_hammer"
+        }
+      ],
+      "output_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-161646__metaworld12-hammer-full-seed0/mw12-hammer-full_2026_07_31_00_16_57_0000--s-0",
+      "primary_metrics": [
+        {
+          "episodes": 25,
+          "name": "base_success_rate",
+          "value": 0.36
+        },
+        {
+          "episodes": 25,
+          "name": "final_success_rate",
+          "value": 0.76
+        },
+        {
+          "episodes": 25,
+          "name": "delta_success_rate",
+          "value": 0.4
+        }
+      ],
+      "schema_version": 1,
+      "seed": 0,
+      "task_key": "metaworld_hammer",
+      "task_name": "hammer",
+      "training": {
+        "completed_bc_steps": 4000,
+        "environment_steps": 4440,
+        "episodes": 52,
+        "final_update": {
+          "bc_loss": 0.017510971054434776
+        }
+      },
+      "video": {
+        "camera_name": "corner",
+        "fps": 30,
+        "height": 480,
+        "width": 640
+      },
+      "video_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-161646__metaworld12-hammer-full-seed0/mw12-hammer-full_2026_07_31_00_16_57_0000--s-0/videos",
+      "wandb_run_url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-hammer-full_2026_07_31_00_16_57_0000--s-0"
+    },
+    "wandb_summary": {
+      "_runtime": 4172.710300477,
+      "_step": 4000,
+      "_timestamp": 1785432389.1855102,
+      "_wandb": {
+        "runtime": 4172
+      },
+      "autonomous_buffer_size": 19,
+      "env_steps": 4440,
+      "episode_return (exploration)": 1,
+      "eval_video/0": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/0_4000_fbbd76dd1a41c4e2bac9.mp4",
+        "sha256": "fbbd76dd1a41c4e2bac97bfb13543e10e6ff96781e46f0ce20cea9fefd6029ce",
+        "size": 105010,
+        "width": 640
+      },
+      "eval_video/1": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/1_4000_61403b70c17d56b5789e.mp4",
+        "sha256": "61403b70c17d56b5789e693855db7f81002fc3ad28d479a96fa6d78d349d01ce",
+        "size": 102768,
+        "width": 640
+      },
+      "evaluation/Reward >= 0": 1,
+      "evaluation/Reward >= 1": 0.76,
+      "evaluation/avg_episode_len": 124.12,
+      "evaluation/avg_return": 0.76,
+      "evaluation/success_rate": 0.76,
+      "intervention/episode_rate": 0.8076923076923077,
+      "intervention/expert_steps": 4002,
+      "intervention/intervened_episodes": 42,
+      "intervention/step_rate": 0.9013513513513514,
+      "intervention/total_episodes": 52,
+      "intervention/total_steps": 4440,
+      "intervention/trigger_distance_mean": 0.12291625452538332,
+      "intervention_rate": 0.8571428571428571,
+      "inversion/7d_mse": 0.00012614829756785184,
+      "inversion/inv_w_max": 4.157973766326904,
+      "inversion/inv_w_mean_abs": 0.21290089190006256,
+      "inversion/inv_w_p99": 2.2017321586608887,
+      "inversion/inv_w_p99_threshold": 3,
+      "inversion/seed_on_manifold": 1,
+      "inversion/seed_p99_max": 1.636526346206665,
+      "inversion/seed_p99_mean": 1.460274159908295,
+      "is_success (exploration)": 1,
+      "num_online_samples": 331,
+      "num_online_trajs": 52,
+      "replay_buffer_size": 331,
+      "rollout/all_succ_rate_w100": 0.9230769230769232,
+      "rollout/wInt_count_w100": 52,
+      "rollout/wInt_succ_rate_w100": 0.9230769230769232,
+      "training/bc_loss": 0.017510971054434776
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
