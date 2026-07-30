@@ -1,5 +1,5 @@
 {
-  "completed_runs": 2,
+  "completed_runs": 3,
   "expected_runs": 36,
   "macro_delta_success_rate": null,
   "protocol": "metaworld12-v1",
@@ -8,11 +8,11 @@
   "suite": "metaworld12-flowdagger-v1",
   "tasks": [
     {
-      "base_success_rate": 0.72,
-      "completed_seeds": 2,
-      "delta_success_rate": 0.13999999999999996,
+      "base_success_rate": 0.68,
+      "completed_seeds": 3,
+      "delta_success_rate": 0.12,
       "expected_seeds": 3,
-      "final_success_rate": 0.86,
+      "final_success_rate": 0.8,
       "seeds": [
         {
           "base_success_rate": 0.68,
@@ -27,6 +27,13 @@
           "final_success_rate": 0.84,
           "run_id": "20260730-053447__metaworld12-assembly-full-seed1",
           "seed": 1
+        },
+        {
+          "base_success_rate": 0.6,
+          "delta_success_rate": 0.08000000000000007,
+          "final_success_rate": 0.68,
+          "run_id": "20260730-063218__metaworld12-assembly-full-seed42",
+          "seed": 42
         }
       ],
       "task": "metaworld_assembly"
