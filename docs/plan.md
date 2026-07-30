@@ -15,7 +15,7 @@ vla-post-train/
 ├── README.md / cmd.md / lab
 ├── pyproject.toml / uv.lock
 ├── .codex/skills/{add-method,run-experiment,summarize-experiment}/
-├── methods/{flowdagger,dsrl-pi0,rlinf,starvla,lerobot}/
+├── methods/{flowdagger,dsrl-pi0,expo-ft,rlinf,starvla,lerobot}/
 ├── scripts/
 │   ├── lab.py
 │   ├── config.py / process.py / run_record.py / monitor.py / report.py
@@ -38,6 +38,9 @@ vla-post-train/
 - 根仓库使用 Python 3.12 + uv；训练环境由各 method 自行维护。
 - StarVLA、LeRobot 和 RLinf 标记为 framework。LeRobot 使用用户 fork 的干净
   `workspace` 分支，旧 `dev` 历史保持不变；仅接入 framework 时不创建实验目录。
+- 首期之后新增的 method 沿用同一约定：LeRobot（framework，`workspace`）和
+  EXPO-FT（method，`dev`，fork 自 `pd-perry/expo-ft`）。两者当前只固定代码版本，
+  尚未创建 `experiments/<method>/` 或运行手册。
 
 ### 配置与启动
 

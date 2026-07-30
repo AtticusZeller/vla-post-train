@@ -26,11 +26,17 @@
 - 5,000-step unlimited run
   `20260729-013931__rlt-maniskill-stage2-unlimited-seed2026` 已按用户决定在约 32 分钟后
   中止；它验证了官方参数路径和单轮约 6 分 19 秒的耗时，不作为算法结果。
-- 当前 progressive 配置为
+- progressive 配置为
   `experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml`：100 steps、
   64 个训练环境、64 个固定评测环境、每 20 steps 评测/保存、5,000 replay warmup 和
-  10,000 RLT warmup update。它不设置墙钟限制，目标是在约 11–14 小时内获得 base、
-  RLT 接管初期和后续 online 更新的逐步成功率。
+  10,000 RLT warmup update，不设置墙钟限制。
+- progressive run `20260729-021706__rlt-maniskill-stage2-progressive-seed2026` 已跑满
+  100/100 steps 并以 exit code 0 正常结束，实际耗时约 16 小时、约 32 GPU·小时。
+  最终 64 条固定评测轨迹为 `eval/success_once=0.703125`、`eval/reward=0.011972`、
+  `eval/episode_len=191.578`。这是首个真正跨过 online gate 的 run
+  （`rlt/update_step=35,600` > 10,000 warmup、`ready_for_online=1`），但结束时
+  `actor_weight_ramp_progress` 只到 0.316，在线 actor 权重尚未爬满，因此 0.703 相对
+  12 小时跑的 0.672 只能算方向性小幅提升，不是 ramp 完整后的效果上限。
 - progressive 仍启用 simulated expert takeover；评测阶段不允许 expert。MP4 只拼接
   前 4 路，并沿用本地封装后复制到 OSSFS 的可靠写入方式。
 
@@ -58,5 +64,12 @@
   `/mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/stage2-progressive/`。
 - W&B 项目为 `atticux/rlt-maniskill`；本地退出码和 traceback 的判定优先级高于
   W&B 状态。
-- W&B run：<https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>；完整结果见根仓库
-  `experiments/rlinf/runs/20260727-070549__rlt-maniskill-stage2-12h-seed2026/summary.json`。
+- 12 小时 run 的 W&B 为 <https://wandb.ai/atticux/rlt-maniskill/runs/umh3vuuo>，
+  progressive run 为 <https://wandb.ai/atticux/rlt-maniskill/runs/jmqtnoox>；完整结果见
+  根仓库对应 `experiments/rlinf/runs/<run-id>/summary.json`。
+- `lab experiment summarize` 依赖 wandb Public API。当前锁定的 `wandb==0.28.1` 只在
+  `history()` 上支持 `stream="system"`，且 `run.summary` 需要经 `_json_dict` 才能
+  JSON 序列化；相关处理在 `scripts/monitor.py::collect_wandb`，背景见 `docs/bug.md`。
+- 汇总某个 run 时需要临时把该 run 的 W&B URL 填进配置的 `tracking.run_urls`
+  （`primary_metrics` 同理），跑完 `summarize` / `report build` 后按惯例还原为空模板；
+  运行证据以 `run.json`/`summary.json`/`report.md` 为准。

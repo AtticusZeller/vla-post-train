@@ -13,8 +13,9 @@ class FakeRun:
     state = "finished"
     summary = {"success_rate": 0.75}
 
-    def scan_history(self, *, stream: str) -> list[dict[str, Any]]:
+    def history(self, *, stream: str, pandas: bool) -> list[dict[str, Any]]:
         assert stream == "system"
+        assert pandas is False
         return [
             {"_timestamp": 0.0, "system.gpu.0.gpu": 50.0},
             {"_timestamp": 3600.0, "system.gpu.0.gpu": 80.0},

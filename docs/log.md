@@ -4,6 +4,35 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-29：归档 RLToken progressive 中预算运行并修复汇总工具
+
+- 正式 run `20260729-021706__rlt-maniskill-stage2-progressive-seed2026` 已跑满
+  100/100 steps 正常退出（exit_code=0），总耗时约 16 小时；W&B
+  <https://wandb.ai/atticux/rlt-maniskill/runs/jmqtnoox>。
+- 最终固定评测（64 episodes）：`eval/success_once=0.703125`、
+  `eval/reward=0.011972`、`eval/episode_len=191.578`；训练侧已跨过 online gate
+  （`rlt/update_step=35,600` > `warmup_required_updates=10,000`），但运行结束时
+  `actor_weight_ramp_progress` 只爬到 0.316，在线 actor 权重尚未爬满，因此当前
+  0.703 相对上一轮 12 小时跑的 0.672 只是方向性的小幅提升，不能算作 ramp 完整后
+  的效果上限。
+- 修复 `scripts/monitor.py::collect_wandb`：当前锁定的 `wandb==0.28.1` 已把
+  `stream` 参数从 `scan_history()` 移到 `history()`，且 `run.summary` 顶层
+  `dict()` 转换保留了不可序列化的嵌套 `SummarySubDict`，导致
+  `lab experiment summarize` 报错。改用 `run.history(stream="system",
+  pandas=False)` 和 `run.summary._json_dict`（对测试 fake 的 plain dict 兼容
+  降级）修复；详见 `docs/bug.md`。
+- 已用该 run 的 W&B URL 临时展开 `primary_metrics` 跑通
+  `lab experiment summarize` 和 `lab report build rlinf`，随后按既有惯例把
+  `experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml` 的
+  `tracking.run_urls`/`native.primary_metrics` 还原为空模板，只保留
+  `run.json`/`summary.json`/`report.md` 作为该次运行的证据。
+- 验证通过：25 个根仓 pytest（含更新后的 `test_monitor.py`）、ruff
+  check/format、summarize/report build 命令实测通过。
+- 洁癖收尾：README 与 `docs/plan.md` 补上新增的 `methods/expo-ft` submodule；
+  `docs/rlinf.md` 与 `experiments/rlinf/report.md` 把 progressive 从「计划」改写为
+  已归档结果并写明 ramp 未爬满的边界；`cmd.md` 把三个已 Passed 的验证块收敛为一个
+  当前待验证块，历史验证指向本文件。
+
 ## 2026-07-29：将 RLToken 调整为 progressive 中等预算
 
 - 5,000-step unlimited run

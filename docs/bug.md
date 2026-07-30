@@ -4,6 +4,27 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-07-29：`lab experiment summarize` 因 wandb SDK API 变更而失败
+
+- **触发：** `scripts/monitor.py::collect_wandb` 用 `run.scan_history(stream="system")`
+  拉取 GPU system metrics，并用 `dict(run.summary)` 展开 run summary；当前锁定的
+  `wandb==0.28.1` 已把 `stream` 参数移到 `history()`，`scan_history()` 不再接受该
+  关键字，且 `run.summary` 顶层 `dict()` 转换后仍会保留嵌套字段（如 `_wandb`）为
+  不可 JSON 序列化的 `SummarySubDict`。
+- **现象：** `./lab experiment summarize <run_id>` 先报
+  `TypeError: Run.scan_history() got an unexpected keyword argument 'stream'`；
+  用 `run.history(stream="system", pandas=False)` 替换后又报
+  `TypeError: Object of type SummarySubDict is not JSON serializable`。
+- **处理：** 把 GPU system stream 调用改为 `run.history(stream="system",
+  pandas=False)`；summary 展开改用 `getattr(run.summary, "_json_dict",
+  run.summary)` 后再 `dict()`，同时兼容测试用的 plain-dict fake 和真实
+  `HTTPSummary` 对象。`tests/test_monitor.py` 的 `FakeRun` 同步把
+  `scan_history` 换成签名匹配的 `history`。
+- **原因：** wandb 官方 Public API（`/wandb/wandb` 源码 `apis/public/runs.py`）
+  在 `scan_history()` 里去掉了 `stream` 关键字，只有 `history()` 保留；`run.summary`
+  是懒加载的 `HTTPSummary`，其 `_json_dict` 才是纯 dict 快照，直接 `dict()`
+  顶层转换不会递归展开内部 `SummarySubDict`。
+
 ## 2026-07-28：Ray 从根 `uv run` 继承 working dir 后遗漏源码目录
 
 - **触发：** 根 `lab` 通过 `uv run` 启动 RLinf 子进程，子进程再调用

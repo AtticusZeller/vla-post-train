@@ -27,94 +27,45 @@ uv run pytest
 
 ## 待用户验证
 
-- **状态**：Passed（2026-07-28，用户明确授权 Agent 按原样命令代验）。
-- **目的**：确认 STEAM medium 的训练 seed 与评测 seed 已解耦、两卡启动配置正确，
-  且真实 value-training smoke 已完成优化并保存 checkpoint。
-- **前置条件**：`/root/RLinf/.venv` 可用；无需重新占用 GPU，smoke 产物已保存在
-  `/mnt/data/atticux/vla-post-train/rlinf/`。
+- **状态**：Pending
+- **目的**：确认修复后的 `lab experiment summarize` 能在当前 `wandb==0.28.1` 上
+  正常抓取 W&B summary 与 GPU system metrics，并写出可序列化的 `summary.json`。
+- **前置条件**：`/root/.netrc` 中的 W&B 凭据可用；无需占用 GPU。
 - **命令**：
-
-请在新终端执行：
 
 ```bash
 cd /root/vla-post-train
 
 uv run pytest -q tests/test_monitor.py
 
-(
-  cd methods/rlinf
-  /root/RLinf/.venv/bin/python -m pytest -q \
-    tests/unit_tests/test_recap_steam_summary.py \
-    tests/unit_tests/test_recap_steam_medium_configs.py
-)
+uv run python - <<'PY'
+import json
+from scripts.monitor import collect_wandb
 
-./lab experiment dry-run \
-  experiments/rlinf/configs/libero10_task0_medium_steam_seed1_2gpu.yaml
-
-test -f \
-  /mnt/data/atticux/vla-post-train/rlinf/20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu/native/smoke-seed-1/steam/steam-medium-value-2gpu-smoke/checkpoints/global_step_2/actor/model_state_dict/full_weights.pt
-grep -F '"exit_code": 0' \
-  experiments/rlinf/runs/20260728-080517__libero10-task0-medium-steam-value-smoke-2gpu/run.json
+data = collect_wandb(["https://wandb.ai/atticux/rlt-maniskill/runs/jmqtnoox"])
+print("state:", data["runs"][0]["state"])
+print("gpu_hours:", data["resources"].get("gpu_hours"))
+print("eval/success_once:", data["summary"]["eval/success_once"])
+json.dumps(data)
+print("json-serializable: OK")
+PY
 
 git diff --check
-git -C methods/rlinf diff --check
 ```
 
-- **通过标准**：根仓测试显示 `3 passed`，RLinf 测试显示 `5 passed`；dry-run
-  显示 `steam-medium-replication 1 0`、`CUDA_VISIBLE_DEVICES=0,1` 和
-  `RLINF_NPROC=2`；checkpoint 检查成功；`grep` 显示 `"exit_code": 0`；
-  两次 diff 检查均无输出。
-- **失败时返回**：完整命令输出；若 checkpoint 检查失败，再返回
-  `ls -lah` 对应的 `global_step_2/actor/model_state_dict/` 目录。
+- **通过标准**：`tests/test_monitor.py` 显示 `3 passed`；脚本输出
+  `state: finished`、非空 `gpu_hours`、`eval/success_once: 0.703125` 和
+  `json-serializable: OK`，且不抛 `TypeError`；`git diff --check` 无输出。
+- **失败时返回**：完整命令输出与 traceback，以及
+  `uv run python -c "import wandb; print(wandb.__version__)"` 的结果。
 
-验证结果：根仓 `3 passed`、RLinf `5 passed`；dry-run、checkpoint、退出码及
-两次 diff 检查均通过。
+## 历史验证记录
 
-## RLToken 无墙钟长跑验证
+STEAM medium 两卡复现、RLToken 无墙钟长跑和 RLToken progressive 中等预算三项
+用户侧验证均已 Passed，命令、通过标准和实际结果记录在 [`docs/log.md`](docs/log.md)
+对应条目中，不在本文件重复保留。
 
-- **状态**：Passed（2026-07-29，用户要求 Agent 完成验证后直接启动）。
-- **目的**：确认正式配置无墙钟限制、关键参数与 RLinf upstream 对齐、Stage 1
-  checkpoint 可作为 expert 加载，且 OSSFS 上生成的视频可播放。
-- **前置条件**：两张 H20、`/root/RLinf/.venv`、Stage 1 step 2,000 checkpoint 和
-  `/mnt/data` 可写。
-- **命令**：
-
-```bash
-cd /root/vla-post-train
-
-./lab config validate \
-  experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml
-./lab experiment dry-run \
-  experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml
-
-(
-  cd methods/rlinf
-  /root/RLinf/.venv/bin/python -m pytest -q \
-    tests/unit_tests/test_record_video.py
-)
-
-ffprobe -v error \
-  -show_entries stream=codec_name,width,height,nb_frames \
-  -show_entries format=duration,size -of json \
-  /mnt/data/atticux/vla-post-train/rlinf/rlt-maniskill/smoke/stage2-unlimited/video/eval/seed_2026/0.mp4
-```
-
-- **通过标准**：dry-run 只解析为 `stage2-unlimited` 且 runtime 不含
-  `timeout_hours`；录像单测 3 项通过；`ffprobe` 返回 H.264、非零帧数与时长。
-- **失败时返回**：完整终端输出、对应 W&B run URL，以及视频文件大小和
-  `ffprobe -v trace` 尾部。
-
-验证结果：根 launcher 测试 5 项、录像单测 3 项、Hydra 展开、ruff 和 dry-run
-均通过；真实两卡 smoke `ifrzd3ve` 正常退出，两个 MP4 均为 H.264、11 帧、1.1 秒。
-
-## RLToken progressive 中等预算验证
-
-- **状态**：Passed（2026-07-29，用户要求 Agent 验证后直接启动）。
-- **目的**：确认新 run 以 100 steps 自然结束、没有墙钟 timeout，并能在中等预算内
-  跨过缩短后的 10,000-update online gate。
-- **前置条件**：`/root/RLinf/.venv`、Stage 1 step 2,000 checkpoint、两张 H20 和
-  可写 `/mnt/data`。
-- **命令**：
+## RLToken 运行与汇总
 
 ```bash
 cd /root/vla-post-train
@@ -124,15 +75,13 @@ cd /root/vla-post-train
 ./lab experiment dry-run \
   experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml
 
-grep -E \
-  'max_epochs: 100|warmup_min_size: 5000|warmup_post_collect_updates: 10000|total_num_envs: 64' \
-  /tmp/rlt-progressive.yaml
-! grep -q max_run_duration /tmp/rlt-progressive.yaml
+./lab experiment status 20260729-021706__rlt-maniskill-stage2-progressive-seed2026
 ```
 
-- **通过标准**：dry-run 仅解析为 `stage2-progressive`；resolved config 包含目标数值，
-  不含 `max_run_duration`；根测试、静态检查和 diff check 全部通过。
-- **失败时返回**：完整命令输出、resolved config 和对应 run 的本地 console 尾部。
+汇总某个 run 前，需要先把该 run 的 W&B URL 临时写入配置的 `tracking.run_urls`
+（`primary_metrics` 同理），再执行下面两条命令，完成后按惯例把配置还原为空模板：
 
-验证结果：Hydra 展开、bash 语法、RLinf 配置单测、根 ruff/ty、25 个 pytest、
-config validate/dry-run 及两层 diff check 均通过。
+```bash
+./lab experiment summarize <run-id>
+./lab report build rlinf
+```

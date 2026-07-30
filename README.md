@@ -10,12 +10,13 @@
 | --- | --- | --- | --- |
 | `methods/flowdagger` | `dev` | method | FlowDAgger 官方实现 fork |
 | `methods/dsrl-pi0` | `dev` | method | DSRL π0 第三方复现 |
-| `methods/rlinf` | `personal-dev` | framework | RECAP / STEAM 训练与实验框架 |
+| `methods/expo-ft` | `dev` | method | EXPO-FT 官方实现 fork |
+| `methods/rlinf` | `personal-dev` | framework | RECAP / STEAM / RLToken 训练与实验框架 |
 | `methods/starvla` | `starVLA_dev` | framework | VLA 训练与策略框架 |
 | `methods/lerobot` | `workspace` | framework | 数据、策略、训练与机器人基础框架 |
 
 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
-LeRobot 当前只作为 framework 固定代码版本，尚未创建实验配置或运行手册。
+LeRobot 与 expo-ft 当前只固定代码版本，尚未创建实验配置或运行手册。
 
 ## 初始化
 

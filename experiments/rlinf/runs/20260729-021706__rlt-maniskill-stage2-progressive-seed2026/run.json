@@ -1,0 +1,62 @@
+{
+  "artifact_path": "/mnt/data/atticux/vla-post-train/rlinf/20260729-021706__rlt-maniskill-stage2-progressive-seed2026",
+  "code_revisions": [],
+  "config": "experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml",
+  "config_sha256": "507a7df1990bb31662e2ae385867c09e98e55b5ac7e888ca5184ac478588feb1",
+  "cwd": "/root/vla-post-train/methods/rlinf",
+  "exit_code": 0,
+  "finished_at": "2026-07-29T18:24:08.397590Z",
+  "historical": false,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-d9507a8c-f26e-c047-08e1-bb405c25ab9a"
+      },
+      {
+        "index": "1",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-6cc04fc6-7c5a-25e0-b2d4-2b3e223ee938"
+      }
+    ],
+    "hostname": "dsw-462170-85f979966-2mj8w",
+    "platform": "Linux-5.10.134-013.8.2.kangaroo.al8.x86_64-x86_64-with-glibc2.35",
+    "python": "3.12.13"
+  },
+  "method": "rlinf",
+  "method_code": {
+    "branch": "personal-dev",
+    "dirty": false,
+    "repository": "/root/vla-post-train/methods/rlinf",
+    "revision": "cd46911b9362f30d52621b30dff5b6a129eda089"
+  },
+  "pid": 2836653,
+  "resolved_command": [
+    "bash",
+    "experiments/rlt-maniskill/launch.sh",
+    "stage2-progressive"
+  ],
+  "resolved_environment": {
+    "RLINF_VENV": "/root/RLinf/.venv",
+    "UV_NO_SYNC": "1",
+    "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv"
+  },
+  "root": {
+    "branch": "main",
+    "dirty": false,
+    "repository": "/root/vla-post-train",
+    "revision": "bcb2bab2cb6c60df6e834193f0ab38d1ff51b1d6"
+  },
+  "run_id": "20260729-021706__rlt-maniskill-stage2-progressive-seed2026",
+  "schema_version": 1,
+  "signal": null,
+  "started_at": "2026-07-29T02:17:07.310053Z",
+  "tracking": {
+    "backend": "wandb",
+    "project": "rlt-maniskill",
+    "run_urls": []
+  }
+}

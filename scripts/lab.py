@@ -35,6 +35,10 @@ _METHODS = {
         "branch": "dev",
         "upstream": "https://github.com/nakamotoo/dsrl_pi0.git",
     },
+    "expo-ft": {
+        "branch": "dev",
+        "upstream": "https://github.com/pd-perry/expo-ft.git",
+    },
     "rlinf": {
         "branch": "personal-dev",
         "upstream": "https://github.com/RLinf/RLinf.git",

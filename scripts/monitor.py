@@ -37,7 +37,8 @@ def collect_wandb(run_urls: list[str], api: Any | None = None) -> dict[str, Any]
     system_rows: list[dict[str, Any]] = []
     for url in run_urls:
         run = api.run(_wandb_path(url))
-        summary = dict(run.summary)
+        raw_summary = getattr(run.summary, "_json_dict", run.summary)
+        summary = dict(raw_summary)
         merged_summary.update(summary)
         evidence.append(
             {
@@ -47,7 +48,7 @@ def collect_wandb(run_urls: list[str], api: Any | None = None) -> dict[str, Any]
             }
         )
         with suppress(AttributeError, TypeError):
-            system_rows.extend(dict(row) for row in run.scan_history(stream="system"))
+            system_rows.extend(dict(row) for row in run.history(stream="system", pandas=False))
 
     gpu_keys = {
         key
