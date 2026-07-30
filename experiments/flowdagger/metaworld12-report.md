@@ -1,7 +1,7 @@
 # FlowDAgger MetaWorld-12 实验汇总
 
 - 协议：`metaworld12-v1`
-- 进度：8/36 个正式运行
+- 进度：9/36 个正式运行
 - 正式结论门槛：12 tasks × 3 seeds 全部完成。
 
 | Task | Seeds | Base SR | Final SR | Δ SR |
@@ -11,7 +11,7 @@
 | `metaworld_box_close` | 1/3 | 0.320 | 0.120 | -0.200 |
 | `metaworld_coffee_pull` | 1/3 | 0.880 | 0.880 | 0.000 |
 | `metaworld_dial_turn` | 1/3 | 0.400 | 0.560 | 0.160 |
-| `metaworld_door_lock` | 0/3 | — | — | — |
+| `metaworld_door_lock` | 1/3 | 0.280 | 0.760 | 0.480 |
 | `metaworld_hammer` | 0/3 | — | — | — |
 | `metaworld_hand_insert` | 0/3 | — | — | — |
 | `metaworld_lever_pull` | 0/3 | — | — | — |
