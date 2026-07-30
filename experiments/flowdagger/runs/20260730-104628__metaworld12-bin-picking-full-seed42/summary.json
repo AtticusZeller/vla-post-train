@@ -1,0 +1,16 @@
+{
+  "evidence": {
+    "local_exit_code": 130,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-104628__metaworld12-bin-picking-full-seed42/flowdagger_result.json",
+    "local_traceback": true,
+    "wandb_runs": []
+  },
+  "primary_metrics": [],
+  "resources": {},
+  "results": {
+    "local": {},
+    "wandb_summary": {}
+  },
+  "schema_version": 1,
+  "status": "failed"
+}
