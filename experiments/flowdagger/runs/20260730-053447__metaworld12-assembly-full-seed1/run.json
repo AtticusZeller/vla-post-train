@@ -1,0 +1,131 @@
+{
+  "artifact_path": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-053447__metaworld12-assembly-full-seed1",
+  "code_revisions": [],
+  "config": "experiments/flowdagger/configs/metaworld12_assembly_full_seed1.yaml",
+  "config_sha256": "505faf914708e948d85082518226e5963b832cb07885cf898261e06b5da15c51",
+  "cwd": "/root/vla-post-train/methods/flowdagger/flowdagger_pi05",
+  "exit_code": 0,
+  "finished_at": "2026-07-30T06:32:12.434358Z",
+  "historical": false,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-d9507a8c-f26e-c047-08e1-bb405c25ab9a"
+      },
+      {
+        "index": "1",
+        "memory_mb": "97871",
+        "name": "NVIDIA H20",
+        "uuid": "GPU-6cc04fc6-7c5a-25e0-b2d4-2b3e223ee938"
+      }
+    ],
+    "hostname": "dsw-462170-85f979966-2mj8w",
+    "platform": "Linux-5.10.134-013.8.2.kangaroo.al8.x86_64-x86_64-with-glibc2.35",
+    "python": "3.12.13"
+  },
+  "method": "flowdagger",
+  "method_code": {
+    "branch": "dev",
+    "dirty": false,
+    "repository": "/root/vla-post-train/methods/flowdagger",
+    "revision": "60ce68e52db1e2aa8728918c8e51f65d23bc38ea"
+  },
+  "pid": 3573918,
+  "resolved_command": [
+    "conda",
+    "run",
+    "--no-capture-output",
+    "-n",
+    "dsrl_pi0",
+    "python",
+    "train_flowdagger.py",
+    "--env",
+    "metaworld",
+    "--task_key",
+    "metaworld_assembly",
+    "--seed",
+    "1",
+    "--wandb_entity",
+    "1831768457",
+    "--wandb_project",
+    "flowdagger",
+    "--launch_group_id",
+    "metaworld12-v1",
+    "--max_steps",
+    "4000",
+    "--seed_expert_episodes",
+    "10",
+    "--bc_steps_per_episode",
+    "100",
+    "--bc_batch_size",
+    "16",
+    "--eval_episodes",
+    "25",
+    "--eval_interval",
+    "500",
+    "--log_interval",
+    "100",
+    "--checkpoint_interval",
+    "500",
+    "--save_eval_video",
+    "1",
+    "--eval_video_episodes",
+    "2",
+    "--eval_video_fps",
+    "30",
+    "--render",
+    "0",
+    "--inversion_method",
+    "perstep_fp",
+    "--fp_per_step",
+    "5",
+    "--dual_buffer",
+    "1",
+    "--dual_buffer_auto_frac",
+    "0.5",
+    "--filter_failures",
+    "1",
+    "--takeover_min",
+    "0",
+    "--takeover_max",
+    "25",
+    "--beta_start",
+    "1.0",
+    "--beta_end",
+    "1.0",
+    "--beta_decay_episodes",
+    "1",
+    "--prefix",
+    "mw12-assembly-full"
+  ],
+  "resolved_environment": {
+    "CUDA_VISIBLE_DEVICES": "0",
+    "EXP": "/mnt/data/atticux/vla-post-train/flowdagger/20260730-053447__metaworld12-assembly-full-seed1",
+    "MUJOCO_GL": "egl",
+    "PATH": "/root/miniconda3/envs/dsrl_pi0/bin:/root/vla-post-train/.venv/bin:/root/.codex/packages/standalone/releases/0.144.4-x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0/codex-arg0DrPKwi:/root/.local/bin:/root/.nvm/versions/node/v24.18.0/bin:/root/.local/bin:/root/miniconda3/bin:/root/miniconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "WANDB_MODE": "online"
+  },
+  "root": {
+    "branch": "main",
+    "dirty": false,
+    "repository": "/root/vla-post-train",
+    "revision": "1a736446c9e3fde8dd162590a27bd782aa8197bf"
+  },
+  "run_id": "20260730-053447__metaworld12-assembly-full-seed1",
+  "schema_version": 1,
+  "signal": null,
+  "sources": [
+    "/mnt/data/atticux/vla-post-train/flowdagger/20260730-053447__metaworld12-assembly-full-seed1/flowdagger_result.json"
+  ],
+  "started_at": "2026-07-30T05:34:48.018759Z",
+  "tracking": {
+    "backend": "wandb",
+    "project": "flowdagger",
+    "run_urls": [
+      "https://wandb.ai/1831768457/flowdagger/runs/mw12-assembly-full_2026_07_30_13_34_59_0000--s-1"
+    ]
+  }
+}
