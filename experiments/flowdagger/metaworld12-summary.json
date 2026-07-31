@@ -1,5 +1,5 @@
 {
-  "completed_runs": 4,
+  "completed_runs": 5,
   "expected_runs": 36,
   "macro_delta_success_rate": null,
   "protocol": "metaworld12-v2",
@@ -76,12 +76,20 @@
       "task": "metaworld_coffee_pull"
     },
     {
-      "base_success_rate": null,
-      "completed_seeds": 0,
-      "delta_success_rate": null,
+      "base_success_rate": 0.4,
+      "completed_seeds": 1,
+      "delta_success_rate": 0.16000000000000003,
       "expected_seeds": 3,
-      "final_success_rate": null,
-      "seeds": [],
+      "final_success_rate": 0.56,
+      "seeds": [
+        {
+          "base_success_rate": 0.4,
+          "delta_success_rate": 0.16000000000000003,
+          "final_success_rate": 0.56,
+          "run_id": "20260731-112458__metaworld12-dial-turn-full-seed0",
+          "seed": 0
+        }
+      ],
       "task": "metaworld_dial_turn"
     },
     {
