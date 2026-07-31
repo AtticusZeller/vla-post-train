@@ -6,7 +6,7 @@
   "cwd": "/root/vla-post-train/methods/flowdagger/flowdagger_pi05",
   "exit_code": 0,
   "finished_at": "2026-07-30T19:30:48.421792Z",
-  "historical": false,
+  "historical": true,
   "host": {
     "gpus": [
       {

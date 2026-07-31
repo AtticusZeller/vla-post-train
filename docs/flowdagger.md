@@ -16,6 +16,13 @@ method submodule；实验协议、YAML、运行记录和跨 run 汇总留在根�
   BC step，共 4,000 BC step 和 50 条 adaptation rollout。
 - dual buffer 将 intervention/autonomous 样本按 50/50 混合；稳定化 batch size 为 16。
 - 每个评估点跑 25 episodes；前 2 个 episode 保存视频。
+- 当前协议 `metaworld12-v2`：`InterventionHandler` 的 `takeover_min/max` 固定为
+  上游微软官方默认 `5/60`（每回合脚本专家在这个区间内随机接管、开到回合
+  结束），未启用课程扩展。协议 `v1` 曾把窗口收窄到 `0/25`，导致 Box Close /
+  Bin Picking 这类难点集中在任务后半段的任务在评估时机械臂卡死不动；细节见
+  `docs/bug.md` 2026-07-31 条目。v1 下已完成的 15 个正式 run 标记
+  `historical: true`，保留在 `experiments/flowdagger/runs/` 作为旧协议证据，
+  不进入 v2 的正式结论。
 
 协议真身是 `experiments/flowdagger/metaworld12_suite.yaml`。执行
 `./lab experiment suite-configs flowdagger` 可确定性生成 12 份 smoke 和 36 份

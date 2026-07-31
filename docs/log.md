@@ -4,6 +4,28 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-31：修复 FlowDAgger takeover 窗口过窄并升级协议到 v2
+
+- 用户在协议 v1（12 任务 seed0 全部完成，`50.0%→59.7%`）的评估视频里直接看到
+  Box Close 机械臂"抓住不动"；抽帧核对（对照同批次真实成功案例排除录像管线
+  故障）确认失败 episode 从第 5 步左右起整段 300 步逐像素静止，console.log
+  逐步诊断显示底层动作持续钳制在执行边界或收敛到近似恒定值，是观测-动作闭环
+  卡进自洽定点，而非零输出。
+- 追查 `shared/intervention_handler.py` 确认根因：`beta_decay` 模式下接管时机
+  只按每回合开始时采样的固定步数触发，不看策略表现；`metaworld12_suite.yaml`
+  协议 v1 把该窗口从上游官方默认 `5/60` 收窄到 `0/25`（300 步任务的 8%），且
+  未启用课程扩展，导致策略几乎没有任务后半段/精细接触阶段的自主训练覆盖。
+  Box Close、Bin Picking 恰好难点集中在后半段，因而在 eval 时进入未训练状态并
+  卡死；`filter_failures=1` 排除了 buffer 污染的可能。判定为协议配置问题，
+  不是代码逻辑错误。
+- 修复：`metaworld12_suite.yaml` 的 `takeover_min/max` 改回官方默认 `5/60`；
+  `protocol`/`id` 升级为 `metaworld12-v2`；重新生成 48 份 smoke/formal YAML；
+  把协议 v1 下已完成的 15 个正式 run 的 `run.json` 标记 `historical: true`，
+  `metaworld12-report.md` 干净回到 `0/36`，旧证据保留不删除。
+- 验证通过：根 `ruff check`/`format --check`、28 个 pytest、
+  `./lab config validate --all`、`./lab report suite flowdagger` 输出核对。
+- 详见 `docs/bug.md` 2026-07-31 条目；下一步在协议 v2 下重跑 12 任务 seed0。
+
 ## 2026-07-30：完成 FlowDAgger MetaWorld-12 正式实验准备
 
 - 将 method 的任务与 scripted-expert registry 从 Assembly 扩展到论文 12 tasks；

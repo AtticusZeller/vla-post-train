@@ -26,7 +26,7 @@ native:
     MUJOCO_GL: egl
     WANDB_MODE: online
   suite:
-    protocol: metaworld12-v1
+    protocol: metaworld12-v2
     phase: full
     task: metaworld_assembly
     seed: 42
@@ -43,7 +43,7 @@ native:
   - --wandb_project
   - flowdagger
   - --launch_group_id
-  - metaworld12-v1
+  - metaworld12-v2
   - --max_steps
   - '4000'
   - --seed_expert_episodes
@@ -79,9 +79,9 @@ native:
   - --filter_failures
   - '1'
   - --takeover_min
-  - '0'
+  - '5'
   - --takeover_max
-  - '25'
+  - '60'
   - --beta_start
   - '1.0'
   - --beta_end

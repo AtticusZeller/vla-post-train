@@ -15,6 +15,13 @@
   `/mnt/data/atticux/vla-post-train/flowdagger/`。
 - 旧 Assembly batch-16 full 保留为历史单任务证据，不进入本 suite；当前正式进度以
   `experiments/flowdagger/metaworld12-report.md` 为准。
+- 2026-07-31：协议 `v1`（`takeover_min/max=0/25`）12 任务 seed0 跑完后，用户在
+  评估视频里发现 Box Close / Bin Picking 机械臂卡死不动；排查确认是
+  `takeover_max=25` 把策略的自主决策窗口收窄到任务后半段几乎没有训练覆盖，而
+  非代码 bug（细节见 `docs/bug.md`）。已把协议升级为 `v2`，`takeover_min/max`
+  恢复上游官方默认 `5/60`，v1 的 15 个正式 run 标记 `historical: true` 保留为
+  旧协议证据。下一步：在协议 v2 下重新跑满 12 任务 seed0，再决定是否继续
+  seed1/seed42。
 
 ## STEAM Medium · seed 1 续训至 10k
 

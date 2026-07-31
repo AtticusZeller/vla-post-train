@@ -4,6 +4,43 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-07-31：`takeover_max=25` 收窄导致 Box Close / Bin Picking 评估时机械臂卡死
+
+- **触发：** `metaworld12_suite.yaml`（协议 v1）把 `InterventionHandler` 的
+  `takeover_min/max` 从上游微软 FlowDAgger 官方默认（也是本仓库自己历史 Assembly
+  基线实际使用的值）`5/60` 显式改成了 `0/25`，且从未启用已有的
+  `takeover_max_start`/`takeover_max_curriculum_episodes` 课程扩展。
+- **现象：** 用户直接在评估视频里看到机械臂"抓住不动"。抽帧核对（对照同一
+  eval 批次里的真实成功案例，证实录像管线本身没问题）确认：失败 episode 里
+  机械臂从第 5 步左右起，在整段 300 步（10 秒）视频里逐像素完全静止；
+  console.log 的逐步诊断显示底层动作并非零输出——Box Close 案例里 z 分量持续在
+  `-3.6` 附近（远超 `metaworld_pi05_adapter.py:118` 的 `np.clip(-1,1)` 执行时钳制
+  上限），Bin Picking 案例里动作收敛到一个近似恒定的小幅度值——两者都指向
+  观测-动作闭环卡进了一个自洽定点：夹爪被卡住不动，画面不再变化，策略于是
+  持续输出几乎相同的（在 Box Close 案例里是持续钳制到边界的）动作，没有任何
+  机制能检测"卡住"并跳出。
+- **根因：** `shared/intervention_handler.py` 的 `beta_decay` 模式下，
+  `check_progress()` 完全不看 `off_nominal_distance`，只按每回合开始时采样的
+  固定步数（`takeover_min`~`takeover_max`）切换到脚本专家、随后专家开到回合
+  结束。`perform_control_eval` 则完全不调用 `intervention_handler`，全程
+  300 步都由策略自主决策。协议 v1 把窗口固定为 0~25 步（300 步任务的 8%），
+  且训练全程 4,000 BC step 都不会扩大，导致策略几乎从未在训练中获得"任务
+  后半段、尤其是精细接触阶段"的自主决策经验；一旦评估要求它独立走完全程，
+  在 Box Close（合盖卡扣）、Bin Picking（抓取+精确放置）这类难点集中在后半段
+  的任务上就会进入未训练过的状态并卡死。Door Lock/Hammer/Stick Push 等容错更
+  高的任务受影响小。`filter_failures=1` 会整条丢弃失败的探索 episode，所以
+  这不是训练 buffer 被污染，纯粹是自主决策窗口配置过窄导致的覆盖缺口——不是
+  代码逻辑错误，`InterventionHandler`/`dagger_loop.py`/eval 循环都严格按配置
+  执行。
+- **处理：** 把 `metaworld12_suite.yaml` 的 `takeover_min/max` 改回官方默认
+  `5/60`，未启用课程扩展（避免和窗口复原两个变量混在一起判断效果）；同时把
+  `protocol`/`id` 从 `metaworld12-v1` 升级到 `metaworld12-v2`，并将旧协议下已
+  完成的 15 个正式 run 的 `run.json` 标记 `historical: true`（`scripts/
+  flowdagger_suite.py::_suite_results` 已经会跳过 `historical` run），使
+  `metaworld12-report.md` 干净地回到 0/36，不需要删除旧证据。旧 15 个 run
+  （含 50%→59.7% 的 seed0 汇总）作为协议 v1 的历史证据保留在
+  `experiments/flowdagger/runs/`，不进入新协议的正式结论。
+
 ## 2026-07-30：根 `uv run` 的 PATH 抢占目标 Conda Python
 
 - **触发：** `./lab experiment run` 自身由根 `.venv` 的 `uv run` 启动，再通过

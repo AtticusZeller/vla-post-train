@@ -31,7 +31,10 @@ findmnt -T /mnt/data
 - 4,000 BC steps，每条在线轨迹后 100 steps，batch size 16；
 - dual buffer intervention/autonomous 50/50；
 - step 0 与每 500 steps 评估 25 episodes；
-- 每个评估点保存前 2 个 640×480、30 FPS 视频。
+- 每个评估点保存前 2 个 640×480、30 FPS 视频；
+- `takeover_min/max=5/60`（协议 `metaworld12-v2`，恢复上游官方默认）：脚本专家在
+  每回合第 5~60 步之间随机接管、开到回合结束，未启用课程扩展。旧协议 `v1` 用过
+  更窄的 `0/25`，会导致高精度接触任务在评估时卡死，见 `docs/bug.md`。
 
 生成和检查配置：
 
@@ -92,3 +95,6 @@ findmnt -T /mnt/data
 - 当前 launcher 不支持恢复；`experiment resume` 会无副作用报错。中断前应确认最近
   checkpoint，任何重跑都使用新的 run ID。
 - 旧 Assembly 单 seed full 与所有 smoke 都不能外推为 MetaWorld-12 结论。
+- 协议 `v1`（`takeover_min/max=0/25`）下已完成的 15 个正式 run 标记
+  `historical: true`，不进入协议 `v2` 的正式汇总；详见 `docs/bug.md`
+  2026-07-31 条目。

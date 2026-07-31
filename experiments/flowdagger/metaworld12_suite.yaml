@@ -1,7 +1,7 @@
 schema_version: 1
-id: metaworld12-flowdagger-v1
+id: metaworld12-flowdagger-v2
 method: flowdagger
-protocol: metaworld12-v1
+protocol: metaworld12-v2
 seeds: [0, 1, 42]
 smoke_seed: 42
 tasks:
@@ -40,8 +40,8 @@ protocol_args:
   eval_video_episodes: 2
   eval_video_fps: 30
   dual_buffer_auto_frac: 0.5
-  takeover_min: 0
-  takeover_max: 25
+  takeover_min: 5
+  takeover_max: 60
 smoke_args:
   max_steps: 1
   seed_expert_episodes: 1
