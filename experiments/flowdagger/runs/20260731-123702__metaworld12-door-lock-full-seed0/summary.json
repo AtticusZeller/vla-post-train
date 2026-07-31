@@ -1,0 +1,267 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-123702__metaworld12-door-lock-full-seed0/flowdagger_result.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      {
+        "state": "finished",
+        "summary_keys": [
+          "_runtime",
+          "_step",
+          "_timestamp",
+          "_wandb",
+          "autonomous_buffer_size",
+          "env_steps",
+          "episode_return (exploration)",
+          "eval_video/0",
+          "eval_video/1",
+          "evaluation/Reward >= 0",
+          "evaluation/Reward >= 1",
+          "evaluation/avg_episode_len",
+          "evaluation/avg_return",
+          "evaluation/success_rate",
+          "intervention/episode_rate",
+          "intervention/expert_steps",
+          "intervention/intervened_episodes",
+          "intervention/step_rate",
+          "intervention/total_episodes",
+          "intervention/total_steps",
+          "intervention/trigger_distance_mean",
+          "intervention_rate",
+          "inversion/7d_mse",
+          "inversion/inv_w_max",
+          "inversion/inv_w_mean_abs",
+          "inversion/inv_w_p99",
+          "inversion/inv_w_p99_threshold",
+          "inversion/seed_on_manifold",
+          "inversion/seed_p99_max",
+          "inversion/seed_p99_mean",
+          "is_success (exploration)",
+          "num_online_samples",
+          "num_online_trajs",
+          "replay_buffer_size",
+          "rollout/all_succ_rate_w100",
+          "rollout/wInt_count_w100",
+          "rollout/wInt_succ_rate_w100",
+          "training/bc_loss"
+        ],
+        "url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-door-lock-full_2026_07_31_20_37_13_0000--s-0"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "base_success_rate",
+      "value": 0.28
+    },
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "value": 0.76
+    },
+    {
+      "episodes": 25,
+      "name": "delta_success_rate",
+      "value": 0.48
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 1.1708336195018556,
+    "wandb_system_samples": 500
+  },
+  "results": {
+    "local": {
+      "evaluations": [
+        {
+          "avg_episode_len": 262.0,
+          "avg_return": 0.28,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.28,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 163.0,
+          "avg_return": 0.68,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 500,
+          "success_rate": 0.68,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 162.64,
+          "avg_return": 0.72,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 1000,
+          "success_rate": 0.72,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 177.2,
+          "avg_return": 0.68,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 1500,
+          "success_rate": 0.68,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 137.92,
+          "avg_return": 0.8,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 2000,
+          "success_rate": 0.8,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 185.48,
+          "avg_return": 0.64,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 2500,
+          "success_rate": 0.64,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 181.0,
+          "avg_return": 0.68,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 3000,
+          "success_rate": 0.68,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 227.12,
+          "avg_return": 0.36,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 3500,
+          "success_rate": 0.36,
+          "task_key": "metaworld_door_lock"
+        },
+        {
+          "avg_episode_len": 170.6,
+          "avg_return": 0.76,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-door-lock-full",
+          "seed": 0,
+          "step": 4000,
+          "success_rate": 0.76,
+          "task_key": "metaworld_door_lock"
+        }
+      ],
+      "output_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-123702__metaworld12-door-lock-full-seed0/mw12-door-lock-full_2026_07_31_20_37_13_0000--s-0",
+      "primary_metrics": [
+        {
+          "episodes": 25,
+          "name": "base_success_rate",
+          "value": 0.28
+        },
+        {
+          "episodes": 25,
+          "name": "final_success_rate",
+          "value": 0.76
+        },
+        {
+          "episodes": 25,
+          "name": "delta_success_rate",
+          "value": 0.48
+        }
+      ],
+      "schema_version": 1,
+      "seed": 0,
+      "task_key": "metaworld_door_lock",
+      "task_name": "door_lock",
+      "training": {
+        "completed_bc_steps": 4000,
+        "environment_steps": 5227,
+        "episodes": 50,
+        "final_update": {
+          "bc_loss": 0.07998305559158325
+        }
+      },
+      "video": {
+        "camera_name": "corner",
+        "fps": 30,
+        "height": 480,
+        "width": 640
+      },
+      "video_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-123702__metaworld12-door-lock-full-seed0/mw12-door-lock-full_2026_07_31_20_37_13_0000--s-0/videos",
+      "wandb_run_url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-door-lock-full_2026_07_31_20_37_13_0000--s-0"
+    },
+    "wandb_summary": {
+      "_runtime": 4242.899232335,
+      "_step": 4000,
+      "_timestamp": 1785505675.6800747,
+      "_wandb": {
+        "runtime": 4242
+      },
+      "autonomous_buffer_size": 100,
+      "env_steps": 5227,
+      "episode_return (exploration)": 1,
+      "eval_video/0": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/0_4000_17cfbd5ae3f8e3f13460.mp4",
+        "sha256": "17cfbd5ae3f8e3f1346073d57c78f2483c62808c9c6ee6bad3b4438b94703a5f",
+        "size": 159627,
+        "width": 640
+      },
+      "eval_video/1": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/1_4000_2ec48f82a47d71f689e5.mp4",
+        "sha256": "2ec48f82a47d71f689e5913e811f4f412806ed993f588114380ff3cf26b2eacd",
+        "size": 148307,
+        "width": 640
+      },
+      "evaluation/Reward >= 0": 1,
+      "evaluation/Reward >= 1": 0.76,
+      "evaluation/avg_episode_len": 170.6,
+      "evaluation/avg_return": 0.76,
+      "evaluation/success_rate": 0.76,
+      "intervention/episode_rate": 0.8,
+      "intervention/expert_steps": 3969,
+      "intervention/intervened_episodes": 40,
+      "intervention/step_rate": 0.7593265735603597,
+      "intervention/total_episodes": 50,
+      "intervention/total_steps": 5227,
+      "intervention/trigger_distance_mean": 0.13148963167332112,
+      "intervention_rate": 1,
+      "inversion/7d_mse": 0.0014616611879318953,
+      "inversion/inv_w_max": 5.27877140045166,
+      "inversion/inv_w_mean_abs": 0.3377273380756378,
+      "inversion/inv_w_p99": 2.884270668029785,
+      "inversion/inv_w_p99_threshold": 3,
+      "inversion/seed_on_manifold": 1,
+      "inversion/seed_p99_max": 3.089285135269165,
+      "inversion/seed_p99_mean": 2.9478068590164184,
+      "is_success (exploration)": 1,
+      "num_online_samples": 416,
+      "num_online_trajs": 50,
+      "replay_buffer_size": 416,
+      "rollout/all_succ_rate_w100": 0.98,
+      "rollout/wInt_count_w100": 50,
+      "rollout/wInt_succ_rate_w100": 0.98,
+      "training/bc_loss": 0.07998305559158325
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
