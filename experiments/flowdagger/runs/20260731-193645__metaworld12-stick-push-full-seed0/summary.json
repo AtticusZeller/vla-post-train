@@ -1,0 +1,267 @@
+{
+  "evidence": {
+    "local_exit_code": 0,
+    "local_summary": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-193645__metaworld12-stick-push-full-seed0/flowdagger_result.json",
+    "local_traceback": false,
+    "wandb_runs": [
+      {
+        "state": "finished",
+        "summary_keys": [
+          "_runtime",
+          "_step",
+          "_timestamp",
+          "_wandb",
+          "autonomous_buffer_size",
+          "env_steps",
+          "episode_return (exploration)",
+          "eval_video/0",
+          "eval_video/1",
+          "evaluation/Reward >= 0",
+          "evaluation/Reward >= 1",
+          "evaluation/avg_episode_len",
+          "evaluation/avg_return",
+          "evaluation/success_rate",
+          "intervention/episode_rate",
+          "intervention/expert_steps",
+          "intervention/intervened_episodes",
+          "intervention/step_rate",
+          "intervention/total_episodes",
+          "intervention/total_steps",
+          "intervention/trigger_distance_mean",
+          "intervention_rate",
+          "inversion/7d_mse",
+          "inversion/inv_w_max",
+          "inversion/inv_w_mean_abs",
+          "inversion/inv_w_p99",
+          "inversion/inv_w_p99_threshold",
+          "inversion/seed_on_manifold",
+          "inversion/seed_p99_max",
+          "inversion/seed_p99_mean",
+          "is_success (exploration)",
+          "num_online_samples",
+          "num_online_trajs",
+          "replay_buffer_size",
+          "rollout/all_succ_rate_w100",
+          "rollout/wInt_count_w100",
+          "rollout/wInt_succ_rate_w100",
+          "training/bc_loss"
+        ],
+        "url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-stick-push-full_2026_08_01_03_36_56_0000--s-0"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "episodes": 25,
+      "name": "base_success_rate",
+      "value": 0.48
+    },
+    {
+      "episodes": 25,
+      "name": "final_success_rate",
+      "value": 0.96
+    },
+    {
+      "episodes": 25,
+      "name": "delta_success_rate",
+      "value": 0.48
+    }
+  ],
+  "resources": {
+    "gpu_count": 1,
+    "gpu_hours": 0.6666670362816917,
+    "wandb_system_samples": 322
+  },
+  "results": {
+    "local": {
+      "evaluations": [
+        {
+          "avg_episode_len": 215.68,
+          "avg_return": 0.48,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 0,
+          "success_rate": 0.48,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 83.72,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 500,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 81.24,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 1000,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 78.88,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 1500,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 79.72,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 2000,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 78.88,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 2500,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 79.28,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 3000,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 79.24,
+          "avg_return": 1.0,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 3500,
+          "success_rate": 1.0,
+          "task_key": "metaworld_stick_push"
+        },
+        {
+          "avg_episode_len": 88.52,
+          "avg_return": 0.96,
+          "launch_group_id": "metaworld12-v2",
+          "prefix": "mw12-stick-push-full",
+          "seed": 0,
+          "step": 4000,
+          "success_rate": 0.96,
+          "task_key": "metaworld_stick_push"
+        }
+      ],
+      "output_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-193645__metaworld12-stick-push-full-seed0/mw12-stick-push-full_2026_08_01_03_36_56_0000--s-0",
+      "primary_metrics": [
+        {
+          "episodes": 25,
+          "name": "base_success_rate",
+          "value": 0.48
+        },
+        {
+          "episodes": 25,
+          "name": "final_success_rate",
+          "value": 0.96
+        },
+        {
+          "episodes": 25,
+          "name": "delta_success_rate",
+          "value": 0.48
+        }
+      ],
+      "schema_version": 1,
+      "seed": 0,
+      "task_key": "metaworld_stick_push",
+      "task_name": "stick_push",
+      "training": {
+        "completed_bc_steps": 4000,
+        "environment_steps": 3961,
+        "episodes": 50,
+        "final_update": {
+          "bc_loss": 0.05855362489819527
+        }
+      },
+      "video": {
+        "camera_name": "corner",
+        "fps": 30,
+        "height": 480,
+        "width": 640
+      },
+      "video_directory": "/mnt/data/atticux/vla-post-train/flowdagger/20260731-193645__metaworld12-stick-push-full-seed0/mw12-stick-push-full_2026_08_01_03_36_56_0000--s-0/videos",
+      "wandb_run_url": "https://wandb.ai/1831768457/flowdagger/runs/mw12-stick-push-full_2026_08_01_03_36_56_0000--s-0"
+    },
+    "wandb_summary": {
+      "_runtime": 2429.592428537,
+      "_step": 4000,
+      "_timestamp": 1785529045.2281983,
+      "_wandb": {
+        "runtime": 2429
+      },
+      "autonomous_buffer_size": 105,
+      "env_steps": 3961,
+      "episode_return (exploration)": 1,
+      "eval_video/0": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/0_4000_5936b3d19a3b4c29e6a7.mp4",
+        "sha256": "5936b3d19a3b4c29e6a7fb0eb154e7a4645261d377d3cf8ffcac901a56f7303b",
+        "size": 102503,
+        "width": 640
+      },
+      "eval_video/1": {
+        "_type": "video-file",
+        "height": 480,
+        "path": "media/videos/eval_video/1_4000_403a0d01cc743c64423f.mp4",
+        "sha256": "403a0d01cc743c64423f71e706a45cfd9eef414b7f241a23f5cdc70361496d37",
+        "size": 101784,
+        "width": 640
+      },
+      "evaluation/Reward >= 0": 1,
+      "evaluation/Reward >= 1": 0.96,
+      "evaluation/avg_episode_len": 88.52,
+      "evaluation/avg_return": 0.96,
+      "evaluation/success_rate": 0.96,
+      "intervention/episode_rate": 0.8,
+      "intervention/expert_steps": 2703,
+      "intervention/intervened_episodes": 40,
+      "intervention/step_rate": 0.6824034334763949,
+      "intervention/total_episodes": 50,
+      "intervention/total_steps": 3961,
+      "intervention/trigger_distance_mean": 0.07593167424201966,
+      "intervention_rate": 1,
+      "inversion/7d_mse": 0.00015114918642211703,
+      "inversion/inv_w_max": 3.406790256500244,
+      "inversion/inv_w_mean_abs": 0.21232199668884277,
+      "inversion/inv_w_p99": 1.4467757940292358,
+      "inversion/inv_w_p99_threshold": 3,
+      "inversion/seed_on_manifold": 1,
+      "inversion/seed_p99_max": 1.513866901397705,
+      "inversion/seed_p99_mean": 1.4369285941123962,
+      "is_success (exploration)": 1,
+      "num_online_samples": 315,
+      "num_online_trajs": 50,
+      "replay_buffer_size": 315,
+      "rollout/all_succ_rate_w100": 1,
+      "rollout/wInt_count_w100": 50,
+      "rollout/wInt_succ_rate_w100": 1,
+      "training/bc_loss": 0.05855362489819527
+    }
+  },
+  "schema_version": 1,
+  "status": "completed"
+}
