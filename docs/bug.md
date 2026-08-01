@@ -40,6 +40,25 @@
   `metaworld12-report.md` 干净地回到 0/36，不需要删除旧证据。旧 15 个 run
   （含 50%→59.7% 的 seed0 汇总）作为协议 v1 的历史证据保留在
   `experiments/flowdagger/runs/`，不进入新协议的正式结论。
+- **复盘（协议 v2 seed0 12/12 跑完后）：** Box Close 按预期修复
+  （−20pp → +32pp）。但 Bin Picking 完全没好转（v1 −44pp → v2 −48pp），
+  两次协议下失败 episode 的收敛动作向量几乎数值重合
+  （`[0.03,-0.05,-0.35,0.60]` vs `[0.04,-0.08,-0.35,0.59]`），说明它不是
+  接管窗口覆盖不够的问题，更像是冻结的 π0.5 底座策略在这个具体视觉场景下
+  存在一个稳定吸引点，噪声空间 steering 拉不出来。对照原论文 Table 1
+  （arXiv:2607.08877）：Bin Picking 官方结果是 0.56→0.69（+13pp），且原文
+  声称 MetaWorld 上没有任何任务出现下降。但 `methods/flowdagger/README.md`
+  明确写着发布的代码"only running the MetaWorld assembly task"——官方只在
+  Assembly 上验证过这份参考实现；本仓库 12-task 里的 Coffee Pull/Dial
+  Turn/Lever Pull/Pick Place/Soccer 5 个任务完全是自建扩展，论文没有报告过。
+  原文对干预机制的描述是人类操作员"判断策略行为不满意时"实时介入，更接近
+  `InterventionHandler` 里已实现但当前协议未启用的 `intervention_mode=
+  disagreement`（按策略/专家动作差距触发），而不是当前用的 `beta_decay`
+  固定步数调度。`disagreement` 模式没有实测验证，作为已知选项记录，不在
+  本轮范围内。
+- **结论：** 用户决定到此收尾，不再追加 Bin Picking 专项实验；Bin Picking
+  标记为协议 v2 下的已知未解决限制，其余 11 个任务的 seed0 结果作为当前
+  最新证据。
 
 ## 2026-07-30：根 `uv run` 的 PATH 抢占目标 Conda Python
 

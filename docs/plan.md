@@ -20,8 +20,16 @@
   `takeover_max=25` 把策略的自主决策窗口收窄到任务后半段几乎没有训练覆盖，而
   非代码 bug（细节见 `docs/bug.md`）。已把协议升级为 `v2`，`takeover_min/max`
   恢复上游官方默认 `5/60`，v1 的 15 个正式 run 标记 `historical: true` 保留为
-  旧协议证据。下一步：在协议 v2 下重新跑满 12 任务 seed0，再决定是否继续
-  seed1/seed42。
+  旧协议证据。
+- 2026-07-31：协议 v2 下 12 任务 seed0 已跑完（macro 50.0%→60.0%，+10.0pp）。
+  Box Close 按预期修复；Bin Picking 仍是 −48pp，两次不同协议下失败动作收敛到
+  几乎同一个数值点，判定为 π0.5 底座策略对该视觉场景的行为吸引点，而非接管
+  窗口配置问题；对照原论文（arXiv:2607.08877）确认官方代码只在 Assembly 上
+  验证过、Table 1 只报告 7/12 任务且未公开 MetaWorld 干预调度的具体超参数，
+  当前 12-task 结果不必与原文逐任务对齐。用户决定到此收尾，不再追加 Bin
+  Picking 专项实验（`intervention_mode=disagreement` 记录为未来可选、未实测
+  的方向），转向其他实验。是否继续 FlowDAgger 的 seed1/seed42 待后续会话
+  与用户确认优先级。
 
 ## STEAM Medium · seed 1 续训至 10k
 

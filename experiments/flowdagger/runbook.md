@@ -98,3 +98,7 @@ findmnt -T /mnt/data
 - 协议 `v1`（`takeover_min/max=0/25`）下已完成的 15 个正式 run 标记
   `historical: true`，不进入协议 `v2` 的正式汇总；详见 `docs/bug.md`
   2026-07-31 条目。
+- 协议 v2 seed0 已跑完 12/12；Bin Picking 仍为 −48pp，判定为 π0.5 底座策略
+  的场景吸引点而非协议配置问题，标记为已知未解决限制，未继续用
+  `intervention_mode=disagreement` 验证。继续 seed1/seed42 或恢复 Bin
+  Picking 专项排查前，先确认这是否仍是当前优先级。

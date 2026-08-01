@@ -23,6 +23,17 @@ method submodule；实验协议、YAML、运行记录和跨 run 汇总留在根�
   `docs/bug.md` 2026-07-31 条目。v1 下已完成的 15 个正式 run 标记
   `historical: true`，保留在 `experiments/flowdagger/runs/` 作为旧协议证据，
   不进入 v2 的正式结论。
+- 协议 v2 seed0 12/12 已跑完（macro 50.0%→60.0%，+10.0pp）。Box Close 按预期
+  修复（−20pp→+32pp）；**Bin Picking 未修复（−48pp）**，判定为 π0.5 底座策略
+  对该场景的行为吸引点，非接管窗口问题，已知未解决限制，用户决定不再追加
+  专项实验。`intervention_mode=disagreement`（已实现、未启用，按策略/专家
+  动作差距触发，比固定步数调度更接近原论文描述的人类反应式介入）记录为未来
+  可选方向，未实测。详见 `docs/bug.md` 2026-07-31 条目的复盘。
+- Coffee Pull/Dial Turn/Lever Pull/Pick Place/Soccer 5 个任务是本仓库自建的
+  MetaWorld-12 扩展；原论文（arXiv:2607.08877 Table 1）只报告了 Assembly、
+  Bin Picking、Box Close、Door Lock、Hammer、Hand Insert、Stick Push 7 个
+  任务，且官方发布代码明确只在 Assembly 上验证过。逐任务数字不必与原文
+  Table 1 完全对齐。
 
 协议真身是 `experiments/flowdagger/metaworld12_suite.yaml`。执行
 `./lab experiment suite-configs flowdagger` 可确定性生成 12 份 smoke 和 36 份

@@ -4,6 +4,29 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-07-31：完成 FlowDAgger 协议 v2 seed0 12/12 并收尾 Bin Picking 排查
+
+- 协议 v2（`takeover_min/max=5/60`）下的 12 任务 seed0 全部顺序跑完（tmux
+  `flowdagger-mw12-v2`），逐任务通过 `scripts/flowdagger_seed_queue.sh 0`
+  自动 validate → run → summarize → report → commit → push，`experiments/
+  flowdagger/metaworld12-report.md` 显示 12/36，macro 50.0%→60.0%（+10.0pp）。
+- Box Close 按预期修复（−20pp→+32pp），确认接管窗口诊断成立。Bin Picking
+  仍是 −48pp（比 v1 的 −44pp 还差一点）；抽帧+动作日志复核确认失败模式和
+  v1 完全一致（整段 300 步机械臂静止），且两次不同协议下收敛动作向量数值
+  高度接近，判定为 π0.5 底座策略对该场景的行为吸引点，不是接管窗口覆盖
+  问题。
+- 对照原论文（arXiv:2607.08877, Table 1）核实：官方报告 Bin Picking 为
+  +13pp（未出现任何任务下降），但发布代码
+  `methods/flowdagger/README.md` 明确写着只在 Assembly 上验证过；当前
+  12-task 套件里 Coffee Pull/Dial Turn/Lever Pull/Pick Place/Soccer 5 个
+  任务是本仓库自建扩展，论文没有报告过，且论文正文没有公开 MetaWorld
+  仿真里干预调度的具体超参数（原文对干预的描述是人类操作员反应式介入，
+  更接近代码里已实现但当前协议未启用的 `intervention_mode=disagreement`）。
+- 用户决定收尾：不再追加 Bin Picking 专项实验，标记为协议 v2 下的已知未
+  解决限制；`disagreement` 模式作为未来可选、未实测的方向记录在案。转向
+  其他实验，是否继续 FlowDAgger seed1/seed42 留待后续会话确认。
+- 已停止 tmux 会话 `flowdagger-mw12-v2` 与对应日志 Monitor；工作树干净。
+
 ## 2026-07-31：修复 FlowDAgger takeover 窗口过窄并升级协议到 v2
 
 - 用户在协议 v1（12 任务 seed0 全部完成，`50.0%→59.7%`）的评估视频里直接看到
