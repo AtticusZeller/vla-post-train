@@ -27,28 +27,49 @@ uv run pytest
 
 ## 待用户验证
 
-- **Status:** Passed（2026-08-02，用户确认最终 gitlink、分支、远端与 CLI/测试均通过）
-- **Purpose:** 确认 UniVTAC gitlink 已固定撤销个人 Agent 文件后的 fork
-  `dev@1e9272afca41`，且根 CLI 能识别其预期分支与官方 upstream。
-- **Prerequisites:** 可访问 GitHub；无需安装 Isaac Sim、Isaac Lab、TacEx 或下载数据。
+- **Status:** Pending（2026-08-02；云端修复已停止，等待 Ubuntu 本地机验证）
+- **Purpose:** 从远端恢复 UniVTAC `dev@0876043` 安装器修订，在本地 RTX 4060
+  Laptop GPU 上完成依赖安装、最小 GPU smoke 与 GUI 启动。
+- **Prerequisites:** GitHub 私有仓库访问权限、Conda、可用 NVIDIA 驱动和至少约 50 GB
+  空间。Isaac Sim 4.5 官方只列出 Ubuntu 20.04/22.04，最低内存为 32 GB；当前
+  Ubuntu 24.04、16 GB RAM 和 8 GB VRAM 属于未覆盖/最低边缘配置，首次验证时关闭其他
+  高内存程序，并避免 4K 多相机或大规模并行场景。
 - **Commands:**
 
 ```bash
-cd /root/vla-post-train
-git submodule update --init methods/univtac
+git clone --recurse-submodules \
+  https://github.com/AtticusZeller/vla-post-train.git
+cd vla-post-train
+
 git -C methods/univtac status --short --branch
 git -C methods/univtac remote -v
-./lab doctor
-./lab method status
-uv run pytest tests/test_cli.py
+
+set -o pipefail
+bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
+
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate UniVTAC
+python -m pip check
+# 阅读并接受 NVIDIA Omniverse EULA 后再设置：
+export ACCEPT_EULA=Y
+bash methods/univtac/scripts/install.sh --gpu-smoke \
+  2>&1 | tee "$HOME/univtac-gpu-smoke.log"
+
+# GPU smoke 通过后再验证 GUI；关闭窗口即可结束。
+isaacsim
+
+# 可选：单环境 TacEx 可视化，不先跑 UniVTAC 数据采集或 512-env 训练。
+cd methods/univtac/third_party/TacEx
+python scripts/demos/tactile_sim_approaches/check_taxim_sim.py --debug_vis
 ```
 
-- **Pass criteria:** UniVTAC 位于 `dev` 分支、revision 以 `1e9272afca41` 开头且工作树干净；`origin` 为
-  `AtticusZeller/UniVTAC`、`upstream` 为 `univtac/UniVTAC`；`lab doctor` 全部为
-  `PASS`；`lab method status` 的 `univtac` 行显示 `dev`、`clean=yes` 和正确远端；
-  `tests/test_cli.py` 全部通过。
-- **Return on failure:** 返回上述命令的完整输出；若 submodule 初始化失败，同时返回
-  `git submodule status --recursive`。
+- **Pass criteria:** UniVTAC revision 以 `0876043` 开头且工作树干净；安装命令以
+  exit code 0 结束；`pip check` 无 broken requirements；
+  `--gpu-smoke` 能创建并关闭 Isaac Sim、导入 `tacex` 与 `tacex_uipc`；`isaacsim`
+  出现可交互窗口；可选 TacEx demo 能显示单环境触觉可视化，且无 CUDA OOM 或崩溃。
+- **Return on failure:** 返回 `$HOME/univtac-install.log` 或
+  `$HOME/univtac-gpu-smoke.log`；若 GUI 失败，附终端末尾 200 行、`nvidia-smi`、
+  `free -h` 与是否使用 Wayland。不要在失败后直接启动数据采集。
 
 ## 最近用户验证
 

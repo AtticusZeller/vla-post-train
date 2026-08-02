@@ -4,6 +4,26 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-08-02：UniVTAC 安装链同时受 channel、镜像与上游版本脚本影响
+
+- **触发：** 修复首次 `grep` 退出后，在全新 `UniVTAC` Conda 环境继续执行官方完整
+  安装链。
+- **现象：** 默认 Anaconda channel 先要求非交互 TOS；DSW Aliyun PyPI 镜像缺少
+  `uv`/构建依赖；Isaac Lab 2.1.1 wrapper 强制安装 torch 2.7/cu128，覆盖 UniVTAC
+  需要的 torch 2.5.1/cu124；cuRobo 构建缺 `vcs-versioning`；未 bootstrap 的 vcpkg
+  已存在 toolchain 文件，导致只检查该文件时误判安装完成。
+- **原因：** 原脚本把多个外部项目各自的“当前默认值”当成同一套固定环境，且把目录
+  存在、元数据存在和可执行组件可用混为一谈。网络镜像和非交互云端又放大了这一问题。
+- **处理：** Conda 环境限定 conda-forge；bootstrap 包显式使用官方 PyPI；固定 Isaac
+  Lab v2.1.1 和 cuRobo commit，直接 editable 安装 Isaac Lab 源码扩展以保留指定
+  PyTorch；用 vcpkg 可执行文件而非 toolchain 文件作为 bootstrap 完成标志；把真实
+  GPU 启动改为显式 `--gpu-smoke`，不再让安装器自动跑 512-env 训练或数据采集。
+- **证据边界：** Bash 静态检查与云端部分依赖安装通过；cuRobo CUDA 扩展已在 H20
+  编译成功，`pip check` 无 broken requirements。用户在 vcpkg/tacex_uipc 前主动停止，
+  所以完整安装、GPU smoke 与 GUI 仍待本地验证。日志位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。
+- **状态：** 已提交待本地验证的修订；不能标记为端到端修复。
+
 ## 2026-08-01：UniVTAC 首次安装被 `set -e` 与无匹配 `grep` 静默中止
 
 - **触发：** 在尚无 `UniVTAC` Conda 环境的机器上从已激活的 base 环境执行
