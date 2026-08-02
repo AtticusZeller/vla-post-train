@@ -33,10 +33,12 @@
 
 已完成 benchmark 代码版本固定、远端登记和可恢复安装器修订；没有创建
 `experiments/univtac/`、launcher、配置或运行手册，也没有下载数据。安装器目前是待本地
-验收状态：静态检查已通过，云端已完成 Isaac Sim、Isaac Lab、cuRobo 和 TacEx Python
-包的部分安装，但用户决定不继续解决 DSW 无头环境问题，因此尚未完成 `tacex_uipc`、
-GPU smoke 或 GUI 验证。出现第一个明确实验后，再按具体 policy、task、预算和 seed
-建立可复现配置；大型数据、checkpoint、视频和完整日志写入
+验收状态：静态检查已通过，云端已完成 Isaac Sim、Isaac Lab、cuRobo、TacEx Python
+包、vcpkg bootstrap 和 34/39 个 C++ port；`tacex_uipc` 当前阻塞于 tinygltf GitHub
+archive 的上游 SHA512 变化。用户本地的临时 overlay 已越过该 hash 点并进入 libuipc
+配置/编译，但尚无最终 exit code、`import uipc`、GPU smoke 或 GUI 成功证据。出现第一个
+明确实验后，再按具体 policy、task、预算和 seed 建立可复现配置；大型数据、checkpoint、
+视频和完整日志写入
 `/mnt/data/atticux/vla-post-train/univtac/<run-id>/`。
 
 2026-08-01 在当前 DSW 上实测上游 `scripts/install.sh`：首次安装会因 `set -e` 与
@@ -51,11 +53,15 @@ RLinf formal run 的 GPU。可搜索问题摘要见 `docs/bug.md`，完整 trace
 `/mnt/data/atticux/vla-post-train/univtac/install-20260801T132145Z-reverted/`，因此已排除
 个人提交和 submodule 接入对该安装故障的影响。
 
-2026-08-02 的安装器修订 `dev@0876043` 把环境探测、Conda channel、PyPI 源、Isaac Lab/cuRobo
-版本、vcpkg bootstrap、工作目录和可选 GPU smoke 拆成可恢复步骤。云端迭代日志保存在
-`/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`；最终一次按用户要求
-主动中止，不代表端到端通过。下一步只在本地运行 `cmd.md` 的安装、GPU smoke 与 GUI
-验收；通过前不得把该修订描述为已修复。
+2026-08-02 的安装器基线 `0876043` 把环境探测、Conda channel、PyPI 源、Isaac Lab/cuRobo
+版本、vcpkg bootstrap、工作目录和可选 GPU smoke 拆成可恢复步骤；`dev@a206692` 补充了
+已验证的 vcpkg 中断恢复说明。云端迭代日志保存在
+`/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。`retry-9` 证明失败
+manifest cache 会错误关闭 vcpkg install 并表现为 Eigen3 缺失；隔离 build 后，
+`retry-10` 越过 bootstrap 与 compiler detection，在 tinygltf 2.9.3 的 GitHub archive
+hash 变化处结束。该问题与 vcpkg #53143 的活跃上游事件同类；本地经完整性校验的临时
+overlay 只是一轮安装 workaround，不是仓库长期修复。下一步仍以 `cmd.md` 的完整安装、
+`import uipc`、GPU smoke 与 GUI 验收为准；通过前不得把该修订描述为已修复。
 
 本地机的 RTX 4060 Laptop 8 GB 达到 Isaac Sim 4.5 的最低显存级别，但 16 GB RAM
 低于官方 32 GB 最低要求，Ubuntu 24.04 也不在 4.5 文档列出的 20.04/22.04 支持范围。

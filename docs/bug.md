@@ -18,11 +18,23 @@
   Lab v2.1.1 和 cuRobo commit，直接 editable 安装 Isaac Lab 源码扩展以保留指定
   PyTorch；用 vcpkg 可执行文件而非 toolchain 文件作为 bootstrap 完成标志；把真实
   GPU 启动改为显式 `--gpu-smoke`，不再让安装器自动跑 512-env 训练或数据采集。
-- **证据边界：** Bash 静态检查与云端部分依赖安装通过；cuRobo CUDA 扩展已在 H20
-  编译成功，`pip check` 无 broken requirements。用户在 vcpkg/tacex_uipc 前主动停止，
-  所以完整安装、GPU smoke 与 GUI 仍待本地验证。日志位于
-  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。
-- **状态：** 已提交待本地验证的修订；不能标记为端到端修复。
+- **进一步实装：** 云端 `retry-9` 已成功 bootstrap vcpkg 并识别 GNU 11.4/CUDA
+  12.4，但复用了上次失败后残留的 `build/vcpkg.json`；libuipc 因 manifest 内容未变化
+  把 `VCPKG_MANIFEST_INSTALL` 强制设为 `OFF`，空的 `vcpkg_installed` 随后报
+  `Eigen3Config.cmake` 缺失。隔离 6.2 MB 的失败 build 后，`retry-10` 正常进入 39 个
+  port 的 manifest install，证明后续 `CMAKE_MAKE_PROGRAM`/compiler 提示只是 vcpkg
+  首错的级联输出。
+- **当前外部阻塞：** `retry-10` 安装至 34/39，随后 tinygltf 2.9.3 的 GitHub tarball
+  SHA512 从 vcpkg 记录的 `4f4d479a…` 变为 `6dbcff3e…`。归档可正常解压且 tag 仍指向
+  `14ba27113e…`；同一时段 vcpkg [#53143](https://github.com/microsoft/vcpkg/issues/53143)
+  在 macOS 与 WSL2/Ubuntu 报告相同类型的 tinygltf archive hash 变化。用户本地使用
+  经过 gzip、源码内容和 tar commit 校验的临时 overlay 后已越过 hash 点并进入
+  libuipc 配置/编译，但返回证据没有最终 exit code、`import uipc` 或 GPU smoke。
+- **证据边界：** Bash 静态检查、cuRobo CUDA 扩展、vcpkg bootstrap、34 个 port 与
+  compiler/CUDA detection 已通过；完整 `tacex_uipc` wheel、依赖验证、GPU smoke 和
+  GUI 仍是 Pending。云端 `retry-9.log`、`retry-10.log` 与 manifest 日志位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/` 和当前 TacEx build。
+- **状态：** 安装器运输版本已提交；tinygltf 临时 overlay 未提交，端到端修复尚未成立。
 
 ## 2026-08-01：UniVTAC 首次安装被 `set -e` 与无匹配 `grep` 静默中止
 

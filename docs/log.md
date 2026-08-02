@@ -4,6 +4,21 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-02：收敛 UniVTAC vcpkg/tinygltf 安装证据
+
+- 云端 `retry-9` 证明 `zip` 修复后 vcpkg bootstrap 成功，GNU 11.4 与 CUDA 12.4
+  detection 均通过；同时定位到失败 manifest 残留会把 `VCPKG_MANIFEST_INSTALL` 设为
+  `OFF`，从而把空依赖目录伪装成 Eigen3 missing。
+- 隔离旧 build 后，`retry-10` 正常安装 34/39 个 vcpkg ports，首错收敛为 tinygltf
+  2.9.3 GitHub archive SHA512 变化；后续 Make/C/C++ 提示再次确认为级联输出。该现象
+  与活跃的 microsoft/vcpkg #53143 属于同类上游事件。
+- 用户本地对下载归档完成 gzip、源码内容和 tar commit `14ba27113e…` 校验，并通过临时
+  overlay 越过 hash 点进入 libuipc 配置/编译。附件没有最终 exit code、`import uipc`
+  或 GPU/GUI smoke，因此本条只关闭故障诊断与知识同步，不将安装标记为 Passed。
+- `docs/bug.md` 保留权威根因与证据边界；`docs/univtac.md`、`docs/plan.md`、
+  `docs/cognitive-debt.md`、`cmd.md` 和 method 安装说明已同步。云端原始日志继续保存在
+  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。
+
 ## 2026-08-02：接入 UniVTAC benchmark 并归档官方安装器首错
 
 - 将 `AtticusZeller/UniVTAC` 作为 `methods/univtac` submodule 接入，登记为

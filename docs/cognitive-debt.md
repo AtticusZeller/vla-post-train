@@ -16,14 +16,16 @@
 ## 2026-08-02 · UniVTAC 安装器本地验证运输版本
 
 - **状态：** Open（功能验证 Pending）
-- **范围：** UniVTAC fork `dev@0876043` 的 `scripts/install.sh`、
+- **范围：** UniVTAC fork `dev@a206692`（安装器基线 `0876043`）的 `scripts/install.sh`、
   `docs/Installation.md` 与根仓 gitlink、本地验收命令、安装诊断记录。
 - **暂缓原因：** DSW 无头环境不再作为目标；用户要求先提交并推送，使本地 Ubuntu
   工作站可以拉取同一版本完成 GUI 验证。本条提交是跨机器运输点，不是已验证交付。
 - **验证证据：** `bash -n`、`git diff --check`、帮助/错误参数和 mocked Conda 环境
   探测已通过；云端部分安装确认 Isaac Sim 4.5.0.0、PyTorch 2.5.1+cu124、Isaac Lab、
-  cuRobo、TacEx Python 包和 `pip check`，但在 vcpkg/tacex_uipc 前由用户主动中止，
-  GPU smoke 与 GUI 均未执行。
+  cuRobo、TacEx Python 包、`pip check`、vcpkg bootstrap、34/39 ports 及 GNU 11.4/
+  CUDA 12.4 detection。`retry-9` 暴露失败 manifest cache 会关闭依赖安装；干净 build
+  的 `retry-10` 阻塞于 tinygltf GitHub archive SHA512 上游变化。本地临时 overlay 已
+  越过 hash 点，但完整 `tacex_uipc`、`import uipc`、GPU smoke 与 GUI 均未证实。
 - **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装、
   vcpkg 与 `tacex_uipc` 的构建链，以及本地仿真与云端推理未来应采用的接口边界。
 - **偿还标准：** 本地完成 `cmd.md` 的安装、GPU smoke 和 GUI 验收；随后对最终 diff

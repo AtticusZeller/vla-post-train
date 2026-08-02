@@ -28,8 +28,8 @@ uv run pytest
 ## 待用户验证
 
 - **Status:** Pending（2026-08-02；云端修复已停止，等待 Ubuntu 本地机验证）
-- **Purpose:** 从远端恢复 UniVTAC `dev@0876043` 安装器修订，在本地 RTX 4060
-  Laptop GPU 上完成依赖安装、最小 GPU smoke 与 GUI 启动。
+- **Purpose:** 从远端恢复 UniVTAC `dev@a206692`（安装器基线 `0876043`），在本地
+  RTX 4060 Laptop GPU 上完成依赖安装、最小 GPU smoke 与 GUI 启动。
 - **Prerequisites:** GitHub 私有仓库访问权限、Conda、可用 NVIDIA 驱动和至少约 50 GB
   空间。Isaac Sim 4.5 官方只列出 Ubuntu 20.04/22.04，最低内存为 32 GB；当前
   Ubuntu 24.04、16 GB RAM 和 8 GB VRAM 属于未覆盖/最低边缘配置，首次验证时关闭其他
@@ -63,13 +63,16 @@ cd methods/univtac/third_party/TacEx
 python scripts/demos/tactile_sim_approaches/check_taxim_sim.py --debug_vis
 ```
 
-- **Pass criteria:** UniVTAC revision 以 `0876043` 开头且工作树干净；安装命令以
+- **Pass criteria:** UniVTAC revision 以 `a206692` 开头且工作树干净；安装命令以
   exit code 0 结束；`pip check` 无 broken requirements；
   `--gpu-smoke` 能创建并关闭 Isaac Sim、导入 `tacex` 与 `tacex_uipc`；`isaacsim`
   出现可交互窗口；可选 TacEx demo 能显示单环境触觉可视化，且无 CUDA OOM 或崩溃。
 - **Return on failure:** 返回 `$HOME/univtac-install.log` 或
   `$HOME/univtac-gpu-smoke.log`；若 GUI 失败，附终端末尾 200 行、`nvidia-smi`、
-  `free -h` 与是否使用 Wayland。不要在失败后直接启动数据采集。
+  `free -h` 与是否使用 Wayland。如果首错是 tinygltf `unexpected hash`，不要直接采用
+  控制台 `Actual` 值或盲目重跑；先保留归档、验证 gzip/源码内容/tar commit，并参考
+  `docs/bug.md` 的 2026-08-02 条目。失败 manifest 的 build cache 会让下一次重跑表现为
+  Eigen3 缺失。不要在失败后直接启动数据采集。
 
 ## 最近用户验证
 

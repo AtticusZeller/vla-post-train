@@ -178,10 +178,13 @@ vla-post-train/
 - [x] 提交并推送根 gitlink 与工作区更新。
 - [x] 将 UniVTAC 作为 benchmark 接入 `methods/univtac`，并在撤销个人 Agent 文件后
   固定 fork `dev@1e9272a`；官方首次安装器故障已复现归档。
-- [ ] 在本地 Ubuntu 工作站完成 UniVTAC 安装器与 GUI 仿真验收。云端无头安装修复已按
-  用户要求停止；当前 `dev@0876043` 只完成静态检查和部分云端依赖安装，作为待本地验证
-  的运输版本提交。后续默认采用“本地仿真、云端模型推理”的分工，具体通信接口在首次
-  本地 smoke 通过后再设计，不在本轮安装器改动中提前实现。
+- [ ] 在本地 Ubuntu 工作站完成 UniVTAC 安装器与 GUI 仿真验收。当前
+  `dev@a206692`（安装器基线 `0876043`）已通过静态检查、云端 vcpkg bootstrap、34/39
+  个 port 和完整 compiler/CUDA detection；剩余阻塞是 tinygltf GitHub archive SHA512
+  上游变化。用户本地的完整性校验 overlay 已越过 hash 点并进入 libuipc 编译，但完整
+  安装、`import uipc`、
+  GPU smoke 和 GUI 均没有最终成功证据。后续默认采用“本地仿真、云端模型推理”的
+  分工，具体通信接口在首次本地 smoke 通过后再设计。
 
 ## 验收
 
