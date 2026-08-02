@@ -56,6 +56,26 @@
   `docs/cognitive-debt.md`、`cmd.md` 和 method 安装说明已同步。云端原始日志继续保存在
   `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。
 
+## 2026-08-02：完成 UniVTAC 本地安装与单环境触觉仿真验收
+
+- 在 Ubuntu 24.04、RTX 4060 Laptop 8 GB 上完整安装 Python 3.10、PyTorch
+  2.5.1+cu124、Isaac Sim 4.5.0、Isaac Lab 2.1.1、cuRobo、TacEx 与 `tacex_uipc`；
+  `pip check`、`uipc`/`curobo` 导入和 CUDA 张量计算通过。
+- 首次 TacEx GUI 启动失败定位为 vendored TacEx 缺少 `Gelpad_low_res.usd`，不是 OOM。
+  从 UniVTAC 历史 `b371b18` 恢复完全相同的 blob 后，单环境 `performance` GUI 进入
+  `Setup complete`，GelSight debug view 可见并连续完成多次 reset。
+- 用户截图与控制台证据确认 GPU compute 39–50%、显存 74.66–77.65%；该结果只证明
+  单环境工程链路，不外推到数据采集、512-env 训练或策略质量。结构化证据见
+  [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
+- method 恢复资产提交为 `4423bb7`，收尾终点为 `9ffd768`；根 `cmd.md` 固定 Conda CUDA
+  库优先级、单环境与 `performance` 验证命令，并忽略安装器可重建的
+  `third_party/IsaacLab/` checkout。
+- 门禁结果：`ruff format --check`、`ruff check`、`ty check scripts tests`、`pytest`
+  （29 passed）、`./lab config validate --all` 与排除原始 Kit 日志后的
+  `git diff --check` 均通过；原始日志保留上游输出中的行尾空格以维持证据原貌。
+  `./lab doctor` 的方法仓库/嵌套子模块检查通过，本机仅因不存在 `/mnt/data` 而报告
+  制品盘挂载告警。
+
 ## 2026-08-02：接入 UniVTAC benchmark 并归档官方安装器首错
 
 - 将 `AtticusZeller/UniVTAC` 作为 `methods/univtac` submodule 接入，登记为

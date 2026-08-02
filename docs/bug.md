@@ -26,6 +26,22 @@
 - **状态：** smoke 假阳性已修复；云端 Isaac Sim runtime 仍不可用，本地 RTX 4060
   单环境 GUI/触觉仿真已通过。
 
+## 2026-08-02：UniVTAC vendored TacEx 漏掉 GelSight low-res gelpad
+
+- **触发：** 完整安装后运行 TacEx `check_taxim_sim.py --num_envs 1 --debug_vis
+  --rendering_mode performance`。
+- **现象：** Isaac Sim 能启动且显存仍有约 6.9 GB 空闲，但 USD stage 报
+  `Gelpad_low_res.usd` 无法打开，随后 gelpad prim 不是有效 rigid body，Robot
+  articulation 创建失败。
+- **原因：** UniVTAC 提交 `a9abc0d` 为规避 Git LFS 配额删除 low-res 资产；后续
+  `97a3fe3` 把其他 LFS pointer 恢复成普通 Git 文件时漏掉该文件，而 vendored robot USD
+  仍保留 payload 引用。官方 TacEx 当前文件树和 UniVTAC 早期提交 `b371b18` 均包含它。
+- **处理：** 从 `b371b18` 原样恢复 267,452 字节 USD crate，blob
+  `54ec424ca942aa55cfdc1a168b5e71cdc6e16ab8`，不以 mid/high-res 文件猜测替代。
+- **验证：** 相同单环境 `performance` 命令进入 `Setup complete`，触觉 debug view 可见，
+  连续 reset 且无 CUDA OOM；见 [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
+- **状态：** 已在 method 提交 `4423bb7` 修复并通过用户 GUI 验收。
+
 ## 2026-08-02：UniVTAC 安装链同时受 channel、镜像与上游版本脚本影响
 
 - **触发：** 修复首次 `grep` 退出后，在全新 `UniVTAC` Conda 环境继续执行官方完整
@@ -54,7 +70,8 @@
   `mypy`、嵌套 pip 官方源与 pyuipc 搜索顺序，最终 wheel 和 `import uipc` 通过。
 - **证据边界：** 云端 Python/CUDA 构建链完整通过，libuipc 针对 H20 `sm_90` 编译，
   `pip check` 无冲突；本地 RTX 4060 GUI/触觉仿真通过。云端 H20 的 Isaac Sim
-  Vulkan/RTX runtime 失败属于独立环境边界，见上一条。
+  Vulkan/RTX runtime 失败属于独立环境边界，见上一条；本地 GUI 证据见
+  [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
 - **状态：** 安装器和依赖安装已修复；tinygltf 临时 overlay 未固化，若上游归档再次
   变化仍需重新校验，不能关闭完整性检查。
 

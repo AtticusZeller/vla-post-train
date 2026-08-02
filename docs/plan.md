@@ -198,7 +198,8 @@ vla-post-train/
 - [x] 将 UniVTAC 作为 benchmark 接入 `methods/univtac`，并在撤销个人 Agent 文件后
   固定 fork `dev@1e9272a`；官方首次安装器故障已复现归档。
 - [x] 完成 UniVTAC 本地安装与单环境 GUI/触觉仿真验收；RTX 4060 Laptop 以
-  `--num_envs 1 --rendering_mode performance` 进入 `Setup complete` 并连续 reset。
+  `--num_envs 1 --rendering_mode performance` 进入 `Setup complete` 并连续 reset；
+  vendored TacEx 漏掉的 `Gelpad_low_res.usd` 已从历史原样恢复。
 - [x] 完成当前 DSW 的 Python/CUDA 构建链：全部 vcpkg ports、`tacex_uipc`、pyuipc、
   `pip check` 和 `import uipc` 通过，libuipc 针对 H20 `sm_90` 编译成功。
 - [x] 验证云端 Isaac Sim runtime 边界：当前 DSW 没有可用 NVIDIA Vulkan/RTX graphics
@@ -211,5 +212,5 @@ vla-post-train/
 
 最终必须通过 ruff format/check、ty、pytest、全部配置校验、三个代表 dry-run、根 Agent
 检查、三个 Skill 校验、method Agent 去重和大文件排查。推送后在 `/tmp` 做 authenticated
-recursive clone，确认七个 gitlink 均可恢复。本轮 UniVTAC 接入不运行新的 GPU 实验，
-安装器修复与真实安装另行对齐。
+recursive clone，确认七个 gitlink 均可恢复。UniVTAC 安装器修订另以 Bash 静态检查、
+Conda 环境依赖检查、本地 RTX 4060 正向仿真和云端 H20 负向 GPU smoke 作为运行证据。

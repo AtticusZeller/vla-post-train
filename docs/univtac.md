@@ -67,7 +67,24 @@ tinygltf 临时 overlay 完成余下 5 个 vcpkg ports；随后补齐 libuipc �
 `/mnt/data/atticux/vla-post-train/univtac/install-cloud-20260802T1612Z/`；H20 smoke 与
 GPU foundation 探针分别在同级 `h20-gpu-smoke.log` 和 `gpu-foundation-probe.log`。
 
+首次 GUI 启动并非显存 OOM，而是 UniVTAC vendored TacEx 在移除 Git LFS 文件时漏掉
+`Gelpad_low_res.usd`，robot USD 的 payload 因此无法解析。资产提交 `4423bb7` 从本仓历史
+`b371b18` 恢复相同 blob；随后用户以以下命令完成真实窗口验收：
+
+```bash
+cd methods/univtac/third_party/TacEx
+python scripts/demos/tactile_sim_approaches/check_taxim_sim.py \
+  --num_envs 1 \
+  --debug_vis \
+  --rendering_mode performance
+```
+
+控制台进入 `Setup complete` 并连续 reset，GPU compute 抽样 39–50%、显存
+74.66–77.65%。截图、完整 Kit 日志、控制台摘要和未消除 warning 见
+[`univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
+
 本地机的 RTX 4060 Laptop 8 GB 达到 Isaac Sim 4.5 的最低显存级别，但 16 GB RAM
 低于官方 32 GB 最低要求，Ubuntu 24.04 也不在 4.5 文档列出的 20.04/22.04 支持范围。
-因此先用单环境、低分辨率 smoke，避免 4K 多相机和并行数据采集；若出现 GUI/驱动兼容
-问题，优先准备 Ubuntu 22.04 原生环境，而不是继续改算法或触觉代码。
+因此已验证的运行合同仍限定为单环境 `performance` smoke，避免 4K 多相机和并行数据采集；
+若后续大规模 workload 出现 GUI/驱动兼容或内存问题，优先准备 Ubuntu 22.04 与更大内存/
+显存环境，而不是据此修改算法或触觉代码。

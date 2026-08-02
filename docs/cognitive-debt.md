@@ -17,11 +17,13 @@
 
 - **状态：** Open（功能验证已完成）
 - **范围：** UniVTAC fork 至 `b443b32` 的 `scripts/install.sh`、libuipc Python binding
-  搜索顺序、`docs/Installation.md`，以及根仓 gitlink、安装诊断和运行边界文档。
+  搜索顺序、恢复的 `Gelpad_low_res.usd`、`docs/Installation.md`，以及根仓 gitlink、
+  安装诊断和运行边界文档。
 - **暂缓原因：** 用户选择 Type C− 优先完成跨本地/云端实装与故障收敛，暂不执行
   Explain Diff 五题；功能验证、真实 GPU 证据和失败边界没有延后。
 - **验证证据：** 本地 RTX 4060 完整安装、Isaac Sim GUI、GelSight 触觉窗口和连续 reset
-  通过。云端全部 vcpkg ports、`tacex_uipc 0.1.0`、`pyuipc 0.9.0`、`pip check`、
+  通过，详见 [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。云端全部
+  vcpkg ports、`tacex_uipc 0.1.0`、`pyuipc 0.9.0`、`pip check`、
   `import uipc` 和 H20 `sm_90` CUDA 编译通过；H20 headless smoke 暴露空 Vulkan GPU
   表与 `No device could be created`。修订后的同机复验正确 exit 1，消除旧版假阳性。
 - **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装，vcpkg/
