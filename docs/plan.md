@@ -59,7 +59,7 @@ vla-post-train/
 ├── README.md / cmd.md / lab
 ├── pyproject.toml / uv.lock
 ├── .codex/skills/{add-method,run-experiment,summarize-experiment}/
-├── methods/{flowdagger,dsrl-pi0,expo-ft,rlinf,starvla,lerobot}/
+├── methods/{flowdagger,dsrl-pi0,expo-ft,rlinf,starvla,lerobot,univtac}/
 ├── scripts/
 │   ├── lab.py
 │   ├── config.py / process.py / run_record.py / monitor.py / report.py
@@ -82,9 +82,10 @@ vla-post-train/
 - 根仓库使用 Python 3.12 + uv；训练环境由各 method 自行维护。
 - StarVLA、LeRobot 和 RLinf 标记为 framework。LeRobot 使用用户 fork 的干净
   `workspace` 分支，旧 `dev` 历史保持不变；仅接入 framework 时不创建实验目录。
-- 首期之后新增的 method 沿用同一约定：LeRobot（framework，`workspace`）和
-  EXPO-FT（method，`dev`，fork 自 `pd-perry/expo-ft`）。两者当前只固定代码版本，
-  尚未创建 `experiments/<method>/` 或运行手册。
+- 首期之后新增的仓库沿用同一约定：LeRobot（framework，`workspace`）、
+  EXPO-FT（method，`dev`，fork 自 `pd-perry/expo-ft`）和 UniVTAC（benchmark，
+  `dev`，fork 自 `univtac/UniVTAC`）。三者当前只固定代码版本，尚未创建
+  `experiments/<method>/` 或运行手册。
 
 ### 配置与启动
 
@@ -175,9 +176,14 @@ vla-post-train/
 - [x] 完成全量 Agent、Skill、CLI、测试和递归恢复验证；
 - [x] 完成用户验收与 Explain Diff 五题；
 - [x] 提交并推送根 gitlink 与工作区更新。
+- [x] 将 UniVTAC 作为 benchmark 接入 `methods/univtac`，并在撤销个人 Agent 文件后
+  固定 fork `dev@1e9272a`；官方首次安装器故障已复现归档。
+- [ ] 修复 UniVTAC 官方安装器并完成真实依赖安装/GPU smoke；该项需要单独对齐，
+  不属于本次 benchmark 接入的验收范围。
 
 ## 验收
 
 最终必须通过 ruff format/check、ty、pytest、全部配置校验、三个代表 dry-run、根 Agent
 检查、三个 Skill 校验、method Agent 去重和大文件排查。推送后在 `/tmp` 做 authenticated
-recursive clone，确认五个 gitlink 均可恢复。本任务不运行新的 GPU 实验或 LeRobot 代码。
+recursive clone，确认七个 gitlink 均可恢复。本轮 UniVTAC 接入不运行新的 GPU 实验，
+安装器修复与真实安装另行对齐。

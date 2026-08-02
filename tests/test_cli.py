@@ -14,6 +14,13 @@ def test_lerobot_framework_registration() -> None:
     }
 
 
+def test_univtac_benchmark_registration() -> None:
+    assert lab._METHODS["univtac"] == {
+        "branch": "dev",
+        "upstream": "https://github.com/univtac/UniVTAC.git",
+    }
+
+
 def test_historical_resume_and_summarize_are_immutable() -> None:
     run_id = "historical__libero10-task0-medium"
     run_path = lab.ROOT / "experiments/rlinf/runs" / run_id / "run.json"

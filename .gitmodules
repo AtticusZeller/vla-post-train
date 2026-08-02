@@ -22,3 +22,7 @@
 	path = methods/expo-ft
 	url = https://github.com/AtticusZeller/expo-ft.git
 	branch = dev
+[submodule "methods/univtac"]
+	path = methods/univtac
+	url = https://github.com/AtticusZeller/UniVTAC.git
+	branch = dev

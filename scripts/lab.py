@@ -51,6 +51,10 @@ _METHODS = {
         "branch": "workspace",
         "upstream": "https://github.com/huggingface/lerobot.git",
     },
+    "univtac": {
+        "branch": "dev",
+        "upstream": "https://github.com/univtac/UniVTAC.git",
+    },
 }
 
 

@@ -13,6 +13,27 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-08-02 · UniVTAC benchmark 接入与安装边界诊断
+
+- **状态：** Open
+- **范围：** `methods/univtac` submodule、根仓 method registry/测试、VLA/VTLA
+  工作区说明与 UniVTAC 模块文档；fork `dev@1e9272a` 撤销 Agent 文件后与官方
+  `main@05bcd3e` 文件树等价。安装脚本未修改。
+- **暂缓原因：** 用户优先统一接入 VTLA 仿真 benchmark，并要求保留可搜索的安装失败
+  证据；选择 Type C−，将 Explain Diff 理解 Review 延后，submodule 可恢复性、用户验收
+  和安装故障复现不延后。
+- **验证证据：** `lab doctor`、method status、递归 submodule、Agent scaffold、ruff
+  format/check、ty 和 29 个 pytest 全部通过；用户于 2026-08-02 明确确认最终验收通过。
+  fork/官方完整 tree 和安装脚本 blob 分别一致；撤销个人文件后再次安装仍在创建 Conda
+  环境前以 exit code 1 结束，trace 与分析保存在
+  `/mnt/data/atticux/vla-post-train/univtac/install-20260801T132145Z-reverted/`。
+- **待理解内容：** benchmark 与 framework 的工作区角色边界、父仓 gitlink 与 fork
+  `origin/upstream` 的可恢复链路，以及 Bash `set -e` 如何让无匹配 `grep` 在命令替换中
+  提前结束官方安装脚本。
+- **偿还标准：** 针对本次根仓提交和 UniVTAC fork 的 add/revert 提交运行
+  explain-diff-html，阅读解释并通过全部五题；记录日期和对应 closeout commit。
+- **偿还记录：** Pending
+
 ## 2026-07-29 · RLToken progressive 中等预算
 
 - **状态：** Open

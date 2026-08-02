@@ -25,6 +25,31 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
+## 待用户验证
+
+- **Status:** Passed（2026-08-02，用户确认最终 gitlink、分支、远端与 CLI/测试均通过）
+- **Purpose:** 确认 UniVTAC gitlink 已固定撤销个人 Agent 文件后的 fork
+  `dev@1e9272afca41`，且根 CLI 能识别其预期分支与官方 upstream。
+- **Prerequisites:** 可访问 GitHub；无需安装 Isaac Sim、Isaac Lab、TacEx 或下载数据。
+- **Commands:**
+
+```bash
+cd /root/vla-post-train
+git submodule update --init methods/univtac
+git -C methods/univtac status --short --branch
+git -C methods/univtac remote -v
+./lab doctor
+./lab method status
+uv run pytest tests/test_cli.py
+```
+
+- **Pass criteria:** UniVTAC 位于 `dev` 分支、revision 以 `1e9272afca41` 开头且工作树干净；`origin` 为
+  `AtticusZeller/UniVTAC`、`upstream` 为 `univtac/UniVTAC`；`lab doctor` 全部为
+  `PASS`；`lab method status` 的 `univtac` 行显示 `dev`、`clean=yes` 和正确远端；
+  `tests/test_cli.py` 全部通过。
+- **Return on failure:** 返回上述命令的完整输出；若 submodule 初始化失败，同时返回
+  `git submodule status --recursive`。
+
 ## 最近用户验证
 
 - **状态**：Passed（2026-07-30，用户确认 `corner` 视角与 640×480 清晰度可用）

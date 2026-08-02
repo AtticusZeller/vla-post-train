@@ -2,7 +2,7 @@
 
 # vla-post-train · Agent Collaboration Guide
 
-> Private VLA post-training research workspace for method repositories, reproducible experiments, run evidence, and agent workflows.
+> Private VLA/VTLA post-training research workspace for method repositories, reproducible experiments, run evidence, and agent workflows.
 
 **Primary toolchain:** Python 3.12 + uv + ruff + ty + pytest; method-specific training environments remain isolated
 
@@ -190,10 +190,12 @@ Fill module documentation **incrementally**. Create `docs/<module>.md` the first
 
 <!-- init-repo-agents:module-index:begin -->
 - [[docs/dsrl-pi0.md]] — dsrl-pi0 module (`methods/dsrl-pi0/`)
+- [[docs/expo-ft.md]] — expo-ft module (`methods/expo-ft/`)
 - [[docs/flowdagger.md]] — flowdagger module (`methods/flowdagger/`)
 - [[docs/lerobot.md]] — lerobot module (`methods/lerobot/`)
 - [[docs/rlinf.md]] — rlinf module (`methods/rlinf/`)
 - [[docs/starvla.md]] — starvla module (`methods/starvla/`)
+- [[docs/univtac.md]] — univtac module (`methods/univtac/`)
 <!-- init-repo-agents:module-index:end -->
 <!-- Seeded from a shallow structural scan during initialization, for example:
 - [[docs/datasets.md]] — dataset loading and metadata (`src/<pkg>/datasets/`)

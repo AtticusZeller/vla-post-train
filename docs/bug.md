@@ -4,6 +4,32 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-08-01：UniVTAC 首次安装被 `set -e` 与无匹配 `grep` 静默中止
+
+- **触发：** 在尚无 `UniVTAC` Conda 环境的机器上从已激活的 base 环境执行
+  `bash -x scripts/install.sh`。
+- **现象：** 脚本在输出任何 `Creating conda environment` 之前以 exit code 1
+  结束，trace 最后是 `conda env list`、`grep UniVTAC`、
+  `is_conda_env_exists=`；运行前后都没有创建 `UniVTAC` 环境。
+- **原因：** 脚本启用了 `set -e`，而
+  `is_conda_env_exists=$(conda env list | grep ${CONDA_ENV_NAME})` 在首次安装时
+  必然因无匹配返回 1。赋值命令继承命令替换的非零状态，Bash 因而在进入后续
+  `[ -z ... ]` 判断和 `conda create` 前直接退出。Python 3.10、Isaac Sim 4.5、
+  Isaac Lab 2.1.1 与 PyTorch 2.5.1 的主版本组合符合当前 Isaac Lab 文档，
+  不是本次首错原因。
+- **后续静态阻塞：** vcpkg 首次安装条件写反且检查相对 `Toolchain`，随后却把
+  `CMAKE_TOOLCHAIN_FILE` 指向不存在的 `$HOME/Toolchain/vcpkg/...`；fresh
+  `tacex_uipc` 安装后也没有恢复 UniVTAC 根目录，最终 `bash collect_data.sh`
+  会在 `third_party/TacEx` 下找不到文件。安装器还把 cuRobo 全量 pytest、
+  512-env TacEx 训练和数据采集耦合在依赖安装流程中。
+- **证据：** 原始 trace 与完整分析位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-20260801T124939Z/`。按用户要求撤销
+  Agent 新增文件后，fork `dev@1e9272a` 与官方 `main@05bcd3e` 的完整 tree 均为
+  `283d1675...`、安装脚本 blob 均为 `8efc2591...`；第二次实装仍以相同 trace 和
+  exit code 1 结束，证据位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-20260801T132145Z-reverted/`。
+- **状态：** 已诊断、未修复；本轮只向用户提供可搜索证据，不改上游安装脚本。
+
 ## 2026-07-31：`takeover_max=25` 收窄导致 Box Close / Bin Picking 评估时机械臂卡死
 
 - **触发：** `metaworld12_suite.yaml`（协议 v1）把 `InterventionHandler` 的

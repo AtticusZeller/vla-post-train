@@ -4,6 +4,27 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-02：接入 UniVTAC benchmark 并归档官方安装器首错
+
+- 将 `AtticusZeller/UniVTAC` 作为 `methods/univtac` submodule 接入，登记为
+  `benchmark`；`origin` 指向用户 fork，`upstream` 指向 `univtac/UniVTAC`，根仓
+  registry、README、模块索引和 `docs/univtac.md` 已同步。暂不创建
+  `experiments/univtac/`、launcher 或 runbook。
+- 按用户要求撤销 Agent 新增文件：fork `dev@1e9272a` 保留 add/revert 审计历史，但
+  最终文件树与官方 `main@05bcd3e` 完全一致，`scripts/install.sh` blob 也一致；父仓
+  gitlink 固定 `1e9272afca41`。
+- 两次实装均确认官方 `scripts/install.sh` 在首次安装时因 `set -e` 与
+  `conda env list | grep UniVTAC` 无匹配而在 `conda create` 前 exit 1；没有创建
+  Conda 环境或安装依赖。撤销后复验证据位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-20260801T132145Z-reverted/`，
+  后续 vcpkg 与工作目录风险见 `docs/bug.md`。
+- Agent 验证通过：`lab doctor`、method status、递归 submodule、Agent scaffold、
+  ruff format/check、ty、29 个 pytest，以及 fork/官方 tree/blob 等价检查；用户于
+  2026-08-02 明确确认最终验收通过。
+- 本任务为 Type C−，开放认知债务记录见
+  [`docs/cognitive-debt.md`](cognitive-debt.md) 的同名条目；安装器修复和真实 GPU smoke
+  不在本次已完成范围内。
+
 ## 2026-07-31：完成 FlowDAgger 协议 v2 seed0 12/12 并收尾 Bin Picking 排查
 
 - 协议 v2（`takeover_min/max=5/60`）下的 12 任务 seed0 全部顺序跑完（tmux

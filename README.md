@@ -1,6 +1,6 @@
 # VLA 后训练研究工作区
 
-这是一个私有的研究控制仓库，用于统一管理 VLA 后训练方法代码、实验配置、运行证据、
+这是一个私有的研究控制仓库，用于统一管理 VLA/VTLA 后训练方法代码、实验配置、运行证据、
 结果汇总和 Agent workflow。算法与第三方框架始终保留在独立 Git 仓库中，并通过
 `methods/` submodule 固定到准确 revision。
 
@@ -14,9 +14,10 @@
 | `methods/rlinf` | `personal-dev` | framework | RECAP / STEAM / RLToken 训练与实验框架 |
 | `methods/starvla` | `starVLA_dev` | framework | VLA 训练与策略框架 |
 | `methods/lerobot` | `workspace` | framework | 数据、策略、训练与机器人基础框架 |
+| `methods/univtac` | `dev` | benchmark | 视触觉仿真、数据采集、策略训练与评测平台 |
 
 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
-LeRobot 与 expo-ft 当前只固定代码版本，尚未创建实验配置或运行手册。
+LeRobot、expo-ft 与 UniVTAC 当前只固定代码版本，尚未创建实验配置或运行手册。
 
 ## 初始化
 
