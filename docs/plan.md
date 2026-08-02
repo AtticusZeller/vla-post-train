@@ -45,6 +45,25 @@
   输出写入新的 formal run artifact，不改写原始 step 1,000 实验。
 - 2026-07-30 首次 continuation 已验证恢复链路并运行至 step 1243，随后按用户要求
   为 FlowDAgger 释放两张卡而中断；未到 3k checkpoint，后续从 step 1000 重启。
+- 2026-08-01/02：第二次 continuation（run `20260801-034909__libero10-task0-
+  medium-steam-seed1-continue10k-2gpu`）从 step 1000 checkpoint 正常恢复，顺利
+  跑完 step 3000、5000 两个检查点的 eval（各 100 回合，eval seed 0）：
+  baseline 40%、step 500 51%、step 1,000 66%、**step 3,000 28%、step 5,000
+  32%**——续训后两个连续检查点都大幅低于 step 1,000，甚至低于 baseline。
+  查过 step 1000→3000 区间的 `train/loss`、`train/grad_norm`、
+  `train/learning_rate`（W&B run `p3bekf52`）：cosine 学习率平滑衰减、loss
+  稳定在 0.007~0.013、grad_norm 全程 0.05~0.12，没有发散或尖峰——训练过程本身
+  正常，但真实任务表现明显变差，更像是继续训练让模型偏离了 step 1,000 那个
+  恰好表现好的点（代理训练目标和下游成功率脱钩），不是训练不稳定。
+- 用户据此判断"肯定有问题"，在 stage 3（目标 step 10,000，训练到约 step
+  5,840）时用 SIGINT 主动中止；run 记录为 exit 130 / signal 2，GPU 显存归零。
+  该 run 不构成正面结果，标记为已中止的诊断证据。W&B 运行：stage1 训练
+  `p3bekf52`、step3000 eval `9358ahyi`（28%）、stage2 训练 `ui4eq0dj`、step5000
+  eval `b15vxrtp`（32%）、stage3 训练（中止）`o4pdwwfr`。
+- 结论：STEAM Medium seed 1 在 step 1,000 之后继续训练（无论是否延长 cosine
+  schedule）目前没有证据支持能稳定超过 70%，反而出现明显退化；step 1,000
+  checkpoint（66%）仍是当前最佳单点证据。是否值得排查退化机制（比如对比不
+  延长 schedule、只训练更少额外步数）留待用户后续决定，本轮不再自动重启。
 
 ## 目标
 

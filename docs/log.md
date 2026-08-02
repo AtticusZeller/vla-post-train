@@ -4,6 +4,24 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-02：STEAM Medium seed 1 续训至 10k 因退化被用户中止
+
+- run `20260801-034909__libero10-task0-medium-steam-seed1-continue10k-2gpu` 从
+  `global_step_1000` checkpoint 正常恢复，双卡稳定训练，顺利产出 step 3,000、
+  5,000 两个 eval 检查点（各 100 回合，eval seed 0）：28%、32%，均明显低于
+  step 1,000 的 66%，也低于 40% 的 baseline。
+- 复核 step 1000→3000 区间的 `train/loss`/`train/grad_norm`/
+  `train/learning_rate`（W&B `p3bekf52`）：cosine 学习率平滑衰减、loss 稳定在
+  0.007~0.013、grad_norm 全程 0.05~0.12，无发散或尖峰——排除训练不稳定，判断
+  为继续训练后代理训练目标与真实任务成功率脱钩，偏离了 step 1,000 的优质点。
+- 用户判断"肯定有问题"，主动要求中止；在 stage 3（目标 10,000，训练到约
+  step 5,840）以 SIGINT 终止，run 记录 exit 130 / signal 2，GPU 显存归零。
+  已 `./lab experiment summarize` 归档（status=failed，中止运行证据，不构成
+  正面结论）；`docs/plan.md` STEAM Medium 章节记录完整五点曲线与结论。
+- 已停止 tmux 会话 `rlinf-steam-continue10k` 与日志 Monitor。
+
+
+
 ## 2026-08-02：收敛 UniVTAC vcpkg/tinygltf 安装证据
 
 - 云端 `retry-9` 证明 `zip` 修复后 vcpkg bootstrap 成功，GNU 11.4 与 CUDA 12.4

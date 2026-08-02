@@ -53,6 +53,21 @@
   `rlinf/envs/venv`。该 run 未进入 GPU 训练；禁用上述自动 hook 后，短 Ray worker
   probe 已从共享源码成功导入 `rlinf.envs.venv`。
 
+## STEAM Medium seed 1 续训至 10k（已中止，见 `docs/plan.md`）
+
+- 配置：
+  `experiments/rlinf/configs/libero10_task0_medium_steam_seed1_continue10k_2gpu.yaml`；
+  从 `RLINF_STEAM_MEDIUM_RESUME_DIR` 指向的 `global_step_1000` DCP checkpoint
+  恢复，`actor.optim.total_training_steps=10000`，依次训练/评测到 3000、5000、
+  10000（脚本 `run_steam_medium_continuation`，按 checkpoint 是否存在自动跳过
+  已完成阶段，可安全重跑同一命令续接）。
+- 2026-08-01/02 第二次 continuation 顺利产出 step 3,000（28%）、5,000（32%）两
+  个 eval 点，均低于 step 1,000（66%）与 baseline（40%）；同区间 loss/grad_norm/
+  learning_rate 均正常，判断为代理训练目标与真实成功率脱钩，不是训练不稳定。
+  用户据此在 stage 3（约 step 5,840）主动 SIGINT 中止，不再自动重启到 10,000。
+- 若后续要继续排查，先看是否是"延长 cosine schedule"本身的效应（对比不延长
+  schedule 或缩短续训步数），而不是默认调大 timeout 硬跑到 10k。
+
 ## 恢复、评测与故障
 
 - 当前根 launcher 不声明通用 resume。阶段恢复继续使用方法脚本的原生命令并先写入 runbook。
