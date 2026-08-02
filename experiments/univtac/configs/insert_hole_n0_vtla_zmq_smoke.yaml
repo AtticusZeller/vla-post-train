@@ -19,8 +19,8 @@ tracking:
   run_urls: []
 native:
   command:
-    - python
-    - scripts/eval_policy.py
+    - bash
+    - scripts/run_eval_policy.sh
     - insert_hole
     - demo
     - N0VTLA/deploy
