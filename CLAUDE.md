@@ -193,6 +193,7 @@ Fill module documentation **incrementally**. Create `docs/<module>.md` the first
 - [[docs/expo-ft.md]] — expo-ft module (`methods/expo-ft/`)
 - [[docs/flowdagger.md]] — flowdagger module (`methods/flowdagger/`)
 - [[docs/lerobot.md]] — lerobot module (`methods/lerobot/`)
+- [[docs/n0-vtla.md]] — n0-vtla module (`methods/n0-vtla/`)
 - [[docs/rlinf.md]] — rlinf module (`methods/rlinf/`)
 - [[docs/starvla.md]] — starvla module (`methods/starvla/`)
 - [[docs/univtac.md]] — univtac module (`methods/univtac/`)

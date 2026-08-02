@@ -25,6 +25,31 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
+## 待用户验证
+
+- **Status:** Pending
+- **Purpose:** 确认 N0-VTLA 已按 add-method 工作流登记为 `methods/n0-vtla` submodule：
+  `lab.py` 元数据、分支、修订、remotes 与工作树干净状态都正确。
+- **Prerequisites:** 可访问 GitHub 的 HTTPS 凭据（`gh auth status` 已登录）；
+  不需要 GPU、数据集或训练环境。
+- **Commands:**
+
+```bash
+cd /root/vla-post-train
+./lab method status
+git submodule status --recursive
+git -C methods/n0-vtla remote -v
+git -C methods/n0-vtla status --short --branch
+```
+
+- **Pass criteria:** `./lab method status` 的 `n0-vtla` 行显示 branch=`workspace`、
+  revision=`65563a9`、clean=`yes`、origin=`https://github.com/AtticusZeller/N0-VTLA.git`、
+  upstream=`https://github.com/neoteai/N0-VTLA.git`；`git submodule status --recursive`
+  中 `methods/n0-vtla` 前无 `-` 前缀；method 工作树干净且位于
+  `workspace...origin/workspace`。
+- **Return on failure:** 返回 `./lab method status` 完整输出、
+  `git submodule status` 输出与 `git -C methods/n0-vtla status --short --branch` 结果。
+
 ## UniVTAC 云端 H20 smoke（已验证不可用）
 
 - **Status:** Failed as expected（2026-08-02；安装成功，当前 DSW 的 Vulkan/RTX runtime

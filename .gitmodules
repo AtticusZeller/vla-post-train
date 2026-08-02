@@ -26,3 +26,7 @@
 	path = methods/univtac
 	url = https://github.com/AtticusZeller/UniVTAC.git
 	branch = dev
+[submodule "methods/n0-vtla"]
+	path = methods/n0-vtla
+	url = https://github.com/AtticusZeller/N0-VTLA.git
+	branch = workspace

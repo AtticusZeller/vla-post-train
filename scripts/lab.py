@@ -55,6 +55,10 @@ _METHODS = {
         "branch": "dev",
         "upstream": "https://github.com/univtac/UniVTAC.git",
     },
+    "n0-vtla": {
+        "branch": "workspace",
+        "upstream": "https://github.com/neoteai/N0-VTLA.git",
+    },
 }
 
 

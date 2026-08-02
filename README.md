@@ -15,6 +15,7 @@
 | `methods/starvla` | `starVLA_dev` | framework | VLA 训练与策略框架 |
 | `methods/lerobot` | `workspace` | framework | 数据、策略、训练与机器人基础框架 |
 | `methods/univtac` | `dev` | benchmark | 视触觉仿真、数据采集、策略训练与评测平台 |
+| `methods/n0-vtla` | `workspace` | method | N0-VTLA 官方实现 fork（视触觉后训练与推理） |
 
 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
 LeRobot 与 expo-ft 当前只固定代码版本。UniVTAC 已完成安装器修复和本地 RTX 4060

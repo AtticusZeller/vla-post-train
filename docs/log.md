@@ -4,6 +4,22 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-02：接入 N0-VTLA method submodule
+
+- 按 add-method 工作流接入 NeoteAI 官方 N0-VTLA（触觉潜在 token 后训练与推理仓库）：
+  官方 upstream `neoteai/N0-VTLA`（main@08c1f4a，CC BY-SA 4.0 + Apache-2.0 组件），
+  fork 到 `AtticusZeller/N0-VTLA`，新建并推送 `workspace` 集成分支。
+- submodule 固定到 `methods/n0-vtla@65563a9`（workspace），含方法专属
+  `AGENTS.md` 与 `CLAUDE.md` symlink；`lab.py` 注册 branch/upstream，README 登记为
+  `method` 角色；根模块索引、`docs/n0-vtla.md` 与 `cmd.md` 待用户验证块已同步。
+- 按 method 接入规则不创建 `experiments/n0-vtla/`、launcher、配置或 runbook；
+  等具体实验或历史迁移需求。
+- 门禁结果：`./lab doctor`、`./lab method status`（n0-vtla=workspace/clean）、
+  `git submodule status --recursive` 全初始化、`git diff --check`、ruff format/check、
+  ty check、pytest（29 passed）、`./lab config validate --all` 与
+  check-repo-agents.sh 均通过。方法修订先于父 gitlink 推送（origin/workspace 65563a9）。
+- 待用户验证见 `cmd.md` 的 `## 待用户验证` 块。
+
 ## 2026-08-02：完成 UniVTAC 云端安装并收敛 H20 runtime 边界
 
 - 同步本地成功分支后，云端使用经 gzip、源码内容和 tag commit 校验的 tinygltf 临时
