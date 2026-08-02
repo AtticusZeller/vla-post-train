@@ -1,0 +1,36 @@
+schema_version: 1
+id: insert-hole-n0-vtla-zmq-smoke
+method: univtac
+repository:
+  path: methods/univtac
+  expected_branch: dev
+  require_clean: false
+environment:
+  manager: conda
+  name: UniVTAC
+runtime:
+  formal: false
+  allow_dirty: true
+  gpus: [0]
+  artifact_root: ~/vla-post-train-artifacts
+  timeout_hours: 2
+tracking:
+  backend: local
+  project: n0-vtla-univtac
+  run_urls: []
+native:
+  command:
+    - python
+    - scripts/eval_policy.py
+    - insert_hole
+    - demo
+    - N0VTLA/deploy
+    - --total_num
+    - "5"
+    - --headless
+    - --device
+    - cuda:0
+  env:
+    N0VTLA_ZMQ_ADDR: tcp://127.0.0.1:5557
+    UNIVTAC_EVAL_ROOT: "{artifact_path}/native/eval_result"
+  primary_metrics: []

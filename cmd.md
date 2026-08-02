@@ -27,32 +27,40 @@ uv run pytest
 
 ## 待用户验证
 
-- **Status:** Passed（2026-08-02；用户已执行并确认）
-- **Purpose:** 确认 N0-VTLA 已按 add-method 工作流登记为 `methods/n0-vtla` submodule：
-  `lab.py` 元数据、分支、修订、remotes 与工作树干净状态都正确。
-- **Prerequisites:** 可访问 GitHub 的 HTTPS 凭据（`gh auth status` 已登录）；
-  不需要 GPU、数据集或训练环境。
+- **Status:** Pending
+- **Purpose:** 在本地 RTX 4060 上运行 UniVTAC `insert_hole`，经 SSH 转发调用云端
+  H20 的 N0-VTLA ZMQ 服务，验证 5 个 episode 的完整跨机闭环。
+- **Prerequisites:** 本地 UniVTAC 环境与 Omniverse EULA 已完成；能通过 GitHub 拉取
+  根仓与 UniVTAC 子模块的候选提交；能通过 SSH 访问当前 DSW。云端 tmux
+  `n0-vtla-zmq` 必须存活，端口只监听云端 `127.0.0.1:5557`。
 - **Commands:**
 
 ```bash
-cd /root/vla-post-train
-./lab method status
-git submodule status --recursive
-git -C methods/n0-vtla remote -v
-git -C methods/n0-vtla status --short --branch
+# 本地：通过 GitHub 同步根仓与 UniVTAC 子模块候选提交。
+cd /path/to/vla-post-train
+git pull --ff-only
+git submodule update --init --recursive
+
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate UniVTAC
+python -m pip install msgpack==1.1.2 pyzmq==27.1.0
+
+# 本地另开终端并保持运行：
+ssh -N -L 5557:127.0.0.1:5557 aliyun_vla_rl_exp_atticux
+
+# 回到根仓终端：
+./lab config validate experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml
+./lab experiment dry-run experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml
+./lab experiment run experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml
 ```
 
-- **Pass criteria:** `./lab method status` 的 `n0-vtla` 行显示 branch=`workspace`、
-  revision=`65563a9`、clean=`yes`、origin=`https://github.com/AtticusZeller/N0-VTLA.git`、
-  upstream=`https://github.com/neoteai/N0-VTLA.git`；`git submodule status --recursive`
-  中 `methods/n0-vtla` 前无 `-` 前缀；method 工作树干净且位于
-  `workspace...origin/workspace`。
-- **Return on failure:** 返回 `./lab method status` 完整输出、
-  `git submodule status` 输出与 `git -C methods/n0-vtla status --short --branch` 结果。
-- **Observed result:** 用户于 2026-08-02 执行上述命令并确认：`./lab method status` 显示
-  n0-vtla=workspace@65563a9、clean=yes、origin/upstream 正确；`git submodule status
-  --recursive` 中 `methods/n0-vtla` 无 `-` 前缀；method 工作树干净
-  （`## workspace...origin/workspace`）。
+- **Pass criteria:** 五个 episode 均结束且无 ZMQ timeout、缺图像键、动作 shape 或
+  非有限值错误；日志持续输出 `N0-VTLA chunk` 延迟、逐 seed success/failed 与最终
+  `Final Result`；run 的视频和日志写入
+  `~/vla-post-train-artifacts/univtac/<run-id>/`。5-episode 成功率只作为 smoke
+  方向性证据。
+- **Return on failure:** 返回根 run ID、`run.json`、`logs/console.log`、首次 traceback
+  前后各 100 行、`nvidia-smi`，以及云端 `tmux capture-pane -p -t n0-vtla-zmq -S -200`。
 
 ## UniVTAC 云端 H20 smoke（已验证不可用）
 
