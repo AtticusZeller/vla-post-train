@@ -28,27 +28,39 @@ uv run pytest
 ## 待用户验证
 
 - **Status:** Pending
-- **Purpose:** 在本地 RTX 4060 上运行 UniVTAC `insert_hole`，经 SSH 转发调用云端
-  H20 的 N0-VTLA ZMQ 服务，验证 5 个 episode 的完整跨机闭环。
-- **Prerequisites:** 本地 UniVTAC 环境与 Omniverse EULA 已完成；能通过 GitHub 拉取
-  根仓与 UniVTAC 子模块的候选提交；能通过 SSH 访问当前 DSW。云端 tmux
-  `n0-vtla-zmq` 必须存活，端口只监听云端 `127.0.0.1:5557`。
+- **Purpose:** 在实验室 RTX 4090 上运行 UniVTAC `insert_hole`，经 SSH 转发调用云端
+  H20 的 N0-VTLA ZMQ 服务，并由用户电脑通过 WebRTC 查看，验证 5 个 episode 的完整
+  跨机闭环。
+- **Prerequisites:** 4090 推荐 Ubuntu 22.04、至少 32 GB RAM、可用 NVIDIA 驱动、
+  Conda 与 `uv`；能通过 GitHub 拉取私有根仓；4090 能 SSH 访问当前 DSW；用户电脑能
+  路由到 4090 的 TCP 49100 和 UDP 47998。云端 tmux `n0-vtla-zmq` 必须存活，服务只
+  监听云端 `127.0.0.1:5557`。
 - **Commands:**
 
 ```bash
-# 本地：通过 GitHub 同步根仓与 UniVTAC 子模块候选提交。
+# 4090：通过 GitHub 同步根仓与 UniVTAC 子模块候选提交。
 cd /path/to/vla-post-train
 git pull --ff-only
 git submodule update --init --recursive
+
+uv sync --python 3.12 --all-groups
+set -o pipefail
+bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate UniVTAC
 python -m pip install msgpack==1.1.2 pyzmq==27.1.0
 
-# 本地另开终端并保持运行：
-ssh -N -L 5557:127.0.0.1:5557 aliyun_vla_rl_exp_atticux
+# 首次交互运行 isaacsim，阅读并接受 EULA；退出后：
+export ACCEPT_EULA=Y
+bash methods/univtac/scripts/install.sh --gpu-smoke \
+  2>&1 | tee "$HOME/univtac-4090-gpu-smoke.log"
 
-# 回到根仓终端：
+# 4090 另开终端并保持运行：
+ssh -N -L 5557:127.0.0.1:5557 \
+  -p 1022 root@nlb-q4893rwy28q2gtmo1a.cn-beijing.nlb.aliyuncsslb.com
+
+# 4090 回到根仓终端；用户电脑用 WebRTC Client 连接 4090 IP：
 ./lab config validate experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml
 ./lab experiment dry-run experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml
 ./lab experiment run experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml

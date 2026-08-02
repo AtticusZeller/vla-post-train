@@ -27,10 +27,11 @@ native:
     - --total_num
     - "5"
     - --headless
+    - --livestream
+    - "2"
     - --device
     - cuda:0
   env:
-    LIVESTREAM: "0"
     N0VTLA_ZMQ_ADDR: tcp://127.0.0.1:5557
     UNIVTAC_EVAL_ROOT: "{artifact_path}/native/eval_result"
   primary_metrics: []
