@@ -3,7 +3,6 @@ id: insert-hole-n0-vtla-zmq-smoke
 method: univtac
 repository:
   path: methods/univtac
-  expected_branch: dev
   require_clean: false
 environment:
   manager: conda
