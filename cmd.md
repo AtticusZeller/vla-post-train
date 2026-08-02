@@ -25,10 +25,10 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
-## 待用户验证
+## UniVTAC 本地验证（已通过）
 
-- **Status:** Pending（2026-08-02；云端修复已停止，等待 Ubuntu 本地机验证）
-- **Purpose:** 从远端恢复 UniVTAC `dev@0876043` 安装器修订，在本地 RTX 4060
+- **Status:** Passed（2026-08-02；Ubuntu 本地单环境 GUI 与触觉仿真已通过）
+- **Purpose:** 从远端恢复 UniVTAC `dev@9ffd768` 安装器与资产修订，在本地 RTX 4060
   Laptop GPU 上完成依赖安装、最小 GPU smoke 与 GUI 启动。
 - **Prerequisites:** GitHub 私有仓库访问权限、Conda、可用 NVIDIA 驱动和至少约 50 GB
   空间。Isaac Sim 4.5 官方只列出 Ubuntu 20.04/22.04，最低内存为 32 GB；当前
@@ -49,6 +49,8 @@ bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate UniVTAC
+export CUDA_HOME="$CONDA_PREFIX"
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 python -m pip check
 # 阅读并接受 NVIDIA Omniverse EULA 后再设置：
 export ACCEPT_EULA=Y
@@ -60,10 +62,14 @@ isaacsim
 
 # 可选：单环境 TacEx 可视化，不先跑 UniVTAC 数据采集或 512-env 训练。
 cd methods/univtac/third_party/TacEx
-python scripts/demos/tactile_sim_approaches/check_taxim_sim.py --debug_vis
+python scripts/demos/tactile_sim_approaches/check_taxim_sim.py \
+  --num_envs 1 \
+  --debug_vis \
+  --rendering_mode performance
 ```
 
-- **Pass criteria:** UniVTAC revision 以 `0876043` 开头且工作树干净；安装命令以
+- **Pass criteria:** UniVTAC revision 为 `9ffd768`（包含资产恢复提交 `4423bb7`）且工作树
+  干净；安装命令以
   exit code 0 结束；`pip check` 无 broken requirements；
   `--gpu-smoke` 能创建并关闭 Isaac Sim、导入 `tacex` 与 `tacex_uipc`；`isaacsim`
   出现可交互窗口；可选 TacEx demo 能显示单环境触觉可视化，且无 CUDA OOM 或崩溃。
@@ -72,6 +78,11 @@ python scripts/demos/tactile_sim_approaches/check_taxim_sim.py --debug_vis
   `free -h` 与是否使用 Wayland。不要在失败后直接启动数据采集。
 
 ## 最近用户验证
+
+- **UniVTAC 单环境触觉仿真**：Passed（2026-08-02）。RTX 4060 Laptop 8 GB 上以
+  `--num_envs 1 --rendering_mode performance` 进入 `Setup complete`，GelSight
+  tactile debug view 可见并连续完成多次 reset；证据见
+  [`docs/univtac-smoke-20260802.md`](docs/univtac-smoke-20260802.md)。
 
 - **状态**：Passed（2026-07-30，用户确认 `corner` 视角与 640×480 清晰度可用）
 - **目的**：人工确认 FlowDAgger MetaWorld-12 冒烟运行生成的视频可播放，

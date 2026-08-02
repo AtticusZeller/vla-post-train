@@ -13,21 +13,23 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
-## 2026-08-02 · UniVTAC 安装器本地验证运输版本
+## 2026-08-02 · UniVTAC 安装器与本地触觉仿真
 
-- **状态：** Open（功能验证 Pending）
-- **范围：** UniVTAC fork `dev@0876043` 的 `scripts/install.sh`、
-  `docs/Installation.md` 与根仓 gitlink、本地验收命令、安装诊断记录。
-- **暂缓原因：** DSW 无头环境不再作为目标；用户要求先提交并推送，使本地 Ubuntu
-  工作站可以拉取同一版本完成 GUI 验证。本条提交是跨机器运输点，不是已验证交付。
-- **验证证据：** `bash -n`、`git diff --check`、帮助/错误参数和 mocked Conda 环境
-  探测已通过；云端部分安装确认 Isaac Sim 4.5.0.0、PyTorch 2.5.1+cu124、Isaac Lab、
-  cuRobo、TacEx Python 包和 `pip check`，但在 vcpkg/tacex_uipc 前由用户主动中止，
-  GPU smoke 与 GUI 均未执行。
+- **状态：** Open（功能验证 Passed；理解复盘 Pending）
+- **范围：** UniVTAC fork `dev@9ffd768` 的 `scripts/install.sh`、
+  `docs/Installation.md`、恢复的 `Gelpad_low_res.usd` 与根仓 gitlink、本地验收命令、
+  安装诊断记录。
+- **暂缓原因：** 安装和 GUI/触觉仿真已完成运行验收，但用户选择先完成可恢复提交与
+  证据收尾，将 installer、vcpkg 和 vendored TacEx 资产链的代码理解复盘延后。
+- **验证证据：** 本地完整安装确认 Isaac Sim 4.5.0.0、PyTorch 2.5.1+cu124、Isaac Lab、
+  cuRobo、TacEx、`tacex_uipc` 和 `pip check`；RTX 4060 Laptop 8 GB 上的单环境
+  `performance` GUI 进入 `Setup complete`，GelSight debug view 可见并连续 reset，
+  用户于 2026-08-02 明确确认完全通过。详见
+  [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
 - **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装、
   vcpkg 与 `tacex_uipc` 的构建链，以及本地仿真与云端推理未来应采用的接口边界。
-- **偿还标准：** 本地完成 `cmd.md` 的安装、GPU smoke 和 GUI 验收；随后对最终 diff
-  运行 explain-diff-html 并通过全部五题，再把本条改为 Repaid。
+- **偿还标准：** 对最终 installer、资产恢复与验证命令 diff 运行 explain-diff-html，
+  通过全部五题后把本条改为 Repaid。
 - **偿还记录：** Pending
 
 ## 2026-08-02 · UniVTAC benchmark 接入与安装边界诊断

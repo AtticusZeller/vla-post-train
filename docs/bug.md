@@ -4,6 +4,22 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-08-02：UniVTAC vendored TacEx 漏掉 GelSight low-res gelpad
+
+- **触发：** 完整安装后运行 TacEx `check_taxim_sim.py --num_envs 1 --debug_vis
+  --rendering_mode performance`。
+- **现象：** Isaac Sim 能启动且显存仍有约 6.9 GB 空闲，但 USD stage 报
+  `Gelpad_low_res.usd` 无法打开，随后 gelpad prim 不是有效 rigid body，Robot
+  articulation 创建失败。
+- **原因：** UniVTAC 提交 `a9abc0d` 为规避 Git LFS 配额删除 low-res 资产；后续
+  `97a3fe3` 把其他 LFS pointer 恢复成普通 Git 文件时漏掉该文件，而 vendored robot USD
+  仍保留 payload 引用。官方 TacEx 当前文件树和 UniVTAC 早期提交 `b371b18` 均包含它。
+- **处理：** 从 `b371b18` 原样恢复 267,452 字节 USD crate，blob
+  `54ec424ca942aa55cfdc1a168b5e71cdc6e16ab8`，不以 mid/high-res 文件猜测替代。
+- **验证：** 相同单环境 `performance` 命令进入 `Setup complete`，触觉 debug view 可见，
+  连续 reset 且无 CUDA OOM；见 [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
+- **状态：** 已在 method 提交 `4423bb7` 修复并通过用户 GUI 验收。
+
 ## 2026-08-02：UniVTAC 安装链同时受 channel、镜像与上游版本脚本影响
 
 - **触发：** 修复首次 `grep` 退出后，在全新 `UniVTAC` Conda 环境继续执行官方完整
@@ -18,11 +34,12 @@
   Lab v2.1.1 和 cuRobo commit，直接 editable 安装 Isaac Lab 源码扩展以保留指定
   PyTorch；用 vcpkg 可执行文件而非 toolchain 文件作为 bootstrap 完成标志；把真实
   GPU 启动改为显式 `--gpu-smoke`，不再让安装器自动跑 512-env 训练或数据采集。
-- **证据边界：** Bash 静态检查与云端部分依赖安装通过；cuRobo CUDA 扩展已在 H20
-  编译成功，`pip check` 无 broken requirements。用户在 vcpkg/tacex_uipc 前主动停止，
-  所以完整安装、GPU smoke 与 GUI 仍待本地验证。日志位于
-  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`。
-- **状态：** 已提交待本地验证的修订；不能标记为端到端修复。
+- **证据边界：** 云端曾在 vcpkg/tacex_uipc 前主动停止；随后本地完整安装确认 cuRobo
+  CUDA 扩展、`tacex_uipc`、`pip check`、PyTorch CUDA 张量和单环境 GUI/触觉仿真通过。
+  该证据仍不覆盖数据采集、512-env 训练或策略质量。云端日志位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/`，本地 GUI 证据见
+  [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。
+- **状态：** 安装与单环境 GUI 工程链已端到端验证；大规模工作负载未验证。
 
 ## 2026-08-01：UniVTAC 首次安装被 `set -e` 与无匹配 `grep` 静默中止
 

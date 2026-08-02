@@ -178,10 +178,10 @@ vla-post-train/
 - [x] 提交并推送根 gitlink 与工作区更新。
 - [x] 将 UniVTAC 作为 benchmark 接入 `methods/univtac`，并在撤销个人 Agent 文件后
   固定 fork `dev@1e9272a`；官方首次安装器故障已复现归档。
-- [ ] 在本地 Ubuntu 工作站完成 UniVTAC 安装器与 GUI 仿真验收。云端无头安装修复已按
-  用户要求停止；当前 `dev@0876043` 只完成静态检查和部分云端依赖安装，作为待本地验证
-  的运输版本提交。后续默认采用“本地仿真、云端模型推理”的分工，具体通信接口在首次
-  本地 smoke 通过后再设计，不在本轮安装器改动中提前实现。
+- [x] 在本地 Ubuntu 24.04、RTX 4060 Laptop 8 GB 上完成 UniVTAC 环境安装与 TacEx
+  单环境 GUI/触觉仿真验收；恢复 vendored TacEx 漏掉的 `Gelpad_low_res.usd` 后，
+  `performance` 模式进入 `Setup complete` 并连续 reset。当前只证明工程链路，尚未创建
+  UniVTAC 正式实验、数据采集或本地—云端推理接口。
 
 ## 验收
 
