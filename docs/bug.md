@@ -13,9 +13,11 @@
   安装器没有看到后续 TacEx 导入，也仍打印 `Installation completed successfully`。
 - **环境证据：** 默认 `vulkaninfo` 只枚举 CPU llvmpipe，系统 ICD 目录没有 NVIDIA
   JSON；显式使用 RLinf/SAPIEN 的 NVIDIA ICD 后，匹配 580.95.05 的
-  `libGLX_nvidia.so.0` 仍返回 `VK_ERROR_INCOMPATIBLE_DRIVER`。官方 Isaac Sim 要求明确
-  排除无 RT Cores 的 A100/H100；H20 是否同属硬件排除项仍需官方规格或案例确认，因此
-  当前只把“本 DSW runtime 不可用”作为已证实结论。
+  `libGLX_nvidia.so.0` 仍返回 `VK_ERROR_INCOMPATIBLE_DRIVER`。这证明当前容器的 NVIDIA
+  Vulkan graphics 路径没有建立；独立于该软件栈故障，NVIDIA 对 H20 的
+  [直接答复](https://forums.developer.nvidia.com/t/does-the-h20-graphics-card-support-isaac-lab-isaac-sim/339701)
+  与 Isaac Sim 官方仓库 [Discussion #446](https://github.com/isaac-sim/IsaacSim/discussions/446)
+  均确认 H20 没有 RT Cores、不受 Isaac Sim 支持。补齐 ICD 不能消除最终硬件边界。
 - **处理：** GPU smoke 记录完整 Kit 输出，要求 GPU foundation device count 大于 0，
   并要求 Python 输出 TacEx/`tacex_uipc` 最终成功哨兵；出现设备创建错误或哨兵缺失即
   exit 1。用户命令固定使用 `$CONDA_PREFIX/bin/python`，避免根 `.venv` 抢占解释器。
@@ -23,8 +25,8 @@
   `Isaac Sim could not create a Vulkan/RTX graphics device`。证据见
   `/mnt/data/atticux/vla-post-train/univtac/h20-gpu-smoke.log`、
   `gpu-foundation-probe.log` 和 `gpu-smoke-negative-verification.log`。
-- **状态：** smoke 假阳性已修复；云端 Isaac Sim runtime 仍不可用，本地 RTX 4060
-  单环境 GUI/触觉仿真已通过。
+- **状态：** smoke 假阳性已修复；当前 H20 不再投入 Isaac Sim runtime 修复，本地
+  RTX 4060 单环境 GUI/触觉仿真已通过，后续采用本地仿真、云端模型训练与推理。
 
 ## 2026-08-02：UniVTAC vendored TacEx 漏掉 GelSight low-res gelpad
 

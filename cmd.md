@@ -57,10 +57,11 @@ bash methods/univtac/scripts/install.sh --gpu-smoke \
 - **Observed result:** Conda Python 的 `pip check` 与 `uipc 0.9.0` 通过；Kit 显示
   `Driver Version: 0`、空 GPU 表和 `No device could be created`。旧安装器误报成功，
   修订后相同故障明确输出 `Isaac Sim could not create a Vulkan/RTX graphics device`
-  并 exit 1。该结果不影响云端模型推理，但当前机器不能承担 Isaac Sim 仿真。
+  并 exit 1。NVIDIA 已明确 H20 没有 RT Cores、不受 Isaac Sim 支持；该结果不影响
+  云端模型训练与推理，但当前机器不能承担 Isaac Sim 仿真。
 - **Evidence:** `/mnt/data/atticux/vla-post-train/univtac/h20-gpu-smoke.log`、
-  `gpu-foundation-probe.log`、`gpu-smoke-negative-verification.log`。若云平台日后补齐匹配
-  Vulkan runtime，再用同一命令复验；不要混装版本不同于宿主 580.95.05 的驱动包。
+  `gpu-foundation-probe.log`、`gpu-smoke-negative-verification.log`。不要在当前 H20 上
+  混装 graphics 驱动或手工注入 ICD；云端仿真只在换用受支持 RTX GPU 后重新验证。
 
 ## UniVTAC 本地验证（已通过）
 

@@ -25,10 +25,12 @@
   通过，详见 [`docs/univtac-smoke-20260802.md`](univtac-smoke-20260802.md)。云端全部
   vcpkg ports、`tacex_uipc 0.1.0`、`pyuipc 0.9.0`、`pip check`、
   `import uipc` 和 H20 `sm_90` CUDA 编译通过；H20 headless smoke 暴露空 Vulkan GPU
-  表与 `No device could be created`。修订后的同机复验正确 exit 1，消除旧版假阳性。
+  表与 `No device could be created`。修订后的同机复验正确 exit 1，消除旧版假阳性；
+  NVIDIA 论坛和 Isaac Sim 官方仓库的 H20 专门答复进一步确认其没有 RT Cores、不受
+  Isaac Sim 支持。
 - **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装，vcpkg/
   libuipc/pyuipc 构建链，Kit 的 CUDA 与 Vulkan/RTX 双重设备边界，以及未来本地仿真与
-  云端模型推理通信接口。
+  云端模型训练/推理通信接口。
 - **偿还标准：** 针对最终 method/root 提交运行 explain-diff-html，阅读解释并通过全部
   五题；届时把本条改为 Repaid。
 - **偿还记录：** Pending

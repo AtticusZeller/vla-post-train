@@ -40,9 +40,16 @@ libuipc CUDA backend 已针对 H20 的 `sm_90` 编译成功。
 云端运行边界与安装边界必须分开：该 DSW 的 `vulkaninfo` 只枚举 CPU llvmpipe，系统
 Vulkan ICD 目录没有 NVIDIA JSON；显式使用现有 NVIDIA ICD 后仍以
 `VK_ERROR_INCOMPATIBLE_DRIVER` 失败。Isaac Sim headless 因而显示 `Driver Version: 0`、
-空 GPU 表和 `No device could be created`。当前证据确认这台 DSW 不能运行 Isaac Sim
-RTX/Vulkan 仿真，但不能单独裁决是云端 Vulkan 注入不完整还是 H20 硬件能力边界。安装器
-现会把该情况判为 exit 1，不再把 `SimulationApp` 提前 exit 0 误报为成功。
+空 GPU 表和 `No device could be created`。这证明当前容器没有建立可用的 NVIDIA Vulkan
+graphics 路径；除此之外，NVIDIA 对 H20 的[直接答复](https://forums.developer.nvidia.com/t/does-the-h20-graphics-card-support-isaac-lab-isaac-sim/339701)
+和 Isaac Sim 官方仓库的 [H20 讨论](https://github.com/isaac-sim/IsaacSim/discussions/446)
+均确认 H20 没有 RT Cores、位于 Isaac Sim 支持范围之外。因此即使补齐匹配版本的 Vulkan
+用户态栈，也不能把 H20 变成受支持的 Isaac Sim GPU。安装器现会把 graphics device
+创建失败判为 exit 1，不再把 `SimulationApp` 提前 exit 0 误报为成功。
+
+当前运行分工确定为本地 RTX 4060 承担 Isaac Sim/TacEx/UniVTAC 仿真，云端 H20 承担
+模型训练与推理。只有云端换成满足 Isaac Sim 要求的 RTX GPU 后，才重新验证云端仿真；
+不再为当前 H20 尝试混装驱动、手工注入 ICD 或寻找 `physics-only` 绕过路径。
 
 仍没有创建 `experiments/univtac/`、launcher、配置或运行手册，也没有下载数据。出现第一
 个明确实验后，再按具体 policy、task、预算和 seed 建立可复现配置；大型数据、checkpoint、

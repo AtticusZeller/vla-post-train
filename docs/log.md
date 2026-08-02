@@ -13,12 +13,14 @@
   优先加载 Release binding。`pip check` 无冲突，cuRobo/uipc 无 GPU 导入通过。
 - 用户释放 RLinf GPU 并接受 Omniverse EULA 后执行真实 headless smoke。Kit 显示
   `Driver Version: 0`、空 GPU 表与 `No device could be created`；默认 `vulkaninfo`
-  只见 llvmpipe，显式 NVIDIA ICD 仍报 `VK_ERROR_INCOMPATIBLE_DRIVER`。因此确认当前 DSW
-  不可运行 Isaac Sim RTX/Vulkan 仿真，但不把该结果外推为 H20 硬件的最终官方结论。
+  只见 llvmpipe，显式 NVIDIA ICD 仍报 `VK_ERROR_INCOMPATIBLE_DRIVER`，确认当前 DSW
+  没有可用的 NVIDIA Vulkan graphics 路径。后续检索到 NVIDIA 对 H20 的直接答复及
+  Isaac Sim 官方仓库 H20 讨论，均明确 H20 没有 RT Cores、不受 Isaac Sim 支持；因此
+  补齐 ICD 也不能消除最终硬件边界。
 - 旧 smoke 因 `AppLauncher` 在 GPU foundation 失败时提前 exit 0 而误报安装成功；新版
   同时检查 graphics device count、Kit 错误和最终成功哨兵，同机复验正确 exit 1。
 - 本地 RTX 4060 的单环境 GUI/触觉仿真仍是运行正证据；当前工作模式确定为本地仿真、
-  云端模型推理。完整云端证据位于
+  云端模型训练与推理，不再继续修复 H20 上的 Isaac Sim runtime。完整云端证据位于
   `/mnt/data/atticux/vla-post-train/univtac/install-cloud-20260802T1612Z/` 及同级 smoke 日志。
 - 本任务为 Type C−，开放认知债务见 `docs/cognitive-debt.md` 的
   “UniVTAC 安装器与本地/云端运行边界”条目。

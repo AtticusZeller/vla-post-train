@@ -17,7 +17,8 @@
 | `methods/univtac` | `dev` | benchmark | 视触觉仿真、数据采集、策略训练与评测平台 |
 
 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
-LeRobot、expo-ft 与 UniVTAC 当前只固定代码版本，尚未创建实验配置或运行手册。
+LeRobot 与 expo-ft 当前只固定代码版本。UniVTAC 已完成安装器修复和本地 RTX 4060
+单环境触觉仿真验收，但尚未创建实验配置或运行手册；当前采用本地仿真、云端模型推理。
 
 ## 初始化
 
