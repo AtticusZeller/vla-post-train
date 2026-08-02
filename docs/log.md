@@ -18,7 +18,10 @@
   `git submodule status --recursive` 全初始化、`git diff --check`、ruff format/check、
   ty check、pytest（29 passed）、`./lab config validate --all` 与
   check-repo-agents.sh 均通过。方法修订先于父 gitlink 推送（origin/workspace 65563a9）。
-- 待用户验证见 `cmd.md` 的 `## 待用户验证` 块。
+- 2026-08-02 用户执行 `cmd.md` 验证命令并确认：`./lab method status` 显示
+  n0-vtla=workspace@65563a9、clean=yes、origin/upstream 正确；`git submodule
+  status --recursive` 中 `methods/n0-vtla` 无 `-` 前缀且与父 gitlink 一致；method
+  工作树干净。`cmd.md` 待用户验证块已标记 Passed。
 
 ## 2026-08-02：完成 UniVTAC 云端安装并收敛 H20 runtime 边界
 

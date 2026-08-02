@@ -27,7 +27,7 @@ uv run pytest
 
 ## 待用户验证
 
-- **Status:** Pending
+- **Status:** Passed（2026-08-02；用户已执行并确认）
 - **Purpose:** 确认 N0-VTLA 已按 add-method 工作流登记为 `methods/n0-vtla` submodule：
   `lab.py` 元数据、分支、修订、remotes 与工作树干净状态都正确。
 - **Prerequisites:** 可访问 GitHub 的 HTTPS 凭据（`gh auth status` 已登录）；
@@ -49,6 +49,10 @@ git -C methods/n0-vtla status --short --branch
   `workspace...origin/workspace`。
 - **Return on failure:** 返回 `./lab method status` 完整输出、
   `git submodule status` 输出与 `git -C methods/n0-vtla status --short --branch` 结果。
+- **Observed result:** 用户于 2026-08-02 执行上述命令并确认：`./lab method status` 显示
+  n0-vtla=workspace@65563a9、clean=yes、origin/upstream 正确；`git submodule status
+  --recursive` 中 `methods/n0-vtla` 无 `-` 前缀；method 工作树干净
+  （`## workspace...origin/workspace`）。
 
 ## UniVTAC 云端 H20 smoke（已验证不可用）
 
