@@ -25,10 +25,47 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
-## 待用户验证
+## UniVTAC 云端 H20 smoke（已验证不可用）
 
-- **Status:** Pending（2026-08-02；云端修复已停止，等待 Ubuntu 本地机验证）
-- **Purpose:** 从远端恢复 UniVTAC `dev@a206692`（安装器基线 `0876043`），在本地
+- **Status:** Failed as expected（2026-08-02；安装成功，当前 DSW 的 Vulkan/RTX runtime
+  不可用，修订后的 smoke 已正确返回 exit 1）
+- **Purpose:** 验证当前 DSW 的 2×H20 能否真正启动 Isaac Sim 4.5 headless，并加载
+  TacEx 与 `tacex_uipc`；该检查用于区分“安装/编译完成”和“RTX 仿真运行兼容”。
+- **Prerequisites:** 以下命令是已完成验证的复现入口。执行前确认 GPU 空闲；首次运行先
+  启动 `isaacsim`，在交互式终端阅读并接受 NVIDIA Omniverse EULA，退出后再设置
+  `ACCEPT_EULA=Y`。安装器不会代替用户接受许可证。
+- **Commands:**
+
+```bash
+cd /root/vla-post-train
+nvidia-smi
+
+source /root/miniconda3/etc/profile.d/conda.sh
+conda activate UniVTAC
+export CUDA_HOME="$CONDA_PREFIX"
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+"$CONDA_PREFIX/bin/python" -m pip check
+"$CONDA_PREFIX/bin/python" -c 'import uipc; print(uipc.__version__)'
+
+# 仅在你已经阅读并接受 NVIDIA Omniverse EULA 后执行：
+export ACCEPT_EULA=Y
+bash methods/univtac/scripts/install.sh --gpu-smoke \
+  2>&1 | tee /mnt/data/atticux/vla-post-train/univtac/h20-gpu-smoke.log
+```
+
+- **Observed result:** Conda Python 的 `pip check` 与 `uipc 0.9.0` 通过；Kit 显示
+  `Driver Version: 0`、空 GPU 表和 `No device could be created`。旧安装器误报成功，
+  修订后相同故障明确输出 `Isaac Sim could not create a Vulkan/RTX graphics device`
+  并 exit 1。该结果不影响云端模型推理，但当前机器不能承担 Isaac Sim 仿真。
+- **Evidence:** `/mnt/data/atticux/vla-post-train/univtac/h20-gpu-smoke.log`、
+  `gpu-foundation-probe.log`、`gpu-smoke-negative-verification.log`。若云平台日后补齐匹配
+  Vulkan runtime，再用同一命令复验；不要混装版本不同于宿主 580.95.05 的驱动包。
+
+## UniVTAC 本地验证（已通过）
+
+- **Status:** Passed（2026-08-02；Ubuntu 本地单环境 GUI 与触觉仿真已通过）
+- **Purpose:** 从远端恢复 UniVTAC `dev@9ffd768`，在本地
   RTX 4060 Laptop GPU 上完成依赖安装、最小 GPU smoke 与 GUI 启动。
 - **Prerequisites:** GitHub 私有仓库访问权限、Conda、可用 NVIDIA 驱动和至少约 50 GB
   空间。Isaac Sim 4.5 官方只列出 Ubuntu 20.04/22.04，最低内存为 32 GB；当前
@@ -49,8 +86,8 @@ bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
 
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate UniVTAC
-python -m pip check
-# 阅读并接受 NVIDIA Omniverse EULA 后再设置：
+"$CONDA_PREFIX/bin/python" -m pip check
+# 先运行 isaacsim，在交互式终端阅读并接受 EULA；退出后再设置：
 export ACCEPT_EULA=Y
 bash methods/univtac/scripts/install.sh --gpu-smoke \
   2>&1 | tee "$HOME/univtac-gpu-smoke.log"
@@ -60,10 +97,13 @@ isaacsim
 
 # 可选：单环境 TacEx 可视化，不先跑 UniVTAC 数据采集或 512-env 训练。
 cd methods/univtac/third_party/TacEx
-python scripts/demos/tactile_sim_approaches/check_taxim_sim.py --debug_vis
+python scripts/demos/tactile_sim_approaches/check_taxim_sim.py \
+  --num_envs 1 \
+  --debug_vis \
+  --rendering_mode performance
 ```
 
-- **Pass criteria:** UniVTAC revision 以 `a206692` 开头且工作树干净；安装命令以
+- **Pass criteria:** 历史验收使用 UniVTAC `9ffd768`（包含低分辨率 GelSight 资产恢复）；安装命令以
   exit code 0 结束；`pip check` 无 broken requirements；
   `--gpu-smoke` 能创建并关闭 Isaac Sim、导入 `tacex` 与 `tacex_uipc`；`isaacsim`
   出现可交互窗口；可选 TacEx demo 能显示单环境触觉可视化，且无 CUDA OOM 或崩溃。

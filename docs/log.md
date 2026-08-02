@@ -4,6 +4,25 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-02：完成 UniVTAC 云端安装并收敛 H20 runtime 边界
+
+- 同步本地成功分支后，云端使用经 gzip、源码内容和 tag commit 校验的 tinygltf 临时
+  overlay 安装余下 5 个 vcpkg ports；补齐 libuipc 未声明的 `mypy` 和嵌套 pip 官方源，
+  最终构建 `tacex_uipc 0.1.0`、`pyuipc 0.9.0` 与 H20 `sm_90` CUDA backend。
+- 修复 pyuipc wheel 的 stub-only 顶层 namespace 遮蔽编译 `.so`：`import uipc` 现在
+  优先加载 Release binding。`pip check` 无冲突，cuRobo/uipc 无 GPU 导入通过。
+- 用户释放 RLinf GPU 并接受 Omniverse EULA 后执行真实 headless smoke。Kit 显示
+  `Driver Version: 0`、空 GPU 表与 `No device could be created`；默认 `vulkaninfo`
+  只见 llvmpipe，显式 NVIDIA ICD 仍报 `VK_ERROR_INCOMPATIBLE_DRIVER`。因此确认当前 DSW
+  不可运行 Isaac Sim RTX/Vulkan 仿真，但不把该结果外推为 H20 硬件的最终官方结论。
+- 旧 smoke 因 `AppLauncher` 在 GPU foundation 失败时提前 exit 0 而误报安装成功；新版
+  同时检查 graphics device count、Kit 错误和最终成功哨兵，同机复验正确 exit 1。
+- 本地 RTX 4060 的单环境 GUI/触觉仿真仍是运行正证据；当前工作模式确定为本地仿真、
+  云端模型推理。完整云端证据位于
+  `/mnt/data/atticux/vla-post-train/univtac/install-cloud-20260802T1612Z/` 及同级 smoke 日志。
+- 本任务为 Type C−，开放认知债务见 `docs/cognitive-debt.md` 的
+  “UniVTAC 安装器与本地/云端运行边界”条目。
+
 ## 2026-08-02：STEAM Medium seed 1 续训至 10k 因退化被用户中止
 
 - run `20260801-034909__libero10-task0-medium-steam-seed1-continue10k-2gpu` 从

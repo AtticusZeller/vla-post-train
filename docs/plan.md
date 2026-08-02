@@ -197,13 +197,15 @@ vla-post-train/
 - [x] 提交并推送根 gitlink 与工作区更新。
 - [x] 将 UniVTAC 作为 benchmark 接入 `methods/univtac`，并在撤销个人 Agent 文件后
   固定 fork `dev@1e9272a`；官方首次安装器故障已复现归档。
-- [ ] 在本地 Ubuntu 工作站完成 UniVTAC 安装器与 GUI 仿真验收。当前
-  `dev@a206692`（安装器基线 `0876043`）已通过静态检查、云端 vcpkg bootstrap、34/39
-  个 port 和完整 compiler/CUDA detection；剩余阻塞是 tinygltf GitHub archive SHA512
-  上游变化。用户本地的完整性校验 overlay 已越过 hash 点并进入 libuipc 编译，但完整
-  安装、`import uipc`、
-  GPU smoke 和 GUI 均没有最终成功证据。后续默认采用“本地仿真、云端模型推理”的
-  分工，具体通信接口在首次本地 smoke 通过后再设计。
+- [x] 完成 UniVTAC 本地安装与单环境 GUI/触觉仿真验收；RTX 4060 Laptop 以
+  `--num_envs 1 --rendering_mode performance` 进入 `Setup complete` 并连续 reset。
+- [x] 完成当前 DSW 的 Python/CUDA 构建链：全部 vcpkg ports、`tacex_uipc`、pyuipc、
+  `pip check` 和 `import uipc` 通过，libuipc 针对 H20 `sm_90` 编译成功。
+- [x] 验证云端 Isaac Sim runtime 边界：当前 DSW 没有可用 NVIDIA Vulkan/RTX graphics
+  device，headless smoke 正确以 exit 1 结束；不再把它误报为安装成功。
+- [ ] 后续默认采用“本地仿真、云端模型推理”的分工；等出现第一个明确 VTLA 实验时，
+  再设计通信接口、`experiments/univtac/` 配置和 runbook。若网页版找到 H20 官方支持
+  证据或云平台提供匹配 Vulkan runtime，可另开环境验证，不在当前安装器中盲目混装驱动。
 
 ## 验收
 

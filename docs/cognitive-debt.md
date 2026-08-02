@@ -13,23 +13,22 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
-## 2026-08-02 · UniVTAC 安装器本地验证运输版本
+## 2026-08-02 · UniVTAC 安装器与本地/云端运行边界
 
-- **状态：** Open（功能验证 Pending）
-- **范围：** UniVTAC fork `dev@a206692`（安装器基线 `0876043`）的 `scripts/install.sh`、
-  `docs/Installation.md` 与根仓 gitlink、本地验收命令、安装诊断记录。
-- **暂缓原因：** DSW 无头环境不再作为目标；用户要求先提交并推送，使本地 Ubuntu
-  工作站可以拉取同一版本完成 GUI 验证。本条提交是跨机器运输点，不是已验证交付。
-- **验证证据：** `bash -n`、`git diff --check`、帮助/错误参数和 mocked Conda 环境
-  探测已通过；云端部分安装确认 Isaac Sim 4.5.0.0、PyTorch 2.5.1+cu124、Isaac Lab、
-  cuRobo、TacEx Python 包、`pip check`、vcpkg bootstrap、34/39 ports 及 GNU 11.4/
-  CUDA 12.4 detection。`retry-9` 暴露失败 manifest cache 会关闭依赖安装；干净 build
-  的 `retry-10` 阻塞于 tinygltf GitHub archive SHA512 上游变化。本地临时 overlay 已
-  越过 hash 点，但完整 `tacex_uipc`、`import uipc`、GPU smoke 与 GUI 均未证实。
-- **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装、
-  vcpkg 与 `tacex_uipc` 的构建链，以及本地仿真与云端推理未来应采用的接口边界。
-- **偿还标准：** 本地完成 `cmd.md` 的安装、GPU smoke 和 GUI 验收；随后对最终 diff
-  运行 explain-diff-html 并通过全部五题，再把本条改为 Repaid。
+- **状态：** Open（功能验证已完成）
+- **范围：** UniVTAC fork 至 `b443b32` 的 `scripts/install.sh`、libuipc Python binding
+  搜索顺序、`docs/Installation.md`，以及根仓 gitlink、安装诊断和运行边界文档。
+- **暂缓原因：** 用户选择 Type C− 优先完成跨本地/云端实装与故障收敛，暂不执行
+  Explain Diff 五题；功能验证、真实 GPU 证据和失败边界没有延后。
+- **验证证据：** 本地 RTX 4060 完整安装、Isaac Sim GUI、GelSight 触觉窗口和连续 reset
+  通过。云端全部 vcpkg ports、`tacex_uipc 0.1.0`、`pyuipc 0.9.0`、`pip check`、
+  `import uipc` 和 H20 `sm_90` CUDA 编译通过；H20 headless smoke 暴露空 Vulkan GPU
+  表与 `No device could be created`。修订后的同机复验正确 exit 1，消除旧版假阳性。
+- **待理解内容：** 安装器为何绕开 Isaac Lab wrapper 的 torch 2.7/cu128 重装，vcpkg/
+  libuipc/pyuipc 构建链，Kit 的 CUDA 与 Vulkan/RTX 双重设备边界，以及未来本地仿真与
+  云端模型推理通信接口。
+- **偿还标准：** 针对最终 method/root 提交运行 explain-diff-html，阅读解释并通过全部
+  五题；届时把本条改为 Repaid。
 - **偿还记录：** Pending
 
 ## 2026-08-02 · UniVTAC benchmark 接入与安装边界诊断

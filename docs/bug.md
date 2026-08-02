@@ -4,6 +4,28 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-08-02：Isaac Sim GPU foundation 失败会以 exit 0 制造 smoke 假阳性
+
+- **触发：** 在 Alibaba Cloud DSW 的 2×H20 上执行安装器 `--gpu-smoke`；CUDA 和
+  `nvidia-smi` 均正常，但 Isaac Sim 依赖 Vulkan/RTX graphics device。
+- **现象：** Kit 输出 `Driver Version: 0`、空 GPU 表、`No device could be created` 和
+  `Unable to get IGpuFoundation`，但 `AppLauncher(...)` 提前以 exit 0 结束 Python；旧
+  安装器没有看到后续 TacEx 导入，也仍打印 `Installation completed successfully`。
+- **环境证据：** 默认 `vulkaninfo` 只枚举 CPU llvmpipe，系统 ICD 目录没有 NVIDIA
+  JSON；显式使用 RLinf/SAPIEN 的 NVIDIA ICD 后，匹配 580.95.05 的
+  `libGLX_nvidia.so.0` 仍返回 `VK_ERROR_INCOMPATIBLE_DRIVER`。官方 Isaac Sim 要求明确
+  排除无 RT Cores 的 A100/H100；H20 是否同属硬件排除项仍需官方规格或案例确认，因此
+  当前只把“本 DSW runtime 不可用”作为已证实结论。
+- **处理：** GPU smoke 记录完整 Kit 输出，要求 GPU foundation device count 大于 0，
+  并要求 Python 输出 TacEx/`tacex_uipc` 最终成功哨兵；出现设备创建错误或哨兵缺失即
+  exit 1。用户命令固定使用 `$CONDA_PREFIX/bin/python`，避免根 `.venv` 抢占解释器。
+- **验证：** 修订前同一日志误报成功；修订后真实 H20 复验以 exit 1 结束，并明确输出
+  `Isaac Sim could not create a Vulkan/RTX graphics device`。证据见
+  `/mnt/data/atticux/vla-post-train/univtac/h20-gpu-smoke.log`、
+  `gpu-foundation-probe.log` 和 `gpu-smoke-negative-verification.log`。
+- **状态：** smoke 假阳性已修复；云端 Isaac Sim runtime 仍不可用，本地 RTX 4060
+  单环境 GUI/触觉仿真已通过。
+
 ## 2026-08-02：UniVTAC 安装链同时受 channel、镜像与上游版本脚本影响
 
 - **触发：** 修复首次 `grep` 退出后，在全新 `UniVTAC` Conda 环境继续执行官方完整
@@ -24,17 +46,17 @@
   `Eigen3Config.cmake` 缺失。隔离 6.2 MB 的失败 build 后，`retry-10` 正常进入 39 个
   port 的 manifest install，证明后续 `CMAKE_MAKE_PROGRAM`/compiler 提示只是 vcpkg
   首错的级联输出。
-- **当前外部阻塞：** `retry-10` 安装至 34/39，随后 tinygltf 2.9.3 的 GitHub tarball
+- **后续已解决阻塞：** `retry-10` 安装至 34/39，随后 tinygltf 2.9.3 的 GitHub tarball
   SHA512 从 vcpkg 记录的 `4f4d479a…` 变为 `6dbcff3e…`。归档可正常解压且 tag 仍指向
   `14ba27113e…`；同一时段 vcpkg [#53143](https://github.com/microsoft/vcpkg/issues/53143)
-  在 macOS 与 WSL2/Ubuntu 报告相同类型的 tinygltf archive hash 变化。用户本地使用
-  经过 gzip、源码内容和 tar commit 校验的临时 overlay 后已越过 hash 点并进入
-  libuipc 配置/编译，但返回证据没有最终 exit code、`import uipc` 或 GPU smoke。
-- **证据边界：** Bash 静态检查、cuRobo CUDA 扩展、vcpkg bootstrap、34 个 port 与
-  compiler/CUDA detection 已通过；完整 `tacex_uipc` wheel、依赖验证、GPU smoke 和
-  GUI 仍是 Pending。云端 `retry-9.log`、`retry-10.log` 与 manifest 日志位于
-  `/mnt/data/atticux/vla-post-train/univtac/install-fixed-20260802/` 和当前 TacEx build。
-- **状态：** 安装器运输版本已提交；tinygltf 临时 overlay 未提交，端到端修复尚未成立。
+  在 macOS 与 WSL2/Ubuntu 报告相同类型的 tinygltf archive hash 变化。云端对归档完成
+  gzip、源码内容和 tar commit 校验后使用临时 overlay，安装余下 5 个 ports；随后补齐
+  `mypy`、嵌套 pip 官方源与 pyuipc 搜索顺序，最终 wheel 和 `import uipc` 通过。
+- **证据边界：** 云端 Python/CUDA 构建链完整通过，libuipc 针对 H20 `sm_90` 编译，
+  `pip check` 无冲突；本地 RTX 4060 GUI/触觉仿真通过。云端 H20 的 Isaac Sim
+  Vulkan/RTX runtime 失败属于独立环境边界，见上一条。
+- **状态：** 安装器和依赖安装已修复；tinygltf 临时 overlay 未固化，若上游归档再次
+  变化仍需重新校验，不能关闭完整性检查。
 
 ## 2026-08-01：UniVTAC 首次安装被 `set -e` 与无匹配 `grep` 静默中止
 
