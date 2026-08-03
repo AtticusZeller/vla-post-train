@@ -25,9 +25,9 @@ uv run ty check scripts tests
 uv run pytest
 ```
 
-## 待用户验证
+## UniVTAC 4090 跨机闭环（已验证）
 
-- **Status:** Pending
+- **Status:** Passed（2026-08-03）
 - **Purpose:** 在实验室 RTX 4090 上运行 UniVTAC `insert_hole`，经 SSH 转发调用云端
   H20 的 N0-VTLA ZMQ 服务，并由用户电脑通过 WebRTC 查看，验证 5 个 episode 的完整
   跨机闭环。
@@ -47,7 +47,7 @@ uv sync --python 3.12 --all-groups
 set -o pipefail
 bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
 
-source "$(conda info --base)/etc/profile.d/conda.sh"
+source /home/atticux/miniforge3/etc/profile.d/conda.sh
 conda activate UniVTAC
 python -m pip install msgpack==1.1.2 pyzmq==27.1.0
 
@@ -73,6 +73,9 @@ ssh -N -L 5557:127.0.0.1:5557 \
   方向性证据。
 - **Return on failure:** 返回根 run ID、`run.json`、`logs/console.log`、首次 traceback
   前后各 100 行、`nvidia-smi`，以及云端 `tmux capture-pane -p -t n0-vtla-zmq -S -200`。
+- **Observed:** 用户通过 WebRTC 观察 5 个 episode 全部成功；文本直接记录 4/4 成功及
+  第五回合运行，根摘要为 exit code 0 / completed。最终 `Final Result` 未进入日志，故
+  `results={}`；详见 `experiments/univtac/report.md`。这是仿真闭环，不是真机验证。
 
 ## UniVTAC 云端 H20 smoke（已验证不可用）
 

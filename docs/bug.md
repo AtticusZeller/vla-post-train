@@ -4,6 +4,19 @@
 
 <!-- 新 bug 追加到本行下方 -->
 
+## 2026-08-03：UniVTAC 原生结果只打印到控制台时根摘要会为空
+
+- **触发：** 通过根 `lab experiment run` 执行 UniVTAC 多 episode 评测，但方法没有写入
+  `UNIVTAC_EVAL_ROOT` 下的结构化结果，且 Kit 关闭阶段没有保留最终 `Final Result` 行。
+- **现象：** 逐 seed 输出和 WebRTC 均显示任务运行，进程 exit code 0，根摘要也为
+  `status=completed`，但 `local_summary=null`、`primary_metrics=[]`、`results={}`。
+- **原因：** 根汇总器只收集已声明的结构化原生结果，不会把任意 console 文本猜成指标；
+  `completed` 表示进程工程完成，不等价于已有可解析的任务成功率。
+- **当前处理：** 报告保留逐 seed 片段、退出码和视频，并把用户观察值与机器直接证据分开；
+  不人工修改 `summary.json`。若未来需要正式统计，应由 UniVTAC eval 写结构化 summary，
+  再为根汇总器声明 parser，并重新进行用户侧验证。
+- **状态：** 证据边界已收敛；结构化结果输出尚未实现，不阻塞本次方向性 smoke 收尾。
+
 ## 2026-08-02：Isaac Sim GPU foundation 失败会以 exit 0 制造 smoke 假阳性
 
 - **触发：** 在 Alibaba Cloud DSW 的 2×H20 上执行安装器 `--gpu-smoke`；CUDA 和

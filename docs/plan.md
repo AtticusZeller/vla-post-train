@@ -104,7 +104,7 @@ vla-post-train/
 - 首期之后新增的仓库沿用同一约定：LeRobot（framework，`workspace`）、
   EXPO-FT（method，`dev`，fork 自 `pd-perry/expo-ft`）和 UniVTAC（benchmark，
   `dev`，fork 自 `univtac/UniVTAC`）。LeRobot 与 EXPO-FT 当前只固定代码版本；UniVTAC
-  已完成安装器修复和本地单环境仿真验收，但仍未创建 `experiments/univtac/` 或运行手册。
+  已完成安装器修复、单环境仿真验收，以及 4090 仿真调用 H20 N0-VTLA 服务的跨机闭环。
 
 ### 配置与启动
 
@@ -206,8 +206,10 @@ vla-post-train/
   device，headless smoke 正确以 exit 1 结束；不再把它误报为安装成功。
 - [x] NVIDIA 论坛与 Isaac Sim 官方仓库均确认 H20 没有 RT Cores、不受 Isaac Sim
   支持；后续采用“本地 RTX 仿真、云端 H20 模型训练与推理”的分工，不再为 H20 混装
-  graphics 驱动或注入 ICD。等出现第一个明确 VTLA 实验时，再设计通信接口、
-  `experiments/univtac/` 配置和 runbook；云端仿真只在换用受支持 RTX GPU 后重新验证。
+  graphics 驱动或注入 ICD。
+- [x] 接入 N0-VTLA ZMQ adapter、4090 WebRTC smoke 配置与运行手册；4090 经 SSH 隧道
+  调用 H20 推理服务，用户观察 5 个 `insert_hole` episode 全部成功。机器汇总尚未解析
+  原生成功率，因此该结果只作为方向性工程证据；真机 WebSocket 验证仍未执行。
 
 ## 验收
 

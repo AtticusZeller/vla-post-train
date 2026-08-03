@@ -4,6 +4,22 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-03：完成 N0-VTLA 云端推理与 4090 UniVTAC 跨机闭环
+
+- 云端 H20 运行 N0-VTLA ZMQ 策略服务，实验室 RTX 4090 经 SSH 本地转发调用；4090
+  承担 Isaac Sim/TacEx/UniVTAC 仿真和 WebRTC，用户电脑成功观察完整插孔过程。
+- 用户观察五个 `insert_hole` episode 全部成功。保存控制台直接记录 seed 1000003 为
+  第四次成功（4/4）及 seed 1000004 已执行至 step 568；根摘要记录 exit code 0、
+  `status=completed`。22.27 秒 WebRTC 视频可见末次策略连续运动、接触与完成阶段。
+- 原生最终 `Final Result` 未进入日志，根汇总器也没有 UniVTAC 方法结果 parser，故
+  `primary_metrics=[]`、`results={}`。5/5 只作为用户观察的方向性 smoke 结果，不冒充
+  机器解析的正式成功率；本次也不构成真机 WebSocket 验证。
+- 4090 的已验证激活方式固定为
+  `source /home/atticux/miniforge3/etc/profile.d/conda.sh && conda activate UniVTAC`；
+  运行手册、报告、计划和模块文档已同步。
+- 本任务为 Type C−，开放认知债务见 `docs/cognitive-debt.md` 的
+  “N0-VTLA ZMQ 与 4090 UniVTAC 跨机闭环”条目。
+
 ## 2026-08-02：接入 N0-VTLA method submodule
 
 - 按 add-method 工作流接入 NeoteAI 官方 N0-VTLA（触觉潜在 token 后训练与推理仓库）：

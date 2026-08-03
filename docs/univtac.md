@@ -47,13 +47,15 @@ graphics 路径；除此之外，NVIDIA 对 H20 的[直接答复](https://forums
 用户态栈，也不能把 H20 变成受支持的 Isaac Sim GPU。安装器现会把 graphics device
 创建失败判为 exit 1，不再把 `SimulationApp` 提前 exit 0 误报为成功。
 
-当前运行分工确定为本地 RTX 4060 承担 Isaac Sim/TacEx/UniVTAC 仿真，云端 H20 承担
-模型训练与推理。只有云端换成满足 Isaac Sim 要求的 RTX GPU 后，才重新验证云端仿真；
+当前运行分工确定为实验室 RTX 4090 承担 Isaac Sim/TacEx/UniVTAC 仿真与 WebRTC，
+云端 H20 承担模型训练与推理。只有云端换成满足 Isaac Sim 要求的 RTX GPU 后，才重新验证云端仿真；
 不再为当前 H20 尝试混装驱动、手工注入 ICD 或寻找 `physics-only` 绕过路径。
 
-仍没有创建 `experiments/univtac/`、launcher、配置或运行手册，也没有下载数据。出现第一
-个明确实验后，再按具体 policy、task、预算和 seed 建立可复现配置；大型数据、checkpoint、
-视频和完整日志写入 `/mnt/data/atticux/vla-post-train/univtac/<run-id>/`。
+现已创建 `experiments/univtac/` 配置与运行手册：4090 通过 SSH 转发连接 H20 上的
+N0-VTLA ZMQ 服务，用户电脑通过 WebRTC 观察。2026-08-03 的 5-episode `insert_hole`
+smoke 由用户观察为 5/5 成功；保存文本直接证明 4/4 和第五回合已运行，根摘要为 exit 0 /
+completed，但方法成功率尚未进入 `results`。详细证据边界见
+`experiments/univtac/report.md`。这不是正式模型评测，也不是真机 WebSocket 验证。
 
 2026-08-01 在当前 DSW 上实测上游 `scripts/install.sh`：首次安装会因 `set -e` 与
 `conda env list | grep UniVTAC` 无匹配而在创建环境前以 exit code 1 静默结束。

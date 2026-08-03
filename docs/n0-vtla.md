@@ -35,8 +35,12 @@ tokenizer，因此 `gcsfs` 是必需依赖。
 
 ## 当前接入状态
 
-已完成代码版本固定（`workspace@65563a9`）与远端登记。按 add-method 规则，本次只做
-method 接入，不创建 `experiments/n0-vtla/`、launcher、配置或 runbook；出现具体实验或
-历史迁移需求后再补齐。尚未在本机安装依赖或验证训练/推理路径；首次实验前应在
-`experiments/n0-vtla/runbook.md` 记录环境、数据与 GPU 要求。大型数据、checkpoint 和
-日志写入 `/mnt/data/atticux/vla-post-train/n0-vtla/`。
+已完成代码版本固定（`workspace@65563a9`）与远端登记。云端 H20 已安装独立 `vtla`
+环境并加载发布 checkpoint `NeoteAI/n0_VTLA_insert_hole`；ZMQ 服务使用
+`sim_single_arm_tactile` 配置，只监听 `127.0.0.1:5557`。同机合成输入 smoke 返回
+`(50, 32)` 动作，UniVTAC adapter 执行前 8 维关节动作。
+
+2026-08-03，实验室 RTX 4090 通过 SSH 转发调用该服务并完成 UniVTAC `insert_hole`
+5-episode 跨机闭环；运行与证据见 `experiments/univtac/`。这验证的是 ZMQ 仿真部署，
+不是 `serve_policy.py` WebSocket 真机部署。大型数据、checkpoint 和完整日志继续写入
+`/mnt/data/atticux/vla-post-train/n0-vtla/`。

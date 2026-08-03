@@ -50,7 +50,7 @@ uv sync --python 3.12 --all-groups
 set -o pipefail
 bash methods/univtac/scripts/install.sh 2>&1 | tee "$HOME/univtac-install.log"
 
-source "$(conda info --base)/etc/profile.d/conda.sh"
+source /home/atticux/miniforge3/etc/profile.d/conda.sh
 conda activate UniVTAC
 python -m pip install msgpack==1.1.2 pyzmq==27.1.0
 python -m pip check
@@ -114,6 +114,9 @@ sudo ufw reload
   `~/vla-post-train-artifacts/univtac/<run-id>/` 目录。
 
 5-episode smoke 只证明跨机工程链路，成功率只作为方向性结果，不构成模型质量结论。
+当前根汇总器不会从 UniVTAC 控制台自动提取成功率；若原生脚本在 Kit 关闭时漏掉最终行，
+`summary.json` 会显示 `status=completed` 但 `results={}`。此时保留逐 seed 输出、退出码和
+视频作为证据，不得人工把结果对象改写成机器解析指标。
 
 ## 故障证据
 
