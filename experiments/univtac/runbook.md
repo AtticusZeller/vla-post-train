@@ -19,13 +19,47 @@ H20 上的 N0-VTLA ZMQ 推理服务；用户电脑通过 WebRTC 查看 4090 上�
 - 缓存：`/mnt/data/atticux/vla-post-train/n0-vtla/{cache,huggingface}`；
 - 服务仅监听云端 `127.0.0.1:5557`，不得直接暴露无鉴权端口。
 
-当前服务运行在 tmux `n0-vtla-zmq`。检查：
+### 启动云端 ZMQ 服务
+
+以下命令在 H20 云端执行。使用 `vtla` 环境的绝对 Python，因此 tmux 内不依赖 Conda
+shell 激活状态；若同名 session 已存在，`tmux new-session` 会拒绝重复启动。
+
+```bash
+cd /root/vla-post-train/methods/n0-vtla
+mkdir -p /mnt/data/atticux/vla-post-train/n0-vtla/logs
+
+tmux new-session -d -s n0-vtla-zmq \
+  "set -o pipefail; cd /root/vla-post-train/methods/n0-vtla && \
+env CUDA_VISIBLE_DEVICES=0 \
+N0VTLA_DATA_HOME=/mnt/data/atticux/vla-post-train/n0-vtla/cache \
+HF_HOME=/mnt/data/atticux/vla-post-train/n0-vtla/huggingface \
+VTLA_ASSET_ID=n0_insert_hole_norm \
+/root/miniconda3/envs/vtla/bin/python scripts/serve_zmq.py \
+--config sim_single_arm_tactile \
+--ckpt /mnt/data/atticux/vla-post-train/n0-vtla/checkpoints/n0_VTLA_insert_hole \
+--addr tcp://127.0.0.1:5557 \
+--default-prompt 'insert hole' \
+2>&1 | tee -a /mnt/data/atticux/vla-post-train/n0-vtla/logs/serve-zmq.log"
+```
+
+启动后检查：
 
 ```bash
 tmux has-session -t n0-vtla-zmq
+tmux capture-pane -p -t n0-vtla-zmq -S -80
 ss -ltnp 'sport = :5557'
 nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader
 ```
+
+通过标志是日志出现：
+
+```text
+N0-VTLA ZMQ server on tcp://127.0.0.1:5557 (horizon=50, tactile=True, ...)
+```
+
+查看实时日志使用 `tmux attach -t n0-vtla-zmq`，按 `Ctrl-b d` 退出但保持服务运行。
+只有需要明确重启服务时才执行 `tmux kill-session -t n0-vtla-zmq`，随后重新运行上述启动
+命令。不要把 `--addr` 改成 `tcp://*:5557`；4090 通过 SSH 隧道访问本机监听即可。
 
 ## 4090 前置条件
 

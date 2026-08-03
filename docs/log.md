@@ -4,6 +4,15 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-03：补齐 H20 N0-VTLA ZMQ 服务启动手册
+
+- `experiments/univtac/runbook.md` 与 `cmd.md` 增加可复制的云端 tmux 启动命令，明确
+  GPU 0、`vtla` 绝对 Python、checkpoint、Hugging Face/模型缓存、asset id、日志路径和
+  `127.0.0.1:5557` 本机监听；同时补充就绪标志、检查、attach/detach 与显式重启方式。
+- 命令逐项取自当前 live tmux `n0-vtla-zmq`，而非根据旧文档推测；现役进程仍监听
+  `127.0.0.1:5557`。新增命令通过 zsh no-exec 语法检查，根 ruff、ty、29 个 pytest、
+  UniVTAC report build 和 diff check 全部通过，没有为验证重复启动模型进程。
+
 ## 2026-08-03：完成 N0-VTLA 云端推理与 4090 UniVTAC 跨机闭环
 
 - 云端 H20 运行 N0-VTLA ZMQ 策略服务，实验室 RTX 4090 经 SSH 本地转发调用；4090

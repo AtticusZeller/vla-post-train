@@ -38,6 +38,23 @@ uv run pytest
 - **Commands:**
 
 ```bash
+# 云端 H20：启动策略服务。已有同名 tmux 时不要重复启动。
+cd /root/vla-post-train/methods/n0-vtla
+mkdir -p /mnt/data/atticux/vla-post-train/n0-vtla/logs
+tmux new-session -d -s n0-vtla-zmq \
+  "set -o pipefail; cd /root/vla-post-train/methods/n0-vtla && \
+env CUDA_VISIBLE_DEVICES=0 \
+N0VTLA_DATA_HOME=/mnt/data/atticux/vla-post-train/n0-vtla/cache \
+HF_HOME=/mnt/data/atticux/vla-post-train/n0-vtla/huggingface \
+VTLA_ASSET_ID=n0_insert_hole_norm \
+/root/miniconda3/envs/vtla/bin/python scripts/serve_zmq.py \
+--config sim_single_arm_tactile \
+--ckpt /mnt/data/atticux/vla-post-train/n0-vtla/checkpoints/n0_VTLA_insert_hole \
+--addr tcp://127.0.0.1:5557 --default-prompt 'insert hole' \
+2>&1 | tee -a /mnt/data/atticux/vla-post-train/n0-vtla/logs/serve-zmq.log"
+tmux capture-pane -p -t n0-vtla-zmq -S -80
+ss -ltnp 'sport = :5557'
+
 # 4090：通过 GitHub 同步根仓与 UniVTAC 子模块候选提交。
 cd /path/to/vla-post-train
 git pull --ff-only
