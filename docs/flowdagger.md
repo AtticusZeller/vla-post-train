@@ -56,6 +56,14 @@ run。
 一个任务的 3 个 seed 全部完成后，其 task mean 才进入最终 12-task macro Δ SR。
 当前正式进度见 `experiments/flowdagger/metaworld12-report.md`。
 
+`metaworld12-report.md` 的 Final SR 取最后一个评估点，不是训练全程的峰值。以
+box_close v2 seed0 为例，逐评估点曲线为
+`step 0/500/1000/1500/2000/2500/3000/3500/4000 → SR 0.32/0.64/0.68/0.64/0.56/0.68/0.52/0.40/0.64`：
+峰值 0.68（step 1000 与 2500 两次触达）高于终值 0.64，中段还有明显震荡（冲高后跌到
+0.40 再回升）。引用某任务单点 SR 前需说明取的是峰值还是终值；逐点数据见对应 run 的
+`summary.json`（如
+`experiments/flowdagger/runs/20260731-091207__metaworld12-box-close-full-seed0/summary.json`）。
+
 ## 已验证边界
 
 - 12 个 scripted expert 均在固定 seed 预检中达到 5/5 成功。

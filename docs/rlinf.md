@@ -37,8 +37,17 @@
   （`rlt/update_step=35,600` > 10,000 warmup、`ready_for_online=1`），但结束时
   `actor_weight_ramp_progress` 只到 0.316，在线 actor 权重尚未爬满，因此 0.703 相对
   12 小时跑的 0.672 只能算方向性小幅提升，不是 ramp 完整后的效果上限。
-- progressive 仍启用 simulated expert takeover；评测阶段不允许 expert。MP4 只拼接
-  前 4 路，并沿用本地封装后复制到 OSSFS 的可靠写入方式。
+- progressive 训练 rollout 启用 simulated expert takeover（配置见
+  `methods/rlinf/examples/embodiment/config/maniskill_rlt_stage2_ac_mlp.yaml:122-144`）：
+  `trigger_mode=stalled_progress`，策略进入 critical phase 后连续 3 个 action chunk
+  （`stuck_chunks_before_takeover=3`）在 x/yz/综合插入进度上均未达到阈值
+  （`min_x_progress=0.003`/`min_yz_progress=0.0015`/`min_score_progress=0.002`）才触发
+  接管；评测阶段 `expert_takeover.enable=False`，全程不允许 expert。该 run 结束时
+  （wandb `jmqtnoox` 的 summary）实测 `train/replay/intervention_rate≈2.97%`、
+  `train/replay/actor_switch_rate`（base policy→RLT actor 切换占比）`≈14.7%`、
+  `env/actor_switch_step` 均值≈40.3 步（满 episode 500 步）、
+  `env/entered_actor_phase_once≈82.8%`。MP4 只拼接前 4 路，并沿用本地封装后复制到
+  OSSFS 的可靠写入方式。
 
 ## RLToken 十二小时运行边界
 

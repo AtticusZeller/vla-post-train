@@ -4,6 +4,16 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-04：补充 FlowDAgger 峰值/终值区分与 RL Token 实测介入比例
+
+- `docs/flowdagger.md`：补充 box_close v2 seed0 的逐评估点曲线（0.32→0.68 峰值→0.64
+  终值），说明 `metaworld12-report.md` 的 Final SR 取最后一个评估点而非峰值。
+- `docs/rlinf.md`：补充 RLToken ManiSkill `expert_takeover` 的 `stalled_progress`
+  触发条件（连续 3 个 action chunk 插入进度不足）与 progressive run `jmqtnoox`
+  实测的 `intervention_rate≈2.97%`、`actor_switch_rate≈14.7%` 等指标。
+- 两处数字均取自已归档 run 的 `summary.json` 与方法配置
+  `maniskill_rlt_stage2_ac_mlp.yaml`，未新起任何训练/评测进程；仅文档变更。
+
 ## 2026-08-03：补齐 H20 N0-VTLA ZMQ 服务启动手册
 
 - `experiments/univtac/runbook.md` 与 `cmd.md` 增加可复制的云端 tmux 启动命令，明确
