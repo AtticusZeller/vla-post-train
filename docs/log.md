@@ -4,6 +4,19 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-04：补充 RECAP 四阶段流程与"无在线介入"说明
+
+- `docs/rlinf.md` 新增"RECAP 四阶段与介入机制"小节：Compute Returns → Value
+  Model SFT → Compute Advantages → CFG Training 四阶段各自的算法作用，取自
+  RLinf 上游 `recap.rst` 与本仓库 `run_libero10_task0_comparison.sh` 的实际
+  launcher 结构。
+- 明确记录 RECAP 全程离线、无 intervention/takeover 概念，与 FlowDAgger 的
+  scripted takeover、RL Token 的 `expert_takeover` 区分开；名字里的
+  "Corrections" 指失败轨迹惩罚 + advantage 分位数筛选，不是实时接管。
+- 按用户要求本次只写四阶段说明和介入机制澄清，不写 MVP/medium 的具体成功率
+  结果（历史 run 证据仍在 `experiments/rlinf/runs/historical__libero10-task0-*/`，
+  待用户决定是否补充时再写入）。
+
 ## 2026-08-04：补充 FlowDAgger 峰值/终值区分与 RL Token 实测介入比例
 
 - `docs/flowdagger.md`：补充 box_close v2 seed0 的逐评估点曲线（0.32→0.68 峰值→0.64

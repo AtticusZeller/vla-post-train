@@ -49,6 +49,39 @@
   `env/entered_actor_phase_once≈82.8%`。MP4 只拼接前 4 路，并沿用本地封装后复制到
   OSSFS 的可靠写入方式。
 
+## RECAP 四阶段与介入机制
+
+RECAP（RL with Experience and **Corrections** via Advantage-conditioned Policies）
+是 RLinf 原生的离线 pipeline，按 tag（`returns_tag`→`advantage_tag`）串联执行四个
+顺序阶段，本地 launcher 入口见
+`methods/rlinf/examples/offline_rl/run_libero10_task0_comparison.sh`：
+
+1. **Compute Returns**：对每条轨迹逆序计算折扣回报
+   `G_t = r_t + γ·G_{t+1}`。SFT 数据集（全部成功轨迹）每步 `reward=-1`、终止步
+   `=0`；rollout 数据集（含失败）失败轨迹终止步 `reward=-300`（tag `fail300`）；
+   `γ` 默认 `1.0`（不折扣）。只写 `meta/returns_{tag}.parquet` sidecar，不改原数据。
+2. **Value Model SFT**：用 Step1 的 return 做监督信号训练 value model（SigLIP2
+   视觉编码器 + Gemma3 语言模型 + 可学习 Critic Expert head），输出 201-bin
+   分类分布，预测归一化回报 ∈`[-1,0]`。
+3. **Compute Advantages**：用训好的 value model 计算每个 timestep 的 N-step
+   advantage：`A_t = normalize(r_{t:t+N}) + γᴺ·V(o_{t+N}) − V(o_t)`（N 默认
+   10），按分位数阈值（默认 top 30%，`positive_quantile`）标 positive/negative，
+   写 `meta/advantages_{tag}.parquet`。
+4. **CFG Training**：用 advantage 标签做 classifier-free guidance 训练 π0.5
+   policy：positive（高 advantage）样本作条件输入，negative 样本永远
+   unconditional；`positive_only_conditional=true` 时 positive 样本还以
+   `unconditional_prob=0.1` 概率被随机丢到 unconditional 做正则；推理时
+   `cfgrl_guidance_scale` 控制引导强度。
+
+支持迭代优化：用 Step4 训出的 policy 收集新 rollout 数据后回到 Step1，用新 tag
+（如 `fail300_iter2`）重跑一轮，避免覆盖上一轮证据。
+
+**RECAP 本身没有在线介入机制**，这是和 FlowDAgger 的 scripted takeover、RL Token
+的 `expert_takeover` 最大的区别：RECAP 全程离线，不做任何新的环境交互/rollout，
+代码和上游文档都没有 intervention/takeover 概念。名字里的 "Corrections" 指的不是
+实时人类或专家接管，而是"把失败轨迹也纳入训练数据、用 `reward=-300` 惩罚 +
+advantage 分位数阈值筛选做修正"——本质是离线数据加权/过滤策略，不是在线策略切换。
+
 ## RLToken 十二小时运行边界
 
 - 保留 64 个训练环境、500-step episode、原始 replay warmup、update budget 和
