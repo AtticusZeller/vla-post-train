@@ -13,6 +13,37 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-08-05 · RLToken progressive-full（跑满 actor weight ramp）
+
+- **状态：** Open（功能验证已完成，算法结果待运行结束）
+- **范围：** RLinf `43ad729e..99bbb1e4`；根仓库
+  `rlt_maniskill_stage2_progressive_full_seed2026.yaml`、
+  `stage2-progressive-full.yaml` budget、launch.sh 新 case、runbook.md、
+  `.gitignore`（补充 `.claude/`）。
+- **暂缓原因：** 用户要求把 progressive run 的 `actor_weight_ramp_progress`
+  跑到 1.0；先与用户对齐了续跑方式（resume 会丢失 update_step，选择重开更长单
+  次 run）和 GPU 占用时机（现在启动），选择 Type C−，将 Explain Diff 理解
+  Review 延后；配置验证和正式启动可恢复性不延后。
+- **验证证据：** `lab doctor`、config validate/dry-run 通过；Hydra resolved
+  config 确认 `max_epochs=220`、`val_check_interval=20`、`save_interval=20`、
+  `resume_dir=null`/`ckpt_path=null`（非 resume）、
+  `warmup_updates=20000`/`ramp_updates=50000`、
+  `warmup_min_size=5000`/`warmup_post_collect_updates=10000`、train/eval 均
+  64 环境、train `expert_takeover.enable=true`/eval `=false`，且不存在
+  `max_run_duration`；根 ruff、12 项相关 pytest 通过；root+method 提交均已推送
+  远端（root `a7a807f`、method `99bbb1e4`）。真实两卡正式启动
+  `20260805-100651__rlt-maniskill-stage2-progressive-full-seed2026` 已通过
+  smoke 级验证：两卡 rollout/env worker 正常初始化、显存正常爬升、Global
+  Step 2/220 后无 Traceback/Error，W&B run
+  <https://wandb.ai/atticux/rlt-maniskill/runs/hndbuens> 已创建并持续写入。
+- **待理解内容：** `update_step` 为何不随 checkpoint 持久化（`fsdp_sac_policy_worker.py`
+  的 save/load_checkpoint 实现边界）、`desired_total_updates`/
+  `max_updates_per_train_step` 如何把"新增 transition 数量"转换成"本轮允许跑
+  的 update 数"，以及 220 epochs 的选择如何从这个封顶速率反推而来。
+- **偿还标准：** 针对本次 RLinf 与根仓提交运行 explain-diff-html，阅读解释并通过
+  全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-08-03 · N0-VTLA ZMQ 与 4090 UniVTAC 跨机闭环
 
 - **状态：** Open（功能验证已完成）

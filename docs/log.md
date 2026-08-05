@@ -4,6 +4,25 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-05：启动 RLToken progressive-full 以跑满 actor weight ramp（Type C−，见 cognitive-debt）
+
+- progressive-100 run（`jmqtnoox`）100/100 steps、exit 0，但
+  `actor_weight_ramp_progress` 只到 0.316（`update_step=35,600`，需
+  `≥warmup_updates(20000)+ramp_updates(50000)=70,000`）。确认其 checkpoint 不
+  持久化 `update_step`，resume 会重置计数器，故与用户对齐后选择重开一次更长的
+  单次 run，而非 resume 或修补 checkpoint 代码。
+- 新增方法预算 `methods/rlinf/experiments/rlt-maniskill/budget/stage2-progressive-full.yaml`
+  （`max_epochs: 100→220`，其余与 progressive-100 完全一致）、launch.sh 新
+  case、根配置 `rlt_maniskill_stage2_progressive_full_seed2026.yaml`，并在
+  `experiments/rlinf/runbook.md` 记录依据（220 epochs 按
+  `max_updates_per_train_step=400` 封顶速率反推 ~186 步门槛 + 安全余量）。
+- `lab doctor`、config validate/dry-run、Hydra resolved config 核对、根 ruff、
+  12 项相关 pytest 均通过；root（`a7a807f`）与 method（`99bbb1e4`）提交已推送
+  远端。正式启动 `20260805-100651__rlt-maniskill-stage2-progressive-full-seed2026`
+  两卡初始化正常、Global Step 2/220 无异常，W&B
+  <https://wandb.ai/atticux/rlt-maniskill/runs/hndbuens>；预计约 23–30 小时后
+  结束，运行中评估证据见 cognitive-debt 条目，最终结果待运行结束后归档。
+
 ## 2026-08-04：补充 RECAP 四阶段流程与"无在线介入"说明
 
 - `docs/rlinf.md` 新增"RECAP 四阶段与介入机制"小节：Compute Returns → Value

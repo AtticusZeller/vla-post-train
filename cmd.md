@@ -231,6 +231,26 @@ cd /root/vla-post-train
 ./lab experiment status 20260729-021706__rlt-maniskill-stage2-progressive-seed2026
 ```
 
+## Pending User Verification
+- **Status:** Pending（运行中，预计约 23–30 小时后结束）
+- **Purpose:** 确认 RLToken progressive-full run 把 `actor_weight_ramp_progress`
+  真正跑到 1.0（`rlt/update_step≥70,000`），而不是像 progressive-100 那样中途
+  停在 0.316。
+- **Prerequisites:** 无需额外操作；run 已在两张 H20 上以
+  tmux 会话 `rlt-maniskill` 窗口 `stage2-progressive-full` 后台运行。
+- **Commands:**
+```bash
+cd /root/vla-post-train
+./lab experiment status 20260805-100651__rlt-maniskill-stage2-progressive-full-seed2026
+tmux attach -t rlt-maniskill  # 切到 stage2-progressive-full 窗口看实时进度
+```
+或直接看 W&B：<https://wandb.ai/atticux/rlt-maniskill/runs/hndbuens>
+- **Pass criteria:** 本地退出码 0；W&B summary 中
+  `rlt/update_step≥70,000` 且 `rlt/actor_weight_ramp_progress` 达到/接近
+  1.0；`global_step=220`。
+- **Return on failure:** 本地 traceback／非 0 退出码，或 W&B run 状态、
+  `rlt/update_step` 与 `actor_weight_ramp_progress` 实际数值。
+
 汇总某个 run 前，需要先把该 run 的 W&B URL 临时写入配置的 `tracking.run_urls`
 （`primary_metrics` 同理），再执行下面两条命令，完成后按惯例把配置还原为空模板：
 
