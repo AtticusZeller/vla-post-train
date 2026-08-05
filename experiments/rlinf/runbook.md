@@ -153,3 +153,31 @@
   `rlt/update_step>=10000`、`ready_for_online=1`，后续评测才用于判断 RLT actor
   接管后的方向性效果。该结果必须标记为 accelerated-warmup progressive baseline，
   不能等同于官方 30,000-update warmup full reproduction。
+- 已完成 `20260729-021706__rlt-maniskill-stage2-progressive-seed2026`：100/100
+  steps、exit 0、`rlt/update_step=35,600`，但
+  `actor_weight_ramp_progress` 只到 0.316（未跑满，需
+  `update_step≥warmup_updates(20000)+ramp_updates(50000)=70,000`）。
+
+## RLToken ManiSkill Stage 2（progressive-full，跑满 actor weight ramp）
+
+- 根配置：
+  `experiments/rlinf/configs/rlt_maniskill_stage2_progressive_full_seed2026.yaml`；
+  原生入口：`experiments/rlt-maniskill/launch.sh stage2-progressive-full`；方法预算
+  `methods/rlinf/experiments/rlt-maniskill/budget/stage2-progressive-full.yaml`。
+- 目的：让 `actor_weight_ramp_progress` 真正到 1.0。原 progressive-100 run 的
+  checkpoint 保存逻辑（`fsdp_sac_policy_worker.py:757-847`，RLT AC worker 复用）不
+  持久化 `update_step`，直接 `resume` 会把 warmup/ramp 计数器清零、扔掉已跑的
+  35,600 updates；因此本轮从 Stage 1 `global_step_2000/actor` 重新起步的全新单次
+  run，不是 resume。
+- 与 progressive-100 完全相同：64 训练环境、64 固定评测环境、
+  `warmup_min_size=5000`、`warmup_post_collect_updates=10000`、
+  `max_updates_per_train_step=400`、`update_epoch=5`、critic:actor=4、
+  `expert_takeover(trigger_mode=stalled_progress)`、每 20 steps 评测/保存、前 4 路
+  录像。唯一差异是 `max_epochs: 100→220`。
+- 220 epochs 的依据：progressive-100 结束时 `update_step` 由
+  `max_updates_per_train_step=400` 按 step 封顶增长（非固定线性外推），
+  `desired_total_updates` 已达 57,980、仍有 21,980 积压未跑；按同样的封顶速率，
+  达到 70,000 门槛约需 186 步，220 步留出安全余量，避免刚好卡在门槛之下就结束。
+  预计约 35 小时墙钟（约 70 GPU·小时，2×H20），是 progressive-100（约 16 小时/32
+  GPU·小时）的约两倍。
+- 不设置根或原生墙钟 timeout，以 220 global steps 作为终止条件。
