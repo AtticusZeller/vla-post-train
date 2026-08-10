@@ -4,6 +4,23 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-10：新建 `docs/lerobot.md`，记录 pi05 rollout 与 async_inference 聚合逻辑（Type A/B）
+
+- 探查 `methods/lerobot/src/lerobot/rollout/`（base+sync 组合下的完整数据消费
+  管道：`BaseStrategy.run` → `send_next_action` → `SyncInferenceEngine.get_action`
+  → pi05 专属 preprocessor/postprocessor → `PI05Policy.select_action`），确认
+  chunk 消费到重推理是纯计数触发（`n_action_steps` 静态步数，队列空了才重新
+  推理），没有按百分比提前重规划的选项；该能力只存在于独立的 RTC 推理后端。
+- 探查 `methods/lerobot/src/lerobot/async_inference/`（`RobotClient` +
+  `PolicyServer`，独立 gRPC 异步实现，与 `rollout/inference/rtc.py` 平行不同
+  代码路径），记录 `chunk_size_threshold`（默认 0.5，提前请求新 chunk 的触发
+  阈值）与 `AGGREGATE_FUNCTIONS`（默认 `weighted_average`=0.3/0.7，非 0.5/0.5）
+  两个独立配置项，以及 `_aggregate_action_queues` 按 timestep 对齐新旧 chunk
+  （已执行丢弃 / 重叠加权混合 / 纯未来直接采纳）的时间轴逻辑。
+- 新建 `docs/lerobot.md`；`AGENTS.md`/`CLAUDE.md` 第 7 节新增一条代码引用规范
+  （文件/行号用 markdown 链接、代码另起 fenced block，不与正文混排），两个镜像
+  文件已同步。全部 markdown 相对链接已核对指向仓库内真实文件。
+
 ## 2026-08-05：启动 RLToken progressive-full 以跑满 actor weight ramp（Type C−，见 cognitive-debt）
 
 - progressive-100 run（`jmqtnoox`）100/100 steps、exit 0，但

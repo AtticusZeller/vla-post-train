@@ -242,6 +242,7 @@ Consolidate common development commands and complex experiment configuration beh
 - **Docstrings:** use Google-style docstrings.
 - **Comment granularity:** use one short section comment per coherent block when explanation is useful.
 - **Comment intent:** explain why the block exists, not what each statement does. Do not write noise such as `# Import modules`.
+- **Code references in docs and explanations:** point at a specific file or line with a markdown link, `[file.py:123](relative/path/file.py#L123)`, rather than a bare backticked mention inline in prose. Show actual code in its own fenced ` ``` ` block, separate from the surrounding sentence — omit the block when only the location matters, but never interleave code fragments into a sentence.
 
 ## 8. Language Conventions
 
