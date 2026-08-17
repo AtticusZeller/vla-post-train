@@ -197,6 +197,8 @@ Fill module documentation **incrementally**. Create `docs/<module>.md` the first
 - [[docs/rlinf.md]] — rlinf module (`methods/rlinf/`)
 - [[docs/starvla.md]] — starvla module (`methods/starvla/`)
 - [[docs/univtac.md]] — univtac module (`methods/univtac/`)
+- [[docs/xense-openpi.md]] — xense-openpi module (`methods/xense-openpi/`)
+- [[docs/lerobot-xense.md]] — lerobot-xense module (`methods/lerobot-xense/`)
 <!-- init-repo-agents:module-index:end -->
 <!-- Seeded from a shallow structural scan during initialization, for example:
 - [[docs/datasets.md]] — dataset loading and metadata (`src/<pkg>/datasets/`)

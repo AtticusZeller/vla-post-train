@@ -30,3 +30,11 @@
 	path = methods/n0-vtla
 	url = https://github.com/AtticusZeller/N0-VTLA.git
 	branch = workspace
+[submodule "methods/xense-openpi"]
+	path = methods/xense-openpi
+	url = https://github.com/AtticusZeller/xense-openpi.git
+	branch = main
+[submodule "methods/lerobot-xense"]
+	path = methods/lerobot-xense
+	url = https://github.com/AtticusZeller/lerobot-xense.git
+	branch = main

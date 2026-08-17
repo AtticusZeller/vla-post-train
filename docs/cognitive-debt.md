@@ -13,6 +13,24 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-08-17 · 接入 xense-openpi 与 lerobot-xense submodule
+
+- **状态：** Open（Agent 侧验证完成，等待用户验证）
+- **范围：** 根仓库新增 `methods/xense-openpi`、`methods/lerobot-xense` 两个
+  submodule 及对应 fork；`scripts/lab.py` `_METHODS` 注册、README 角色表、
+  AGENTS.md/CLAUDE.md 模块索引、cmd.md 待验证块。
+- **暂缓原因：** 机械式仓库接入（fork + submodule + 注册），跳过即时理解 Review；
+  对齐问询（tacxense URL、fork 策略）超时未答复，按工作区约定（fork 作 origin、
+  官方作 upstream）与可逆默认执行。
+- **验证证据：** `lab doctor`、`lab method status` 通过；两个方法共 12 个
+  嵌套 submodule 递归初始化；两个 fork 的 `main` gitlink 经 `git ls-remote` 确认
+  远端可恢复；根 ruff/ty/pytest 通过（3 个 conda 依赖测试因本机无 conda 未跑）。
+- **待理解内容：** xense-openpi 的 `third_party/*` 嵌套依赖（ARX5 / XGripper /
+  Elite 机械臂 SDK）在触觉采集链路中的角色；与官方 openpi/lerobot 代码基线的差异范围。
+- **偿还标准：** 对本次根提交运行 explain-diff-html，阅读解释并通过全部五题；
+  记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-08-05 · RLToken progressive-full（跑满 actor weight ramp）
 
 - **状态：** Open（功能验证已完成，算法结果待运行结束）

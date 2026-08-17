@@ -16,8 +16,11 @@
 | `methods/lerobot` | `workspace` | framework | 数据、策略、训练与机器人基础框架 |
 | `methods/univtac` | `dev` | benchmark | 视触觉仿真、数据采集、策略训练与评测平台 |
 | `methods/n0-vtla` | `workspace` | method | N0-VTLA 官方实现 fork（视触觉后训练与推理） |
+| `methods/xense-openpi` | `main` | framework | OpenPI 的 Xense 触觉扩展 fork |
+| `methods/lerobot-xense` | `main` | framework | LeRobot 的 Xense 触觉扩展 fork |
 
-OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，首期不单独接入。
+官方 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，不单独接入；Xense 触觉扩展
+变体（xense-openpi、lerobot-xense）已接入，与官方 LeRobot/OpenPI 相互独立。
 LeRobot 与 expo-ft 当前只固定代码版本。UniVTAC 已完成安装器修复和本地 RTX 4060
 单环境触觉仿真验收，但尚未创建实验配置或运行手册；当前采用本地仿真、云端模型推理。
 

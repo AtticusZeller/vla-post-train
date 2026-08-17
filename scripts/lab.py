@@ -59,6 +59,14 @@ _METHODS = {
         "branch": "workspace",
         "upstream": "https://github.com/neoteai/N0-VTLA.git",
     },
+    "xense-openpi": {
+        "branch": "main",
+        "upstream": "https://github.com/XenseRobotics-AI/xense-openpi.git",
+    },
+    "lerobot-xense": {
+        "branch": "main",
+        "upstream": "https://github.com/Vertax42/lerobot-xense.git",
+    },
 }
 
 

@@ -258,3 +258,25 @@ tmux attach -t rlt-maniskill  # 切到 stage2-progressive-full 窗口看实时�
 ./lab experiment summarize <run-id>
 ./lab report build rlinf
 ```
+
+## Pending User Verification（新增 submodule 可恢复性）
+
+- **Status:** Pending
+- **Purpose:** 验证 `methods/xense-openpi` 与 `methods/lerobot-xense` 两个新增
+  submodule 可从远端递归恢复（含两者共 12 个 `third_party/*` 嵌套 submodule）。
+- **Prerequisites:** 可访问 GitHub（AtticusZeller fork 及 XenseRobotics-AI / Vertax42
+  上游均为公开仓库），磁盘可用空间充足。
+- **Commands:**
+```bash
+rm -rf /tmp/vpt-clone-check && git clone --recurse-submodules \
+  https://github.com/AtticusZeller/vla-post-train.git /tmp/vpt-clone-check
+cd /tmp/vpt-clone-check
+git submodule status --recursive | grep -E 'xense-openpi|lerobot-xense'
+./lab doctor
+./lab method status
+```
+- **Pass criteria:** 两个新 submodule 状态行首无 `-`/`+` 前缀；`lab doctor`
+  全部 OK；`lab method status` 中 xense-openpi、lerobot-xense 分支为 `main`，
+  upstream 分别为 XenseRobotics-AI 与 Vertax42 仓库。
+- **Return on failure:** clone/update 的错误输出、`git submodule status` 结果与
+  `lab doctor` 输出。

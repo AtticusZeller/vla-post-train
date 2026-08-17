@@ -4,6 +4,19 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-17：接入 `methods/xense-openpi` 与 `methods/lerobot-xense`（Type C−，见 cognitive-debt）
+
+- 按 add-method 约定把两个 Xense 触觉扩展仓库 fork 到 AtticusZeller 后接入：
+  - `methods/xense-openpi`（branch `main`，fork 自 `XenseRobotics-AI/xense-openpi`，
+    upstream 指向 Xense 组织；含 5 个 `third_party/*` 嵌套 submodule，已递归初始化，
+    gitlink 经 `git ls-remote` 确认远端可恢复）；
+  - `methods/lerobot-xense`（branch `main`，fork 自 `Vertax42/lerobot-xense`，
+    upstream 指向 Vertax42；含 7 个 `third_party/*` 嵌套 submodule，已递归初始化）。
+- 注册 `scripts/lab.py` `_METHODS`，更新 README 已接入仓库表与
+  AGENTS.md/CLAUDE.md 模块索引；`lab doctor` / `lab method status` 通过。
+- `tacxense` 在公开渠道未找到（GitHub 搜索、Vertax42 / XenseRobotics-AI /
+  AtticusZeller 直查均无此仓库），已跳过，待用户提供 URL 后补接。
+
 ## 2026-08-10：新建 `docs/lerobot.md`，记录 pi05 rollout 与 async_inference 聚合逻辑（Type A/B）
 
 - 探查 `methods/lerobot/src/lerobot/rollout/`（base+sync 组合下的完整数据消费
