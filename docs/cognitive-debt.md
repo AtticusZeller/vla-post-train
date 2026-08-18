@@ -22,11 +22,17 @@
 - **暂缓原因：** 机械式仓库接入（fork + submodule + 注册），跳过即时理解 Review；
   对齐问询（tacxense URL、fork 策略）超时未答复，按工作区约定（fork 作 origin、
   官方作 upstream）与可逆默认执行。
-- **验证证据：** `lab doctor`、`lab method status` 通过；两个方法共 12 个
-  嵌套 submodule 递归初始化；两个 fork 的 `main` gitlink 经 `git ls-remote` 确认
-  远端可恢复；根 ruff/ty/pytest 通过（3 个 conda 依赖测试因本机无 conda 未跑）。
-- **待理解内容：** xense-openpi 的 `third_party/*` 嵌套依赖（ARX5 / XGripper /
+- **验证证据：** `lab doctor`、`lab method status` 通过；8 个嵌套 submodule 递归
+  初始化；两个 fork 的 `main` gitlink 经 `git ls-remote` 确认远端可恢复；根
+  ruff/ty/pytest 通过（3 个 conda 依赖测试因本机无 conda 未跑）。
+  （2026-08-18 更正：原记「两个方法共 12 个嵌套 submodule」有误。xense-openpi 的
+  pin `045ca400` 没有 `.gitmodules`，嵌套 submodule 全部在 lerobot-xense，共 8 个
+  —— 7 个 `third_party/*` 加 `libpyflexiv/flexiv_rdk`。）
+- **待理解内容：** lerobot-xense 的 `third_party/*` 嵌套依赖（ARX5 / XGripper /
   Elite 机械臂 SDK）在触觉采集链路中的角色；与官方 openpi/lerobot 代码基线的差异范围。
+  （2026-08-18 更正：这些依赖原记在 xense-openpi 名下，实际属于 lerobot-xense；
+  结构性结论已落在 [`lerobot-xense.md`](lerobot-xense.md) 与
+  [`xense-openpi.md`](xense-openpi.md)，本条只余理解门禁未过。）
 - **偿还标准：** 对本次根提交运行 explain-diff-html，阅读解释并通过全部五题；
   记录日期和对应提交。
 - **偿还记录：** Pending
