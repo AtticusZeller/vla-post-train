@@ -4,6 +4,28 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-18：新建 `docs/xense-openpi.md` 与 `docs/lerobot-xense.md`（Type A/B）
+
+- 递归初始化两个 Xense submodule 后深入探查，补齐 AGENTS.md/CLAUDE.md 模块索引里
+  已登记但一直缺失的两份模块文档。
+- `docs/xense-openpi.md`：记录 fork 的四处差异（删 ALOHA/LIBERO、新增 bi_flexiv /
+  xense_flare policy、YAML 三级配置查找、拆出 xense-client）、20D 状态与 6D 旋转
+  的直通约定、策略服务端/机器人客户端的双网卡硬性要求，以及 RTC broker 的异步
+  队列设计。
+- `docs/lerobot-xense.md`：记录 mamba + `setup_env.sh` 选择性安装、7 个 third_party
+  SDK 与 PyPI `xensesdk` 的边界、夹爪设备族的 draccus 类型化配置、recipe 自包含
+  与优先级，以及 record 循环在 RT reset 期间切换到"平移帧"的数据集写入语义。
+- **纠正既有记录：** xense-openpi 当前 pin `045ca400` 没有 `.gitmodules`，
+  `git submodule status` 为空；2026-08-17 条目所记"含 5 个 `third_party/*` 嵌套
+  submodule"对当前 pin 不成立（历史上被 `21ece9c` / `6061181` 移除）。硬件 SDK
+  嵌套依赖实际全部在 lerobot-xense（7 个直接 + `flexiv_rdk` 1 个嵌套）。
+  cognitive-debt 2026-08-17 的"待理解内容"需相应改指 lerobot-xense。
+- **代码侧发现：** `Pi0Tactile` 是未接线的原型——继承 `nnx.Module` 却调
+  `super().__init__(config, rngs)`，`embed_prefix` 使用从未创建的 `self.PaliGemma`，
+  只有 115 行且无 `compute_loss`/`sample_actions`，仓库内无任何 config 引用
+  `Pi0TactileConfig`。不能按"已支持触觉输入"来规划实验。
+- 两份文档的全部 markdown 相对链接已脚本核验指向仓库内真实文件；行号锚点逐条对过。
+
 ## 2026-08-17：接入 `methods/xense-openpi` 与 `methods/lerobot-xense`（Type C−，见 cognitive-debt）
 
 - 按 add-method 约定把两个 Xense 触觉扩展仓库 fork 到 AtticusZeller 后接入：
