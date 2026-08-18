@@ -19,7 +19,8 @@
   `git submodule status` 为空；2026-08-17 条目所记"含 5 个 `third_party/*` 嵌套
   submodule"对当前 pin 不成立（历史上被 `21ece9c` / `6061181` 移除）。硬件 SDK
   嵌套依赖实际全部在 lerobot-xense（7 个直接 + `flexiv_rdk` 1 个嵌套）。
-  cognitive-debt 2026-08-17 的"待理解内容"需相应改指 lerobot-xense。
+  已就地更正 2026-08-17 的 log 条目与 cognitive-debt 条目（"待理解内容"改指
+  lerobot-xense，嵌套 submodule 数由 12 更正为实际的 8）。
 - **代码侧发现：** `Pi0Tactile` 是未接线的原型——继承 `nnx.Module` 却调
   `super().__init__(config, rngs)`，`embed_prefix` 使用从未创建的 `self.PaliGemma`，
   只有 115 行且无 `compute_loss`/`sample_actions`，仓库内无任何 config 引用
@@ -30,8 +31,10 @@
 
 - 按 add-method 约定把两个 Xense 触觉扩展仓库 fork 到 AtticusZeller 后接入：
   - `methods/xense-openpi`（branch `main`，fork 自 `XenseRobotics-AI/xense-openpi`，
-    upstream 指向 Xense 组织；含 5 个 `third_party/*` 嵌套 submodule，已递归初始化，
-    gitlink 经 `git ls-remote` 确认远端可恢复）；
+    upstream 指向 Xense 组织；gitlink 经 `git ls-remote` 确认远端可恢复）；
+    ~~含 5 个 `third_party/*` 嵌套 submodule，已递归初始化~~
+    —— 2026-08-18 更正：pin `045ca400` 没有 `.gitmodules`，本仓库没有嵌套 submodule，
+    详见 [`xense-openpi.md`](xense-openpi.md)；
   - `methods/lerobot-xense`（branch `main`，fork 自 `Vertax42/lerobot-xense`，
     upstream 指向 Vertax42；含 7 个 `third_party/*` 嵌套 submodule，已递归初始化）。
 - 注册 `scripts/lab.py` `_METHODS`，更新 README 已接入仓库表与
