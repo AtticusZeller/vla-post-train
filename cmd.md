@@ -2,6 +2,21 @@
 
 > 项目常用命令与用户侧验证入口。命令应可直接复制执行。
 
+## Pending User Verification（Xense SDK 模态文档）
+
+- **Status:** Passed（2026-08-27，用户已确认）
+- **Purpose:** 确认 Xense SDK 模态表的名称、数据形态、推理依赖和封装边界表达清楚。
+- **Prerequisites:** 无；在根仓库执行。
+- **Commands:**
+
+```bash
+sed -n '83,113p' docs/lerobot-xense.md
+```
+
+- **Pass criteria:** 表格覆盖图像、深度、marker、力、网格和时间戳，并明确区分 SDK
+  原生输出与当前 LeRobot 封装；没有把厂商内部转换算法写成仓库实现。
+- **Return on failure:** 返回需要修正的行或术语，以及期望表述。
+
 ## 常用命令
 
 ```bash

@@ -4,6 +4,15 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-08-27：补充 Xense SDK 触觉输出模态（Type B）
+
+- 在 `docs/lerobot-xense.md` 的“触觉相机的数据形态”中补全 Xense Python SDK
+  输出表：校正/差分图、深度、2D marker、稠密三维力、法向力、六维合力/力矩、
+  三类 3D 网格和时间戳。
+- 区分 SDK 原生输出与当前 LeRobot 封装，记录各模态数据形态及是否依赖模型推理；
+  明确 LeRobot 不实现厂商内部的图像到力、深度或网格转换。
+- `git diff --check` 与模态枚举完整性检查通过；用户于 2026-08-27 确认文档表述。
+
 ## 2026-08-18：新建 `docs/xense-openpi.md` 与 `docs/lerobot-xense.md`（Type A/B）
 
 - 递归初始化两个 Xense submodule 后深入探查，补齐 AGENTS.md/CLAUDE.md 模块索引里

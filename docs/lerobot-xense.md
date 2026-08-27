@@ -83,9 +83,30 @@ wheel，内含打过补丁的 `libxense_c.so`）。
 ## 触觉相机的数据形态
 
 [`cameras/xense/`](../methods/lerobot-xense/src/lerobot/cameras/xense) 把 Xense
-触觉传感器包成 lerobot Camera。单个传感器一次可读出：3D 力分布 `35×20×3`、
-6D 合力/力矩 `(6,)`、深度图 `700×400`、2D marker 切向位移 `35×20×2`、
-3D mesh 形变 `35×20×3`。
+触觉传感器包成 lerobot Camera。以本仓库使用的 Xense Python SDK API 为准，单个
+传感器可提供以下模态；同一次 `selectSensorInfo()` 可请求多项，以保证它们来自同一帧。
+
+| 模态 | SDK `OutputType` | SDK 原生数据 | 当前 LeRobot 封装 | 需要推理 |
+|---|---|---|---|---|
+| 校正视觉图像 | `Rectify` | `(H,W,3)`，BGR | `RECTIFY`；读出时转为 RGB 并交换前两维 | 否 |
+| 无接触参考差分图 | `Difference` | `(H,W,3)`，BGR | `DIFFERENCE`；读出时转为 RGB 并交换前两维 | 否，但需要参考帧 |
+| 深度图 | `Depth` | `(H,W)`，单位 mm | `DEPTH`；读出时交换前两维 | 是 |
+| 2D marker 切向位移 | `Marker2D` | `(rows,cols,2)` | `MARKER_2D` | 是 |
+| 稠密 3D 力分布 | `Force` | `(35,20,3)` | `FORCE` | 是 |
+| 法向力分量 | `ForceNorm` | `(35,20,3)` | `FORCE_NORM` | 是 |
+| 六维合力/力矩 | `ForceResultant` | `(6,)`，即 `Fx,Fy,Fz,Tx,Ty,Tz` | `FORCE_RESULTANT` | 是 |
+| 当前 3D 表面网格 | `Mesh3D` | `(35,20,3)` | `MESH_3D` | 是 |
+| 初始 3D 表面网格 | `Mesh3DInit` | `(35,20,3)` | `MESH_3D_INIT` | 是 |
+| 3D 网格形变向量 | `Mesh3DFlow` | `(35,20,3)` | `MESH_3D_FLOW` | 是 |
+| 传感器时间戳 | `TimeStamp` | 标量，单位 s | **尚未封装**为 `XenseOutputType` | 否 |
+
+这里的“需要推理”表示需要加载 Xense SDK 的模型推理引擎；LeRobot 只请求并整理 SDK
+输出，不在本仓库内实现图像到力、深度或网格的转换算法。`Rectify` / `Difference`
+可以设置 `disable_infer=true` 快速启动，其余当前已封装模态不能关闭推理。
+
+尺寸边界要以实际设备配置和运行时数组为准：默认 `rectify_size=(400,700)` 经本封装
+交换前两维后记录为 `(400,700,3)`；marker 网格尺寸可能随传感器型号或标定包变化，
+不要把 `rows×cols` 硬编码为固定值。
 
 注意该模块 README 的安装段落还停留在 `xensesdk==1.6.3` + 一堆手工 pip，与根
 README 现在的 `xensesdk==2.0.1` 由 `setup_env.sh` 统一安装不一致；以根 README
