@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from scripts import focus
 from scripts.config import ROOT, ConfigError, ExperimentConfig, find_configs, load_config
 from scripts.launchers import build_launch_spec
 from scripts.monitor import build_summary
@@ -93,12 +94,25 @@ def _git(path: Path, *args: str) -> tuple[int, str]:
 
 
 def _doctor() -> int:
-    checks: list[tuple[str, str, bool]] = []
+    # None marks a check that does not apply, so inactive methods neither pass
+    # nor fail the run.
+    checks: list[tuple[str, str, bool | None]] = []
     checks.append(("Python", sys.version.split()[0], sys.version_info[:2] == (3, 12)))
     checks.append(("uv.lock", str(ROOT / "uv.lock"), (ROOT / "uv.lock").is_file()))
     checks.append(("Git root", str(ROOT / ".git"), (ROOT / ".git").exists()))
+    active = focus.active_methods(_METHODS)
+    checks.append(
+        (
+            "focus",
+            f"{focus.current_profile(_METHODS)} ({len(active)}/{len(_METHODS)} active)",
+            True,
+        )
+    )
     for method in _METHODS:
         path = ROOT / "methods" / method
+        if method not in active:
+            checks.append((f"method:{method}", f"{path} (inactive)", None))
+            continue
         initialized = path.is_dir() and (path / ".git").exists()
         checks.append((f"method:{method}", str(path), initialized))
     recursive = subprocess.run(
@@ -107,8 +121,11 @@ def _doctor() -> int:
         capture_output=True,
         text=True,
     )
+    active_paths = tuple(focus.submodule_name(method) for method in active)
     uninitialized = [
-        line for line in recursive.stdout.splitlines() if line.lstrip().startswith("-")
+        line
+        for line in recursive.stdout.splitlines()
+        if line.lstrip().startswith("-") and line.split()[1].startswith(active_paths)
     ]
     checks.append(
         (
@@ -137,15 +154,20 @@ def _doctor() -> int:
         artifact_detail += " (mount is read-only; runs are disabled until remounted rw)"
     print("检查项\t状态\t详情")
     for name, detail, passed in checks:
-        print(f"{name}\t{'OK' if passed else 'FAIL'}\t{detail}")
+        state = "SKIP" if passed is None else ("OK" if passed else "FAIL")
+        print(f"{name}\t{state}\t{detail}")
     print(f"artifact writes\t{'WARN' if mount_read_only else 'OK'}\t{artifact_detail}")
-    return 0 if all(passed for _, _, passed in checks) else 1
+    return 0 if all(passed for _, _, passed in checks if passed is not None) else 1
 
 
 def _method_status() -> int:
     print("method\tbranch\trevision\tclean\torigin\tupstream")
     failed = False
+    active = focus.active_methods(_METHODS)
     for method, expected in _METHODS.items():
+        if method not in active:
+            print(f"{method}\tinactive\t-\t-\t-\t-")
+            continue
         path = ROOT / "methods" / method
         code, revision = _git(path, "rev-parse", "--short=12", "HEAD")
         if code:
@@ -163,6 +185,83 @@ def _method_status() -> int:
             f"\t{origin or '-'}\t{upstream or '-'}"
         )
     return int(failed)
+
+
+def _focus_status() -> int:
+    """Print which methods this worktree currently keeps."""
+    active = focus.active_methods(_METHODS)
+    print(f"profile\t{focus.current_profile(_METHODS)}")
+    print("method\tstate\tpopulated")
+    for method in _METHODS:
+        state = "active" if method in active else "inactive"
+        print(f"{method}\t{state}\t{'yes' if focus.is_populated(method) else 'no'}")
+    return 0
+
+
+def _print_manifest(removals: list[focus.Removal]) -> None:
+    for removal in removals:
+        print(f"  {removal.method}\t{focus.human_bytes(removal.size_bytes)}")
+        for entry, size in removal.unrecoverable:
+            print(f"      {entry}\t{focus.human_bytes(size)}\t无法从 git 恢复")
+        if removal.unrecoverable_extra:
+            print(f"      (另有 {removal.unrecoverable_extra} 项小体积未跟踪/忽略内容)")
+
+
+def _method_focus(profile: str | None, dry_run: bool, assume_yes: bool) -> int:
+    """Switch this worktree to one focus profile."""
+    if profile is None:
+        return _focus_status()
+
+    name, selected = focus.load_profile(profile, _METHODS)
+    active = focus.active_methods(_METHODS)
+    # A method counts as needing work whenever the active flag and the worktree
+    # disagree with the profile, so an interrupted switch is resumable.
+    to_deactivate = [
+        method
+        for method in _METHODS
+        if method not in selected and (method in active or focus.is_populated(method))
+    ]
+    to_activate = [
+        method for method in selected if method not in active or not focus.is_populated(method)
+    ]
+    if not to_deactivate and not to_activate:
+        print(f"focus\t{name}\t无需变更")
+        return 0
+
+    removals = focus.deletion_manifest(to_deactivate)
+    if removals:
+        total = sum(removal.size_bytes for removal in removals)
+        lost = sum(removal.unrecoverable_bytes for removal in removals)
+        print(
+            f"将删除 {len(removals)} 个工作树，共 {focus.human_bytes(total)}"
+            f"（其中 {focus.human_bytes(lost)} 无法从 git 恢复）："
+        )
+        _print_manifest(removals)
+    if to_activate:
+        print(f"将 checkout：{', '.join(sorted(to_activate))}")
+    if dry_run:
+        print("dry-run：未做任何改动")
+        return 0
+
+    if removals and not assume_yes:
+        if not sys.stdin.isatty():
+            raise ConfigError("非交互环境下删除工作树需显式传入 --yes")
+        if input("继续？[y/N] ").strip().lower() not in ("y", "yes"):
+            print("已取消")
+            return 1
+
+    # Record the target set first so an interrupted switch still leaves the
+    # worktree consistent with the profile, then normalize again afterwards
+    # because `submodule update --init` writes per-submodule active keys back.
+    focus.set_active(selected, _METHODS)
+    for method in to_deactivate:
+        focus.drop_worktree(method)
+        print(f"deactivated\t{method}")
+    for method in to_activate:
+        focus.restore_worktree(method)
+        print(f"activated\t{method}")
+    focus.set_active(selected, _METHODS)
+    return _focus_status()
 
 
 def _validate(path: str) -> int:
@@ -407,6 +506,10 @@ def build_parser() -> argparse.ArgumentParser:
     method = commands.add_parser("method")
     method_commands = method.add_subparsers(dest="method_command", required=True)
     method_commands.add_parser("status")
+    method_focus = method_commands.add_parser("focus")
+    method_focus.add_argument("profile", nargs="?", help="omit to print the current state")
+    method_focus.add_argument("--dry-run", action="store_true")
+    method_focus.add_argument("--yes", action="store_true", help="skip the deletion prompt")
 
     config = commands.add_parser("config")
     config_commands = config.add_subparsers(dest="config_command", required=True)
@@ -440,6 +543,8 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "doctor":
         return _doctor()
     if args.command == "method":
+        if args.method_command == "focus":
+            return _method_focus(args.profile, args.dry_run, args.yes)
         return _method_status()
     if args.command == "config":
         if args.all:

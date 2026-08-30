@@ -1,0 +1,20 @@
+# 当前工作树里保留哪些 method submodule。
+#
+# 根仓库 main 分支始终记录全部 method 的 gitlink，本文件只决定本机工作树里
+# 实际 checkout 哪些。切换：./lab method focus <profile>
+#
+# 名称取自 scripts/lab.py 的 _METHODS 注册表；"*" 表示全部。
+
+default: xense
+
+profiles:
+  all: ["*"]
+
+  # Xense 触觉线：viewer + openpi/lerobot 触觉扩展 + 上游框架
+  xense:
+    - xense-openpi
+    - lerobot-xense
+    - xense-lerobot-viewer
+    - lerobot
+    - rlinf
+    - n0-vtla

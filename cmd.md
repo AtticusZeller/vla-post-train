@@ -67,6 +67,12 @@ uv sync --python 3.12 --all-groups
 ./lab method status
 ./lab config validate --all
 
+# focus profile：只保留当前关注的 method（见 focus.yaml）
+./lab method focus                  # 查看当前 profile 与各 method 状态
+./lab method focus xense --dry-run  # 预览将删除的工作树
+./lab method focus xense            # 收敛到 Xense 触觉线
+./lab method focus all              # 还原全部
+
 ./lab experiment dry-run \
   experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml
 ./lab experiment dry-run \
@@ -335,3 +341,42 @@ git submodule status --recursive | grep -E 'xense-openpi|lerobot-xense'
   upstream 分别为 XenseRobotics-AI 与 Vertax42 仓库。
 - **Return on failure:** clone/update 的错误输出、`git submodule status` 结果与
   `lab doctor` 输出。
+
+## Pending User Verification（focus profile 切换与还原）
+
+- **Status:** Pending
+- **Purpose:** 验证 `./lab method focus` 能把工作树收敛到 Xense 触觉线的 6 个
+  method、再无损还原，且 `doctor` / `method status` 正确识别 inactive 状态。
+- **Prerequisites:** 在根仓库 `/home/atticuszz/DevSpace/vla-post-train` 下执行；
+  可访问 GitHub（还原步骤只重新 checkout，不需要重新 clone）。
+  **先确认能接受删除 `methods/univtac/third_party/` 下 `curobo`、`IsaacLab`、
+  `TacEx/**/build` 共约 1.3G 的 gitignore 内容——它们无法从 git 恢复，重装需重跑
+  UniVTAC 安装器。**
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+du -sh methods/                      # 记录切换前体积
+git submodule status > /tmp/vpt-submodule-before.txt
+
+./lab method focus xense --dry-run   # 先看清单
+./lab method focus xense             # 确认清单后输入 y
+
+./lab doctor; echo "doctor exit=$?"
+./lab method status
+du -sh methods/
+
+./lab method focus all               # 还原
+git submodule status > /tmp/vpt-submodule-after.txt
+diff /tmp/vpt-submodule-before.txt /tmp/vpt-submodule-after.txt
+./lab doctor; echo "doctor exit=$?"
+```
+- **Pass criteria:** 收敛后 `ls methods/` 只剩 6 个目录（停用的目录会被删掉，不留
+  空壳），`git status` 中不出现 ` D methods/*`；`lab doctor`
+  中 7 个停用方法显示 `SKIP`、`focus` 行显示 `xense (6/13 active)`；`lab method
+  status` 中它们显示 `inactive` 且 6 个活跃方法分支/upstream 正常。还原后
+  `diff` 无输出（`methods/rlinf` 行的 `+` 前缀在两侧一致即可），`lab doctor` 中
+  `focus` 行回到 `all (13/13 active)`。
+  两次 `doctor exit` 均为 `1` 且唯一 FAIL 项是 `artifact mount not mounted` 属
+  已知的本机 `/mnt/data` 未挂载，不算失败；若 `/mnt/data` 已挂载则应为 `0`。
+- **Return on failure:** `./lab method focus` 的完整输出、`diff` 结果、
+  `./lab doctor` 与 `./lab method status` 输出。

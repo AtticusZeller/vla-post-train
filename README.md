@@ -30,12 +30,41 @@ LeRobot 与 expo-ft 当前只固定代码版本。UniVTAC 已完成安装器修�
 ## 初始化
 
 ```bash
-git clone --recurse-submodules https://github.com/AtticusZeller/vla-post-train.git
+git clone https://github.com/AtticusZeller/vla-post-train.git
 cd vla-post-train
 uv sync --python 3.12 --all-groups
+./lab method focus xense      # 只拉当前关注的 method（见下）
 ./lab doctor
 ./lab method status
 ```
+
+## Focus profile · 只保留当前关注的 method
+
+`main` 分支始终记录全部 method 的 gitlink，[`focus.yaml`](focus.yaml) 只决定本机
+工作树里实际 checkout 哪些。切换不改 `.gitmodules`、不分叉历史，可随时还原。
+
+```bash
+./lab method focus                  # 打印当前 profile 与各 method 状态
+./lab method focus xense --dry-run  # 预览将删除的工作树，不做改动
+./lab method focus xense            # 收敛到 Xense 触觉线的 6 个仓库
+./lab method focus all              # 还原全部
+```
+
+停用一个 method 会执行 `git submodule deinit -f` 删除其工作树，并一并删掉 `deinit`
+留下的空目录，所以 `methods/` 下只剩当前关注的仓库。切换前会列出体积清单并要求确认
+（`--yes` 可跳过）。`.git/modules/` 里的对象库不受影响，因此还原不
+需要联网重新 clone。**注意清单里标为「无法从 git 恢复」的条目**（例如 univtac 的
+`third_party/curobo`、`IsaacLab`、`TacEx/**/build`）是 gitignore 掉的手动安装产物，
+删除后需重跑该方法的安装器。
+
+被停用的 method 在 `./lab doctor` 里显示为 `SKIP`、在 `./lab method status` 里显示
+为 `inactive`，都不计为失败。
+
+活跃集合记录在本机 `.git/config` 的 `submodule.active` pathspec 列表里（不是每个
+submodule 的 `submodule.<name>.active`——后者会被 `git submodule update --init`
+改写回 `true`）。删掉目录后 git 会把 gitlink 视为已删除，因此同时给它打上
+`--skip-worktree`，让 `git status` 保持干净。两者都是本机 config 与 index 状态，
+不进入任何提交。
 
 根环境只包含 YAML、W&B、Git/进程编排和测试工具，不安装训练依赖。各 method 使用自己的
 Conda、uv、venv 或 Docker 环境。
