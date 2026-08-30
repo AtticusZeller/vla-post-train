@@ -182,6 +182,158 @@ RT 结束的那一帧会调用一次 `_sync_rt_teleop_to_robot_pose()`，把 Pic
 手柄按键与键盘事件是**同级输入**，统一进同一组 `events[]` 判断：右 `A`=go_start、
 左 `X`=rerecord、左 `Y`=exit_early、右 `B`=stop_recording。
 
+## TacCap 手持数采（UMI 式）落进数据集的形态
+
+> **出处与适用范围**：本节全部内容来自分支 **`origin/dev/taccap-gripper`**
+> （HEAD `b2154ab2`），**不在 `main` 上**——`main` 的工作树里没有下列任何文件，
+> 因此本节路径一律写成 `分支路径:行号`，不做可点击链接（点了会 404）。
+> 用 `git show origin/dev/taccap-gripper:<path>` 查看。
+> 该分支与 main 是分叉关系：commit `872c7b86` 把所有机械臂 submodule 都删了，
+> 只保留手持数采链路。
+
+设备是 TacCap 手持夹爪（其 README 自称 *multimodal tactile data-collection
+gripper*），机型名 `taccap_gripper` / `bi_taccap_gripper`，位姿来自装在夹爪顶部的
+Pico4 Ultra 独立追踪器。
+
+### 硬件 feature 如何变成数据集列
+
+数据集列不是 `tcp.x` 这种硬件键，而是被
+`src/lerobot/datasets/utils.py:615` 的 `hw_to_dataset_features()` 压缩过一层：
+
+- 所有 `float` 型硬件键 **合并成一个 float32 一维数组**——`prefix=action` 出
+  `action`，`prefix=observation` 出 `observation.state`，原始键名按**插入顺序**
+  存进该列的 `names`。
+- 所有 `tuple` 型（相机）各自独立成列 `observation.images.<camera_name>`，
+  `names` 恒为 `["height","width","channels"]`。
+- 再叠加 `src/lerobot/datasets/utils.py:73` 的 `DEFAULT_FEATURES`：`timestamp`
+  float32 `(1,)`，`frame_index` / `episode_index` / `index` / `task_index`
+  int64 `(1,)`。
+
+所以**读数据集时想知道 state 每一维是什么，必须去看该列的 `names`**；维度顺序
+完全由 robot 类里 features 的构建顺序决定。
+
+### 单臂 `taccap_gripper` — 默认配置下的数据集列
+
+默认值出自 `src/lerobot/robots/taccap_gripper/config_taccap_gripper.py`：
+`enable_tracker=True`、`enable_gripper=True`、**`enable_imu=False`**、
+`enable_wrist_camera=True`、`expected_tactiles_per_side=2`、
+`tactile_output_types=["rectify"]`、腕部相机 640×480@30。
+
+| 数据集列 | dtype | shape | names（即每一维的含义） |
+|---|---|---|---|
+| `action` | float32 | `(10,)` | `tcp.x,tcp.y,tcp.z,tcp.r1..tcp.r6,gripper.pos` |
+| `observation.state` | float32 | `(10,)` | 同上（与 action 逐字相同） |
+| `observation.images.tactile_left` | video | `(400,700,3)` | 左指视触觉 |
+| `observation.images.tactile_right` | video | `(400,700,3)` | 右指视触觉 |
+| `observation.images.wrist_cam` | video | `(480,640,3)` | 腕部 UVC |
+| `timestamp` | float32 | `(1,)` | |
+| `frame_index` `episode_index` `index` `task_index` | int64 | `(1,)` | |
+
+- `tcp.*` 单位是米；`r1..r6` 是旋转矩阵的**前两列**（与 `vive_tracker` 同约定）。
+- `gripper.pos` ∈ [0,1]，0=闭 1=开，来自编码器归一化。
+- 定义在 `src/lerobot/robots/taccap_gripper/taccap_gripper.py:318`
+  （`observation_features`）与同文件 `:340`（`action_features`）。
+  **`action` 里没有任何相机**，图像只存在于 observation。
+
+开启 `--robot.enable_imu=true` 后 `observation.state` 变成 `(19,)`，多出的 9 维
+顺序是**按轴外层循环**，不是按传感器分组：
+
+```
+accel.x, gyro.x, mag.x,  accel.y, gyro.y, mag.y,  accel.z, gyro.z, mag.z
+```
+
+单位依次为 m/s²、rad/s、µT。`action` 维度**不变**，仍是 10——IMU 只进观测。
+
+### 双臂 `bi_taccap_gripper`
+
+所有键加 `left_` / `right_` 前缀，且**按侧分组**（left 的全部字段在前，然后
+right），见 `src/lerobot/robots/bi_taccap_gripper/bi_taccap_gripper.py:195`。
+默认（IMU 关）：
+
+| 数据集列 | dtype | shape | names |
+|---|---|---|---|
+| `action` | float32 | `(20,)` | `left_tcp.x..left_tcp.r6, left_gripper.pos, right_tcp.x..right_tcp.r6, right_gripper.pos` |
+| `observation.state` | float32 | `(20,)` | 同上 |
+| `observation.images.{left,right}_tactile_{left,right}` | video | `(400,700,3)` | 4 路触觉 |
+| `observation.images.{left,right}_wrist` | video | `(480,640,3)` | 2 路腕部 |
+
+两个坑：
+
+- **触觉键里的 `left`/`right` 指手指，不是手臂**，所以 `left_tactile_right`
+  （左臂夹爪的右指）是合法且常见的键名。指别由 GSPS 序列号末位奇偶决定
+  （单左双右），传感器与夹爪的配对靠 **USB hub** 而非序列号本身。
+- **腕部相机键名两边不一致**：单臂是 `wrist_cam`，双臂是 `{side}_wrist`
+  （没有 `_cam`）。写下游读取代码时不能想当然。
+
+### 触觉图像 shape 的推导（别硬编码）
+
+`src/lerobot/cameras/xense/configuration_xense.py:160` 起：`rectify_size` 默认
+`(400,700)`，注释标称语义是 `(width,height)`，但赋值时是
+
+```python
+self.height = self.rectify_size[0]   # 400
+self.width  = self.rectify_size[1]   # 700
+```
+
+于是数据集里的 shape 是 **`(400,700,3)`** 的横向图。名实不符，所以上游 README
+反复强调 width/height 自动推导、不要写死。若把 `output_types` 换成
+force / marker / mesh 一类非图像输出，同一段逻辑改走固定的 `height=35,width=20`
+（对应 SDK 的 `(35,20,3)` 力分布），数据集列的 shape 随之变成 `(35,20,3)`。
+
+**单臂与双臂的触觉默认输出不同**：单臂仍是 `["rectify"]`，双臂在 commit
+`9ec78c23` 被改成 `["difference"]`（映射到 SDK 的 AugDifference，对比度增强的
+背景差分）。两者都是免推理的纯矫正产物，shape 相同但**像素含义不同**，混用两批
+数据前要确认这一项。
+
+### 采集语义：self-driven + 平移帧
+
+与本仓库其它机型最大的不同——**没有 teleoperator**：
+
+- `src/lerobot/scripts/lerobot_record.py:194` 的
+  `SELF_DRIVEN_RECORD_ROBOTS = {"taccap_gripper", "bi_taccap_gripper"}` 使
+  `RecordConfig.__post_init__` 放行 `teleop=None`，命令行上没有任何
+  `--teleop.*`。
+- 设备是**被动**的：`send_action()` 是 no-op，电机从不使能，操作者用手掰夹爪
+  走演示。观测和示教动作都由 robot 自己产出。
+- 走专用的 `self_driven_record_loop`（同文件 `:285`），采用**平移帧**配对：
+  `{obs[t-1], pose[t]}`，动作**领先观测一步**，是真正的「移动到下一处」目标，
+  而非同帧配对那种退化的「动作＝当前状态」。代价是每个 episode 丢掉第一帧
+  （首帧没有前驱）。
+
+这也解释了 UMI 原始数据「只有观测没有动作」的问题在这里是怎么解决的：动作不来自
+另一个指令源，而是取下一帧的位姿。
+
+典型采集命令（无任何 `--teleop.*`，设备按序列号规则自动发现）：
+
+```bash
+lerobot-record \
+    --robot.type=taccap_gripper --robot.id=right --robot.side=right \
+    --dataset.repo_id=<org>/<dataset> \
+    --dataset.num_episodes=1 --dataset.episode_time_s=10 \
+    --dataset.single_task='Pick up the object'
+```
+
+### 坐标系
+
+默认落在**世界系**：X 前、Y 左、Z 上、重力对齐，原点是 **Unity VR Client 启动
+瞬间的头显位置**。两条硬约束写在
+`src/lerobot/robots/taccap_gripper/README.md`：
+
+- **不要在 episode 之间重启 Unity client**，否则后续录制全部换了原点。
+- 手性约定 **TBD**：Pico 文档称右手系，SDK 的 `rerun_dual_with_tracker.py` 注释
+  称左手系，尚未在真机核实。
+
+UMI 式初始位姿对齐（把记录位姿 rebase 到部署机器人基座系，训练前无需后处理）
+是**预留功能，默认关闭**：`enable_init_pose_alignment=False`，README 写明原因是
+还没在真机部署硬件上验证过。关闭时数据留在原始 xrt 世界系，下游需自行换系。
+
+### 与 main 的关系
+
+`main` 上只有 `TaccapFollower`（从臂夹爪驱动），整套多模态采样在那条路径上
+**只有 `position` 一维**经 `Gripper.get_gripper_position()` 变成 `gripper.pos`，
+IMU、力矩、编码器速度全部丢弃。手持数采要用上表的格式，必须走
+`origin/dev/taccap-gripper` 分支。两个分支尚未合并。
+
 ## 与 xense-openpi 的接口
 
 - **状态/动作**：双臂 20D = 左右各「TCP 9D（xyz + 6D 旋转）+ 夹爪 1D」，由
