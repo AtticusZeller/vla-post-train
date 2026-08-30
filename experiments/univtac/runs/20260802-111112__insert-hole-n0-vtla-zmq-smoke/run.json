@@ -1,0 +1,68 @@
+{
+  "artifact_path": "/home/atticuszz/vla-post-train-artifacts/univtac/20260802-111112__insert-hole-n0-vtla-zmq-smoke",
+  "code_revisions": [],
+  "config": "experiments/univtac/configs/insert_hole_n0_vtla_zmq_smoke.yaml",
+  "config_sha256": "be189f6850d025f950b21b2981d1f95db557640bda88f4efa75ebc613b4211fb",
+  "cwd": "/home/atticuszz/DevSpace/vla-post-train/methods/univtac",
+  "exit_code": 130,
+  "finished_at": "2026-08-02T11:16:12.721430Z",
+  "historical": false,
+  "host": {
+    "gpus": [
+      {
+        "index": "0",
+        "memory_mb": "8188",
+        "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+        "uuid": "GPU-218e4732-3c22-b04f-bd49-3a7a1d0d8b71"
+      }
+    ],
+    "hostname": "atticuszz-Legion-Y7000P-IRH8",
+    "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
+    "python": "3.12.5"
+  },
+  "method": "univtac",
+  "method_code": {
+    "branch": "",
+    "dirty": false,
+    "repository": "/home/atticuszz/DevSpace/vla-post-train/methods/univtac",
+    "revision": "0513bed3792f53d8df03bd7f79ddd63638ed3091"
+  },
+  "pid": 112643,
+  "resolved_command": [
+    "conda",
+    "run",
+    "--no-capture-output",
+    "-n",
+    "UniVTAC",
+    "bash",
+    "scripts/run_eval_policy.sh",
+    "insert_hole",
+    "demo",
+    "N0VTLA/deploy",
+    "--total_num",
+    "5",
+    "--headless",
+    "--device",
+    "cuda:0"
+  ],
+  "resolved_environment": {
+    "N0VTLA_ZMQ_ADDR": "tcp://127.0.0.1:5557",
+    "PATH": "/home/atticuszz/miniconda3/envs/UniVTAC/bin:/home/atticuszz/DevSpace/vla-post-train/.venv/bin:/home/atticuszz/miniconda3/envs/UniVTAC/bin:/home/atticuszz/miniconda3/condabin:/home/atticuszz/DevSpace/vla-post-train/.venv/bin:/home/atticuszz/.local/opt/TensorRT-10.13.3.9/bin:/home/atticuszz/.bun/bin:/home/linuxbrew/.linuxbrew/opt/curl/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/atticuszz/.local/share/pnpm:/home/atticuszz/.nvm/versions/node/v22.11.0/bin:/usr/local/cuda-12.1/bin:/home/atticuszz/.local/bin:/home/atticuszz/.local/share/JetBrains/Toolbox/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/atticuszz/go/bin",
+    "UNIVTAC_EVAL_ROOT": "/home/atticuszz/vla-post-train-artifacts/univtac/20260802-111112__insert-hole-n0-vtla-zmq-smoke/native/eval_result"
+  },
+  "root": {
+    "branch": "main",
+    "dirty": true,
+    "repository": "/home/atticuszz/DevSpace/vla-post-train",
+    "revision": "e350a4c052980fcda00e79993a05f4e30e995674"
+  },
+  "run_id": "20260802-111112__insert-hole-n0-vtla-zmq-smoke",
+  "schema_version": 1,
+  "signal": 2,
+  "started_at": "2026-08-02T11:11:12.151740Z",
+  "tracking": {
+    "backend": "local",
+    "project": "n0-vtla-univtac",
+    "run_urls": []
+  }
+}

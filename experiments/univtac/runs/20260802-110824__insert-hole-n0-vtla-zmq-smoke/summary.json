@@ -1,0 +1,13 @@
+{
+  "evidence": {
+    "local_exit_code": 1,
+    "local_summary": null,
+    "local_traceback": null,
+    "wandb_runs": []
+  },
+  "primary_metrics": [],
+  "resources": {},
+  "results": {},
+  "schema_version": 1,
+  "status": "failed"
+}
