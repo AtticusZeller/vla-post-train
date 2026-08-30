@@ -67,6 +67,18 @@ _METHODS = {
         "branch": "main",
         "upstream": "https://github.com/Vertax42/lerobot-xense.git",
     },
+    "xense-lerobot-viewer": {
+        "branch": "main",
+        "upstream": "https://github.com/XenseRobotics-AI/xense-lerobot-viewer.git",
+    },
+    "t-rex": {
+        "branch": "workspace",
+        "upstream": "https://github.com/ZhuoyangLiu2005/T-Rex.git",
+    },
+    "tabero": {
+        "branch": "workspace",
+        "upstream": "https://github.com/NathanWu7/Tabero.git",
+    },
 }
 
 

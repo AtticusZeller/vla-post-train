@@ -17,6 +17,46 @@ sed -n '83,113p' docs/lerobot-xense.md
   原生输出与当前 LeRobot 封装；没有把厂商内部转换算法写成仓库实现。
 - **Return on failure:** 返回需要修正的行或术语，以及期望表述。
 
+## Pending User Verification（Tabero 接入）
+
+- **Status:** Pending
+- **Purpose:** 验证 Tabero fork、submodule、分支、远端和根仓库注册信息一致。
+- **Prerequisites:** 已安装 Git，并可访问 GitHub；在本次工作树根目录执行。
+- **Commands:**
+
+```bash
+git submodule status methods/tabero
+git -C methods/tabero status --short --branch
+git -C methods/tabero remote -v
+./lab method status
+./lab doctor
+```
+
+- **Pass criteria:** `methods/tabero` 固定在 `1ad2078d25a7106084b9c2f247217c3f5be801e8`；分支为
+  `workspace`；`origin` 指向 `AtticusZeller/Tabero.git`、`upstream` 指向
+  `NathanWu7/Tabero.git`；Tabero 的 method status clean；`./lab doctor` 不因 Tabero 失败。
+- **Return on failure:** 返回完整命令输出及首次失败命令。
+
+## Pending User Verification
+
+- **Status:** Pending
+- **Purpose:** 验证 T-Rex fork、submodule、分支、远端和根仓库注册信息一致。
+- **Prerequisites:** 已安装 Git，并可访问 GitHub；在本次工作树根目录执行。
+- **Commands:**
+
+```bash
+git submodule status methods/t-rex
+git -C methods/t-rex status --short --branch
+git -C methods/t-rex remote -v
+./lab method status
+./lab doctor
+```
+
+- **Pass criteria:** `methods/t-rex` 固定在 `58bba48fd116a23a32989f4f362f02d8c7bc21a3`；分支为
+  `workspace`；`origin` 指向 `AtticusZeller/T-Rex.git`、`upstream` 指向
+  `ZhuoyangLiu2005/T-Rex.git`；T-Rex 的 method status clean；`./lab doctor` 不因 T-Rex 失败。
+- **Return on failure:** 返回完整命令输出及首次失败命令。
+
 ## 常用命令
 
 ```bash

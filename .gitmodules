@@ -38,3 +38,15 @@
 	path = methods/lerobot-xense
 	url = https://github.com/AtticusZeller/lerobot-xense.git
 	branch = main
+[submodule "methods/xense-lerobot-viewer"]
+	path = methods/xense-lerobot-viewer
+	url = https://github.com/XenseRobotics-AI/xense-lerobot-viewer.git
+	branch = main
+[submodule "methods/t-rex"]
+	path = methods/t-rex
+	url = https://github.com/AtticusZeller/T-Rex.git
+	branch = workspace
+[submodule "methods/tabero"]
+	path = methods/tabero
+	url = https://github.com/AtticusZeller/Tabero.git
+	branch = workspace
