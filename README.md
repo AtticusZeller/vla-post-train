@@ -21,6 +21,7 @@
 | `methods/xense-lerobot-viewer` | `main` | tool | LeRobot 数据集可视化查看器（直接 pin 官方仓库，无 fork）|
 | `methods/t-rex` | `workspace` | method | T-Rex 触觉反应灵巧操作官方实现 fork |
 | `methods/tabero` | `workspace` | method | Tabero 触觉基础模型与基准官方实现 fork |
+| `methods/cosmos` | `xense` | framework | NVIDIA Cosmos-Framework 训练与服务框架 fork；预留 Flexiv/Xense 适配边界 |
 
 官方 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，不单独接入；Xense 触觉扩展
 变体（xense-openpi、lerobot-xense）已接入，与官方 LeRobot/OpenPI 相互独立。

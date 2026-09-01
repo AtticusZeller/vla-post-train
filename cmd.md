@@ -380,3 +380,31 @@ diff /tmp/vpt-submodule-before.txt /tmp/vpt-submodule-after.txt
   已知的本机 `/mnt/data` 未挂载，不算失败；若 `/mnt/data` 已挂载则应为 `0`。
 - **Return on failure:** `./lab method focus` 的完整输出、`diff` 结果、
   `./lab doctor` 与 `./lab method status` 输出。
+
+## 用户验证通过（Cosmos-Framework fork 与 submodule 可恢复性）
+
+- **Status:** Passed（用户于 2026-09-01 确认）
+- **Purpose:** 验证 `methods/cosmos` 使用 `NVIDIA/cosmos-framework` 的
+  AtticusZeller fork 与 `xense` 分支，并固定到已推送、可从远端恢复的 revision。
+- **Prerequisites:** 根仓库已 checkout 本次提交；可访问 GitHub；不需要安装 Cosmos
+  的训练依赖或下载模型权重。
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+./lab method status
+git config --get submodule.methods/cosmos.branch
+git -C methods/cosmos remote -v
+git -C methods/cosmos status --short --branch
+git -C methods/cosmos rev-parse HEAD
+git submodule status --recursive | grep 'methods/cosmos'
+git ls-remote https://github.com/AtticusZeller/cosmos-framework.git refs/heads/xense
+```
+- **Pass criteria:** `lab method status` 输出 Cosmos 的正确行（当前 focus profile 下也可
+  显示为 `inactive`）；若整体退出码为 1，唯一既有异常可为 `rlinf` 的 detached
+  branch；`git config` 返回 `xense`；其 `origin` 为
+  `https://github.com/AtticusZeller/cosmos-framework.git`、`upstream` 为
+  `https://github.com/NVIDIA/cosmos-framework.git`；method 工作树 clean；submodule
+  状态行无 `-`/`+` 前缀；本地 `HEAD` 与 `git ls-remote` 均为本次记录的
+  `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05` revision。
+- **Return on failure:** 上述命令的完整输出，尤其是 Cosmos 的 remote、branch、revision
+  和 submodule status。

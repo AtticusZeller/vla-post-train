@@ -80,6 +80,10 @@ _METHODS = {
         "branch": "workspace",
         "upstream": "https://github.com/NathanWu7/Tabero.git",
     },
+    "cosmos": {
+        "branch": "xense",
+        "upstream": "https://github.com/NVIDIA/cosmos-framework.git",
+    },
 }
 
 

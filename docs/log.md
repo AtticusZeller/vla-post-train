@@ -4,6 +4,18 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-09-01：接入 Cosmos-Framework 并记录 Xense 适配边界（Type C−，见 cognitive-debt）
+
+- fork `NVIDIA/cosmos-framework` 到 `AtticusZeller/cosmos-framework`，从官方 `main`
+  创建并推送 `xense` 分支；根仓以 `methods/cosmos` submodule 固定
+  `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05`。
+- 注册 framework 的 branch/upstream，更新 README 与 Agent 模块索引；保留上游
+  `AGENTS.md`，未修改 Cosmos 方法代码，也未创建实验配置、launcher 或 runbook。
+- `docs/cosmos.md` 明确迁移文件清单为空：OpenPI-Xense 继续负责真机客户端、broker 与
+  Flexiv 控制；未来只在 Cosmos 侧增加训练适配和薄推理服务适配，并保留 20D 先验核验边界。
+- Agent 侧验证 branch/remotes/gitlink/远端 revision、method clean、registry、Ruff、
+  根仓范围 ty 与 16 项 registry/focus 测试通过；用户于 2026-09-01 确认可恢复性验证通过。
+
 ## 2026-08-27：补充 Xense SDK 触觉输出模态（Type B）
 
 - 在 `docs/lerobot-xense.md` 的“触觉相机的数据形态”中补全 Xense Python SDK
