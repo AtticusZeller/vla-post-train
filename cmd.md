@@ -381,59 +381,6 @@ diff /tmp/vpt-submodule-before.txt /tmp/vpt-submodule-after.txt
 - **Return on failure:** `./lab method focus` 的完整输出、`diff` 结果、
   `./lab doctor` 与 `./lab method status` 输出。
 
-## 用户验证通过（Cosmos-Framework fork 与 submodule 可恢复性）
-
-- **Status:** Passed（用户于 2026-09-01 确认）
-- **Purpose:** 验证 `methods/cosmos` 使用 `NVIDIA/cosmos-framework` 的
-  AtticusZeller fork 与 `xense` 分支，并固定到已推送、可从远端恢复的 revision。
-- **Prerequisites:** 根仓库已 checkout 本次提交；可访问 GitHub；不需要安装 Cosmos
-  的训练依赖或下载模型权重。
-- **Commands:**
-```bash
-cd /home/atticuszz/DevSpace/vla-post-train
-./lab method status
-git config --get submodule.methods/cosmos.branch
-git -C methods/cosmos remote -v
-git -C methods/cosmos status --short --branch
-git -C methods/cosmos rev-parse HEAD
-git submodule status --recursive | grep 'methods/cosmos'
-git ls-remote https://github.com/AtticusZeller/cosmos-framework.git refs/heads/xense
-```
-- **Pass criteria:** `lab method status` 输出 Cosmos 的正确行（当前 focus profile 下也可
-  显示为 `inactive`）；若整体退出码为 1，唯一既有异常可为 `rlinf` 的 detached
-  branch；`git config` 返回 `xense`；其 `origin` 为
-  `https://github.com/AtticusZeller/cosmos-framework.git`、`upstream` 为
-  `https://github.com/NVIDIA/cosmos-framework.git`；method 工作树 clean；submodule
-  状态行无 `-`/`+` 前缀；本地 `HEAD` 与 `git ls-remote` 均为本次记录的
-  `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05` revision。
-- **Return on failure:** 上述命令的完整输出，尤其是 Cosmos 的 remote、branch、revision
-  和 submodule status。
-
-## 待用户验证（TacWAM 直接协作仓库与 submodule 可恢复性）
-
-- **Status:** Pending
-- **Purpose:** 验证 `methods/tacwam` 直接使用 `Hubo1231/TacWAM` 的 `main` 分支，
-  没有个人 fork，并固定到已推送、可从私有远端恢复的 revision。
-- **Prerequisites:** 当前 GitHub 身份可读取 private 仓库 `Hubo1231/TacWAM`；不需要
-  Cosmos、PyTorch、模型权重或真机设备。
-- **Commands:**
-```bash
-cd /home/atticuszz/DevSpace/vla-post-train
-./lab method status
-git config --get submodule.methods/tacwam.branch
-git -C methods/tacwam remote -v
-git -C methods/tacwam status --short --branch
-git -C methods/tacwam rev-parse HEAD
-git submodule status --recursive | grep 'methods/tacwam'
-git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/main
-```
-- **Pass criteria:** `lab method status` 显示 `tacwam` 为 `main`、revision `d42ff465a673`、
-  clean=yes；`git config` 返回 `main`；`origin` 与 `upstream` 均为
-  `https://github.com/Hubo1231/TacWAM.git`；submodule 状态行无 `-`/`+` 前缀；本地
-  `HEAD` 与远端 `main` 均为 `d42ff465a673b151482d6efb6d1cc4ab74b5faf6`。
-- **Return on failure:** 上述命令的完整输出，尤其是 TacWAM 的 remote、branch、revision
-  和 submodule status。
-
 ## 待用户验证（FastWAM fork 与 submodule 可恢复性）
 
 - **Status:** Passed（2026-09-02，用户已确认）
@@ -457,4 +404,27 @@ git ls-remote https://github.com/AtticusZeller/FastWAM.git refs/heads/workspace
   `https://github.com/yuantianyuan01/FastWAM.git`；submodule 状态行无 `-`/`+` 前缀；
   远端 `refs/heads/workspace` 与本地 `HEAD` 均为
   `f109f8f863feb49575cbcae9e6e069d38d7c5df0`；`./lab doctor` 不因 fastwam 失败。
+- **Return on failure:** 上述命令的完整输出，尤其是首次失败的命令。
+
+## 待用户验证（移除 Cosmos-Framework 与 TacWAM submodule）
+
+- **Status:** Waived（2026-09-02，用户直接授权提交；用户侧验证未执行，仅有 Agent 侧证据）
+- **Purpose:** 确认 `methods/cosmos` 与 `methods/tacwam` 已从根仓完全移除，且不影响其余
+  method 与 focus 切换。
+- **Prerequisites:** 在本工作树根目录执行；不需要 GPU 或数据。
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+./lab method status
+./lab method focus xense
+./lab doctor
+git config --get-all submodule.active
+grep -rn -iE 'cosmos|tacwam' .gitmodules scripts/lab.py README.md focus.yaml AGENTS.md CLAUDE.md cmd.md docs/
+ls methods/
+```
+- **Pass criteria:** `lab method status` 与 `lab doctor` 都不再出现 `cosmos` 或 `tacwam`
+  行；`./lab method focus xense` 输出「无需变更」且不报 `--skip-worktree` 错误；
+  `submodule.active` 为 fastwam / lerobot / lerobot-xense / xense-openpi 四项；
+  `grep` 只命中 `docs/log.md` 中的历史条目，其余文件无命中；`methods/` 下没有 `cosmos`
+  和 `tacwam` 目录；`doctor` 唯一 FAIL 仍是既有的 `artifact mount not mounted`。
 - **Return on failure:** 上述命令的完整输出，尤其是首次失败的命令。

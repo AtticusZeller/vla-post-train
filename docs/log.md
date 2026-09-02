@@ -4,6 +4,22 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-09-02：移除 Cosmos-Framework 与 TacWAM，触觉 WAM 线作废（Type B）
+
+- 完全移出 `methods/cosmos` 与 `methods/tacwam`：submodule 与 `.git/modules/` 缓存、
+  `submodule.active` pathspec、`.gitmodules`、`scripts/lab.py` 注册、README 角色表、
+  focus `xense` profile、Agent 模块索引、`docs/cosmos.md`、`docs/tacwam.md`、两条
+  `cmd.md` 验证块，以及 cosmos 的 log 条目与未偿还 cognitive-debt 记录。
+- 删除前确认两个工作树 clean 且无未推送提交：cosmos `xense` 与远端同为 `0e034bc9`；
+  tacwam 的 `codex/cosmos3-config-interface` 与已推送 `main` 同为 `d42ff465`，
+  `git log --branches --not --remotes` 为空。远端仓库（cosmos fork、TacWAM 协作仓库）
+  未做任何改动。
+- `docs/plan.md` 的 TacWAM 配置接口计划整段作废，替换为「当前无进行中的计划」；
+  `docs/fastwam.md` 的定位改为独立保留的 WAM 参照系，不再引用已移除的 tacwam。
+- Agent 侧验证 `./lab method status`、`./lab doctor`、`./lab method focus xense`
+  （无需变更、无 `--skip-worktree` 报错）、`submodule.active` 四项、Ruff/ty 与
+  focus/cli/config 21 项测试通过；用户于 2026-09-02 直接授权提交，豁免用户侧验证。
+
 ## 2026-09-02：接入 FastWAM 作为 WAM 对照实现（Type C−，见 cognitive-debt）
 
 - fork `yuantianyuan01/FastWAM` 到 `AtticusZeller/FastWAM`，从官方 `main` 的 `7faa711`
@@ -19,18 +35,6 @@
 - Agent 侧验证 branch/remotes/gitlink/远端 revision、method clean、`./lab doctor` 与
   `./lab method status`、Ruff/ty、focus/cli/config 21 项测试通过；用户于 2026-09-02
   确认可恢复性验证通过。
-
-## 2026-09-01：接入 Cosmos-Framework 并记录 Xense 适配边界（Type C−，见 cognitive-debt）
-
-- fork `NVIDIA/cosmos-framework` 到 `AtticusZeller/cosmos-framework`，从官方 `main`
-  创建并推送 `xense` 分支；根仓以 `methods/cosmos` submodule 固定
-  `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05`。
-- 注册 framework 的 branch/upstream，更新 README 与 Agent 模块索引；保留上游
-  `AGENTS.md`，未修改 Cosmos 方法代码，也未创建实验配置、launcher 或 runbook。
-- `docs/cosmos.md` 明确迁移文件清单为空：OpenPI-Xense 继续负责真机客户端、broker 与
-  Flexiv 控制；未来只在 Cosmos 侧增加训练适配和薄推理服务适配，并保留 20D 先验核验边界。
-- Agent 侧验证 branch/remotes/gitlink/远端 revision、method clean、registry、Ruff、
-  根仓范围 ty 与 16 项 registry/focus 测试通过；用户于 2026-09-01 确认可恢复性验证通过。
 
 ## 2026-08-27：补充 Xense SDK 触觉输出模态（Type B）
 

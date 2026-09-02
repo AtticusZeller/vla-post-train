@@ -50,14 +50,6 @@
 	path = methods/tabero
 	url = https://github.com/AtticusZeller/Tabero.git
 	branch = workspace
-[submodule "methods/cosmos"]
-	path = methods/cosmos
-	url = https://github.com/AtticusZeller/cosmos-framework.git
-	branch = xense
-[submodule "methods/tacwam"]
-	path = methods/tacwam
-	url = https://github.com/Hubo1231/TacWAM.git
-	branch = main
 [submodule "methods/fastwam"]
 	path = methods/fastwam
 	url = https://github.com/AtticusZeller/FastWAM.git

@@ -7,8 +7,9 @@ method。核心问题是"WAM 在测试时是否必须先想象未来"：模型�
 配 ActionDiT 动作头，既可以先生成未来视频再推动作（IDM），也可以跳过想象直接从当前
 观测出动作（first-frame，即 Fast-WAM）。基准是 LIBERO 与 RoboTwin 2.0。
 
-接入它的用途是作为 `methods/tacwam` 的 WAM 对照实现：TacWAM 走 Cosmos3-Edge 触觉
-路线，FastWAM 是同一问题域里已发表、有公开 checkpoint 和数值的参照系。
+接入时的用途是作为触觉 WAM 线（TacWAM + Cosmos-Framework）的对照实现；该线已于
+2026-09-02 移出工作区。FastWAM 作为已发表、有公开 checkpoint 和数值的 WAM 参照系
+独立保留，后续用途待定。
 
 ## 来源与版本
 

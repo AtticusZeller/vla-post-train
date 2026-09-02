@@ -10,11 +10,9 @@ default: xense
 profiles:
   all: ["*"]
 
-  # Xense 触觉线：openpi/lerobot 触觉扩展 + 上游 LeRobot/Cosmos 框架 + WAM 对照
+  # Xense 触觉线：openpi/lerobot 触觉扩展 + 上游 LeRobot + WAM 对照
   xense:
     - xense-openpi
     - lerobot-xense
     - lerobot
-    - cosmos
-    - tacwam
     - fastwam

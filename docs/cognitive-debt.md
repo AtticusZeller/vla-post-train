@@ -32,22 +32,6 @@
   日期、解释产物和偿还提交。
 - **偿还记录：** Pending
 
-## 2026-09-01 · Cosmos-Framework Xense 接入与适配边界
-
-- **状态：** Open（功能与可恢复性验证已完成）
-- **范围：** `methods/cosmos` submodule、Cosmos-Framework fork/`xense` 分支、
-  `.gitmodules`、`scripts/lab.py`、README、Agent 模块索引、`docs/cosmos.md` 与 `cmd.md`。
-- **暂缓原因：** 本轮只做 framework 接入和后续适配范围记录，未修改训练或推理实现；
-  选择 Type C−，将完整 Explain Diff 理解 Review 延后。
-- **验证证据：** fork parent 为 `NVIDIA/cosmos-framework`；远端 `xense` 与本地 gitlink
-  均为 `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05`；method clean；registry/focus 16 项测试、
-  根仓范围 Ruff/ty 与 diff check 通过；用户于 2026-09-01 确认可恢复性验证通过。
-- **待理解内容：** Cosmos domain-aware action head、20D ManipArena 先验的 checkpoint
-  核验方法，以及未来 Xense observation/action schema 与薄服务适配层的边界。
-- **偿还标准：** 针对本次根提交运行 explain-diff-html，阅读解释并通过全部五题；记录
-  日期、解释产物和偿还提交。
-- **偿还记录：** Pending
-
 ## 2026-08-17 · 接入 xense-openpi 与 lerobot-xense submodule
 
 - **状态：** Open（Agent 侧验证完成，等待用户验证）
