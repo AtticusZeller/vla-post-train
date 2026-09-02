@@ -4,6 +4,22 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-09-02：接入 FastWAM 作为 WAM 对照实现（Type C−，见 cognitive-debt）
+
+- fork `yuantianyuan01/FastWAM` 到 `AtticusZeller/FastWAM`，从官方 `main` 的 `7faa711`
+  创建并推送 `workspace` 分支；根仓以 `methods/fastwam` submodule 固定
+  `f109f8f863feb49575cbcae9e6e069d38d7c5df0`。
+- 上游没有 `AGENTS.md`，新写 method 级仓库指南并加 `CLAUDE.md` 指针；记录 8/64 卡默认
+  并行度、`sigma_shift` 与 `instruction_type` 两个数值对照陷阱、`pretrained_norm_stats`
+  首轮置空流程，以及 `third_party/RoboTwin` 与 vendored LeRobot reader 不是 submodule。
+- 注册 branch/upstream，更新 README 角色表、Agent 模块索引、focus `xense` profile 与
+  `docs/fastwam.md`；未创建 `experiments/fastwam/`、配置、launcher 或 runbook，未安装
+  环境、未下载数据集、未运行任何训练或评测。
+- 顺带修正 README 中 focus profile 规模的既有错误（写作 8，实际 6），并同步 profile 注释。
+- Agent 侧验证 branch/remotes/gitlink/远端 revision、method clean、`./lab doctor` 与
+  `./lab method status`、Ruff/ty、focus/cli/config 21 项测试通过；用户于 2026-09-02
+  确认可恢复性验证通过。
+
 ## 2026-09-01：接入 Cosmos-Framework 并记录 Xense 适配边界（Type C−，见 cognitive-debt）
 
 - fork `NVIDIA/cosmos-framework` 到 `AtticusZeller/cosmos-framework`，从官方 `main`

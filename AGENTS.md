@@ -203,6 +203,7 @@ Fill module documentation **incrementally**. Create `docs/<module>.md` the first
 - [[docs/tabero.md]] — tabero module (`methods/tabero/`)
 - [[docs/cosmos.md]] — cosmos module (`methods/cosmos/`)
 - [[docs/tacwam.md]] — tacwam module (`methods/tacwam/`)
+- [[docs/fastwam.md]] — fastwam module (`methods/fastwam/`)
 <!-- init-repo-agents:module-index:end -->
 <!-- Seeded from a shallow structural scan during initialization, for example:
 - [[docs/datasets.md]] — dataset loading and metadata (`src/<pkg>/datasets/`)

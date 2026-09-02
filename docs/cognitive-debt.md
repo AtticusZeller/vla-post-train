@@ -13,6 +13,25 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-09-02 · FastWAM 接入与 WAM 对照边界
+
+- **状态：** Open（Agent 与用户验证均已完成）
+- **范围：** `methods/fastwam` submodule、FastWAM fork/`workspace` 分支及其中的
+  `AGENTS.md`/`CLAUDE.md`、`.gitmodules`、`scripts/lab.py`、README 角色表、focus `xense`
+  profile、Agent 模块索引、`docs/fastwam.md` 与 `cmd.md`。
+- **暂缓原因：** 本轮只做仓库接入与登记，未修改 FastWAM 实现，也未运行训练或评测；
+  选择 Type C−，将完整 Explain Diff 理解 Review 延后。
+- **验证证据：** fork parent 为 `yuantianyuan01/FastWAM`；远端 `workspace` 与本地 gitlink
+  均为 `f109f8f863feb49575cbcae9e6e069d38d7c5df0`；method clean、无嵌套 submodule；
+  `./lab doctor` 中 `method:fastwam OK`；Ruff/ty 与 focus/cli/config 21 项测试通过；
+  用户于 2026-09-02 确认可恢复性验证通过。
+- **待理解内容：** ActionDiT 从 Wan22 DiT 插值的骨干预处理、IDM / first-frame /
+  optional-IDM 四个变体在 `runtime.py` 工厂与 Hydra 配置中的对应关系，以及
+  `sigma_shift`、`instruction_type`、`pretrained_norm_stats` 如何影响可比性。
+- **偿还标准：** 针对本次根提交运行 explain-diff-html，阅读解释并通过全部五题；记录
+  日期、解释产物和偿还提交。
+- **偿还记录：** Pending
+
 ## 2026-09-01 · Cosmos-Framework Xense 接入与适配边界
 
 - **状态：** Open（功能与可恢复性验证已完成）

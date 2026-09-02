@@ -433,3 +433,28 @@ git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/main
   `HEAD` 与远端 `main` 均为 `d42ff465a673b151482d6efb6d1cc4ab74b5faf6`。
 - **Return on failure:** 上述命令的完整输出，尤其是 TacWAM 的 remote、branch、revision
   和 submodule status。
+
+## 待用户验证（FastWAM fork 与 submodule 可恢复性）
+
+- **Status:** Passed（2026-09-02，用户已确认）
+- **Purpose:** 验证 `methods/fastwam` 指向个人 fork 的 `workspace` 分支、`upstream` 指向
+  官方仓库，并固定到已推送、可从远端恢复的 revision。
+- **Prerequisites:** 可访问 GitHub；不需要 GPU、conda 环境、数据集或 checkpoint。
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+./lab method status
+./lab doctor
+git config --get submodule.methods/fastwam.branch
+git -C methods/fastwam remote -v
+git -C methods/fastwam status --short --branch
+git submodule status --recursive | grep 'methods/fastwam'
+git ls-remote https://github.com/AtticusZeller/FastWAM.git refs/heads/workspace
+```
+- **Pass criteria:** `lab method status` 显示 `fastwam` 为 `workspace`、revision
+  `f109f8f863fe`、clean=yes；`git config` 返回 `workspace`；`origin` 为
+  `https://github.com/AtticusZeller/FastWAM.git`、`upstream` 为
+  `https://github.com/yuantianyuan01/FastWAM.git`；submodule 状态行无 `-`/`+` 前缀；
+  远端 `refs/heads/workspace` 与本地 `HEAD` 均为
+  `f109f8f863feb49575cbcae9e6e069d38d7c5df0`；`./lab doctor` 不因 fastwam 失败。
+- **Return on failure:** 上述命令的完整输出，尤其是首次失败的命令。

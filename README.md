@@ -23,6 +23,7 @@
 | `methods/tabero` | `workspace` | method | Tabero 触觉基础模型与基准官方实现 fork |
 | `methods/cosmos` | `xense` | framework | NVIDIA Cosmos-Framework 训练与服务框架 fork；预留 Flexiv/Xense 适配边界 |
 | `methods/tacwam` | `main` | method | TacWAM 触觉感知世界动作模型；直接协作仓库，不使用 fork |
+| `methods/fastwam` | `workspace` | method | Fast-WAM 世界动作模型官方实现 fork（LIBERO / RoboTwin 训练与评测） |
 
 官方 OpenPI 与 LIBERO 继续由各方法按自身依赖闭包管理，不单独接入；Xense 触觉扩展
 变体（xense-openpi、lerobot-xense）已接入，与官方 LeRobot/OpenPI 相互独立。
@@ -48,7 +49,7 @@ uv sync --python 3.12 --all-groups
 ```bash
 ./lab method focus                  # 打印当前 profile 与各 method 状态
 ./lab method focus xense --dry-run  # 预览将删除的工作树，不做改动
-./lab method focus xense            # 收敛到 Xense 触觉线的 8 个仓库
+./lab method focus xense            # 收敛到 Xense 触觉线的 6 个仓库
 ./lab method focus all              # 还原全部
 ```
 
