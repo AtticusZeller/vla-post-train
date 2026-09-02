@@ -14,7 +14,6 @@ profiles:
   xense:
     - xense-openpi
     - lerobot-xense
-    - xense-lerobot-viewer
     - lerobot
-    - rlinf
-    - n0-vtla
+    - cosmos
+    - tacwam

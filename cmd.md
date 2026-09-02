@@ -408,3 +408,28 @@ git ls-remote https://github.com/AtticusZeller/cosmos-framework.git refs/heads/x
   `0e034bc98ffa3c3dfa19f037871f3a8bbc1c4d05` revision。
 - **Return on failure:** 上述命令的完整输出，尤其是 Cosmos 的 remote、branch、revision
   和 submodule status。
+
+## 待用户验证（TacWAM 直接协作仓库与 submodule 可恢复性）
+
+- **Status:** Pending
+- **Purpose:** 验证 `methods/tacwam` 直接使用 `Hubo1231/TacWAM` 的 `main` 分支，
+  没有个人 fork，并固定到已推送、可从私有远端恢复的 revision。
+- **Prerequisites:** 当前 GitHub 身份可读取 private 仓库 `Hubo1231/TacWAM`；不需要
+  Cosmos、PyTorch、模型权重或真机设备。
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+./lab method status
+git config --get submodule.methods/tacwam.branch
+git -C methods/tacwam remote -v
+git -C methods/tacwam status --short --branch
+git -C methods/tacwam rev-parse HEAD
+git submodule status --recursive | grep 'methods/tacwam'
+git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/main
+```
+- **Pass criteria:** `lab method status` 显示 `tacwam` 为 `main`、revision `d42ff465a673`、
+  clean=yes；`git config` 返回 `main`；`origin` 与 `upstream` 均为
+  `https://github.com/Hubo1231/TacWAM.git`；submodule 状态行无 `-`/`+` 前缀；本地
+  `HEAD` 与远端 `main` 均为 `d42ff465a673b151482d6efb6d1cc4ab74b5faf6`。
+- **Return on failure:** 上述命令的完整输出，尤其是 TacWAM 的 remote、branch、revision
+  和 submodule status。
