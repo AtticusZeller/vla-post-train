@@ -44,8 +44,9 @@ Cosmos3-Edge/`cosmos-framework` 外部依赖，而是从 [[docs/fastwam.md]] 迁
 ## 环境安装（未在本机跑完）
 
 上游 README 记录环境为 Python 3.12 + `torch==2.11.0+cu128` + `torchvision==0.26.0+cu128` +
-Transformers 5.4/5.5 + CUDA 12.8，用仓库根目录的 `conda_enviroment.yaml` 创建 `tacwam`
-mamba 环境：
+Transformers 5.4/5.5 + CUDA 12.8，用仓库根目录的 `conda_enviroment.yaml`（当前 pin `ba42007`
+上的实际文件名，缺一个 "n"；`docs/sync-agents-guide` 分支已改名为
+`conda_environment.yaml`，见下文，PR 合并前以此处为准）创建 `tacwam` mamba 环境：
 
 ```bash
 mamba env create -f conda_enviroment.yaml
@@ -80,15 +81,17 @@ UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cu128" \
 `ModuleNotFoundError: No module named 'tacwam'`（`tests/` 下 5 个测试模块全部导入失败，实测于
 2026-09-03）。
 
-2026-09-03 已在协作仓库 `Hubo1231/TacWAM` 上开新分支 `docs/sync-agents-guide`（从 `main`
-`ba42007` 分出，提交 `c959bf5`）重写整份 `AGENTS.md`：Structure 改为对照 `src/tacwam` 实际
-目录；Commands 改指向 `b409c18`/`ba42007` 已统一确立的 `tacwam` mamba 环境
-（`mamba env create -f conda_enviroment.yaml && mamba activate tacwam && pytest`），不再
-引入并行的 uv 安装路径（首个版本一度写成 `uv run --with-editable .`，已修正），并注明
-torch/torchvision/lerobot 已是硬依赖、无免安装测试路径；Boundaries 补上"不重新引入
-cosmos-framework 依赖"。已推送到
-`https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`，PR 尚未开，`main` 尚未合并
-该修复；根仓 `.gitmodules`/`scripts/lab.py` 仍按约定跟踪 `main`，pin 未变。
+2026-09-03 已在协作仓库 `Hubo1231/TacWAM` 上开分支 `docs/sync-agents-guide`（从 `main`
+`ba42007` 分出，随 `main` 前进到 `ee580ad` 后 rebase 过一次）重写整份 `AGENTS.md`：Structure
+改为对照 `src/tacwam` 实际目录，含 `ee580ad` 引入的完整训练循环（模型实例化、AdamW、
+warmup/cosine 学习率、梯度裁剪、断点续训）；Commands 指向 `b409c18`/`ba42007` 已统一确立的
+`tacwam` mamba 环境，不引入并行的 uv 安装路径（首个版本一度写成 `uv run --with-editable .`，
+已修正）；`methods/tacwam/CLAUDE.md` 从 markdown 链接改为 `@AGENTS.md` 导入语法。分支上还把
+`conda_enviroment.yaml`（缺一个 "n"）重命名为 `conda_environment.yaml`，同步更新了 README/
+AGENTS.md 里的引用，内容本身未改。已开 PR
+[`Hubo1231/TacWAM#1`](https://github.com/Hubo1231/TacWAM/pull/1)，`main` 尚未合并；根仓
+`.gitmodules`/`scripts/lab.py` 按约定继续跟踪 `main`，pin 待 PR 合并后再决定是否升级到
+`ee580ad` 之后的提交。
 
 ## 与 FastWAM 的关系
 
