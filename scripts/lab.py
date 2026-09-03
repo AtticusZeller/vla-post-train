@@ -84,6 +84,10 @@ _METHODS = {
         "branch": "workspace",
         "upstream": "https://github.com/yuantianyuan01/FastWAM.git",
     },
+    "tacwam": {
+        "branch": "main",
+        "upstream": "https://github.com/Hubo1231/TacWAM.git",
+    },
 }
 
 

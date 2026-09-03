@@ -406,9 +406,11 @@ git ls-remote https://github.com/AtticusZeller/FastWAM.git refs/heads/workspace
   `f109f8f863feb49575cbcae9e6e069d38d7c5df0`；`./lab doctor` 不因 fastwam 失败。
 - **Return on failure:** 上述命令的完整输出，尤其是首次失败的命令。
 
-## 待用户验证（移除 Cosmos-Framework 与 TacWAM submodule）
+## 待用户验证（移除 Cosmos-Framework 与 TacWAM submodule）[已被 2026-09-03 重新接入取代]
 
-- **Status:** Waived（2026-09-02，用户直接授权提交；用户侧验证未执行，仅有 Agent 侧证据）
+- **Status:** Superseded（2026-09-03：`methods/tacwam` 已重新接入，本块的 grep
+  pass criteria——不应命中 `tacwam`——不再成立；保留仅作历史记录，不要按本块验证）
+- **Status（历史）:** Waived（2026-09-02，用户直接授权提交；用户侧验证未执行，仅有 Agent 侧证据）
 - **Purpose:** 确认 `methods/cosmos` 与 `methods/tacwam` 已从根仓完全移除，且不影响其余
   method 与 focus 切换。
 - **Prerequisites:** 在本工作树根目录执行；不需要 GPU 或数据。
@@ -428,3 +430,31 @@ ls methods/
   `grep` 只命中 `docs/log.md` 中的历史条目，其余文件无命中；`methods/` 下没有 `cosmos`
   和 `tacwam` 目录；`doctor` 唯一 FAIL 仍是既有的 `artifact mount not mounted`。
 - **Return on failure:** 上述命令的完整输出，尤其是首次失败的命令。
+
+## 待用户验证（重新接入 TacWAM 直接协作仓库与 submodule 可恢复性）
+
+- **Status:** Pending
+- **Purpose:** 验证 `methods/tacwam` 重新以 `Hubo1231/TacWAM` 的 `main` 分支直接接入
+  （无个人 fork），固定到已推送、可从远端恢复的 revision，且不影响其余 method 与 focus
+  切换。
+- **Prerequisites:** 当前 GitHub 身份可读取 `Hubo1231/TacWAM`；不需要 Cosmos、PyTorch、
+  模型权重或真机设备。
+- **Commands:**
+```bash
+cd /home/atticuszz/DevSpace/vla-post-train
+./lab method status
+git config --get submodule.methods/tacwam.branch
+git -C methods/tacwam remote -v
+git -C methods/tacwam status --short --branch
+git -C methods/tacwam rev-parse HEAD
+git submodule status --recursive | grep 'methods/tacwam'
+git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/main
+./lab doctor
+```
+- **Pass criteria:** `lab method status` 显示 `tacwam` 为 `main`、revision
+  `ba42007cfa31`、clean=yes；`git config` 返回 `main`；`origin` 与 `upstream` 均为
+  `https://github.com/Hubo1231/TacWAM.git`；submodule 状态行无 `-`/`+` 前缀；本地
+  `HEAD` 与远端 `main` 均为 `ba42007cfa310ec51291359245474887cdba8f27`；`./lab doctor`
+  中 `method:tacwam OK`（唯一预期 FAIL 仍是既有的 `artifact mount not mounted`）。
+- **Return on failure:** 上述命令的完整输出，尤其是 TacWAM 的 remote、branch、revision
+  和 submodule status。

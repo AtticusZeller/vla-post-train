@@ -4,6 +4,31 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-09-03：重新接入 TacWAM（Type C−，见 cognitive-debt）
+
+- 按 2026-09-02 首次接入时确认过的理由，`methods/tacwam` 的 `origin`/`upstream` 均沿用
+  协作仓库 `https://github.com/Hubo1231/TacWAM.git`（用户是联合开发者，不 fork），分支
+  `main`，固定到当前 `main` HEAD `ba42007cfa310ec51291359245474887cdba8f27`（上次 pin
+  `d42ff465` 的后代，中间新增 5 个提交）。
+- 上游架构自上次移除后已实质变化：`af24ac7` 用从 [[docs/fastwam.md]] 迁移的 Wan2.2
+  模型替换了 Cosmos3-Edge，并引入仿 xense-openpi 风格的 `TrainConfig`/`get_config()`
+  配置系统；`src/`、`configs/` 中已无 `cosmos-framework` 引用。按用户决定，
+  `methods/tacwam/AGENTS.md` 原样保留（仍描述已删除的 Cosmos3-Edge 架构），只在根仓
+  `docs/tacwam.md` 中据实记录现状并标注该文件已过时。
+- 实测 `methods/tacwam/AGENTS.md` 记录的测试命令
+  （`uv run --no-project --with pytest --with numpy pytest`）在当前代码上因未安装本地包而
+  5 个测试模块全部 `ModuleNotFoundError`；加 `--with-editable .` 可解决但会触发
+  `torch==2.11.0+cu128` 等重量依赖下载，超出本次仅登记范围，未执行到底。
+- 仅完成仓库登记：`scripts/lab.py` 注册、README 角色表、`focus.yaml` 的 `xense` profile
+  （新增第 5 个仓库）、根 Agent 模块索引、`docs/tacwam.md`、`docs/plan.md`；未安装环境、
+  未创建 `experiments/tacwam/`、未修改 TacWAM 代码或上游 `AGENTS.md`、未运行任何训练或
+  评测。
+- Agent 侧验证：`./lab method status` 显示 `tacwam` 为 `main`、revision `ba42007cfa31`、
+  clean=yes、`origin`/`upstream` 均为 `Hubo1231/TacWAM.git`；`./lab doctor` 中
+  `method:tacwam OK`（`artifact mount FAIL` 为预先存在、与本次改动无关的本机挂载问题）；
+  改动文件 `ruff format --check`/`ruff check` 通过（另两个既有 unformatted 文件与本次
+  改动无关）；focus/cli/config 22 项 pytest 通过。用户侧验证见 `cmd.md` 待验证块。
+
 ## 2026-09-02：移除 Cosmos-Framework 与 TacWAM，触觉 WAM 线作废（Type B）
 
 - 完全移出 `methods/cosmos` 与 `methods/tacwam`：submodule 与 `.git/modules/` 缓存、

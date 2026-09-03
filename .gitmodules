@@ -54,3 +54,7 @@
 	path = methods/fastwam
 	url = https://github.com/AtticusZeller/FastWAM.git
 	branch = workspace
+[submodule "methods/tacwam"]
+	path = methods/tacwam
+	url = https://github.com/Hubo1231/TacWAM.git
+	branch = main

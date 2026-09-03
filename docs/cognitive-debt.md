@@ -13,6 +13,26 @@
 - **偿还记录：** <通过日期、解释产物、closeout commit；未偿还时写 Pending>
 -->
 
+## 2026-09-03 · TacWAM 重新接入与 Wan2.2 架构迁移
+
+- **状态：** Open（Agent 与用户验证均已完成）
+- **范围：** `methods/tacwam` submodule（origin/upstream 均为 `Hubo1231/TacWAM.git`，
+  分支 `main`，pin `ba42007`）、`scripts/lab.py`、README 角色表、`focus.yaml` 的 `xense`
+  profile、根 Agent 模块索引、`docs/tacwam.md`、`docs/plan.md`、`cmd.md`。
+- **暂缓原因：** 本轮只做仓库接入与登记，未修改 TacWAM 实现、未安装环境、未运行任何
+  训练或评测；选择 Type C−，将完整 Explain Diff 理解 Review 延后。
+- **验证证据：** `./lab method status`/`./lab doctor` 确认 `tacwam` clean、
+  revision/origin/upstream 与登记一致；改动文件 Ruff format/check 通过；focus/cli/config
+  22 项 pytest 通过。用户侧 submodule 可恢复性验证见 `cmd.md` 待验证块，尚待用户运行确认。
+- **待理解内容：** `af24ac7` 从 FastWAM 迁移出的 Wan2.2 模型四个变体
+  （`TacWAM`/`TacWAMJoint`/`TacWAMIDM`/`TacWAMOptionalIDM`）与 FastWAM 原始实现的具体
+  差异边界、仿 xense-openpi 风格 `TrainConfig`/`get_config()` 配置系统的适配方式、
+  `src/tacwam/training/data_loader.py` 的 LeRobot DataLoader 构造逻辑，以及
+  `methods/tacwam/AGENTS.md` 描述的 Cosmos3-Edge 架构与当前代码的确切偏离范围。
+- **偿还标准：** 针对本次根提交与 TacWAM `af24ac7..ba42007` 区间运行 explain-diff-html，
+  阅读解释并通过全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
 ## 2026-09-02 · FastWAM 接入与 WAM 对照边界
 
 - **状态：** Open（Agent 与用户验证均已完成）
