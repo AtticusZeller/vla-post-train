@@ -36,15 +36,17 @@
 ## 2026-09-03 · TacWAM AGENTS.md 修复分支与环境安装边界
 
 - **状态：** Open（Agent 侧证据完整；用户侧未要求验证，环境安装本身按用户要求未执行）
-- **范围：** `Hubo1231/TacWAM` 新分支 `docs/sync-agents-guide`（提交 `6e5cd18`，改写
-  `AGENTS.md`）；根仓 `docs/tacwam.md`、`docs/log.md`。
+- **范围：** `Hubo1231/TacWAM` 新分支 `docs/sync-agents-guide`（amend 后提交 `c959bf5`，
+  改写 `AGENTS.md`）；根仓 `docs/tacwam.md`、`docs/log.md`。
 - **暂缓原因：** 只做文档修复分支的创建、推送，未开 PR、未合并 `main`，未安装环境、未运行
   TacWAM 测试；选择 Type C−，将完整 Explain Diff 理解 Review 延后。
 - **验证证据：** `git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/docs/sync-agents-guide`
-  返回 `6e5cd18c121fd09c55f4f1c61e88b9a57491981e`，与本地一致；根仓 `git status` 干净，
+  返回 `c959bf55ee80ca04d507c3374b4c37b234e28acb`，与本地一致；根仓 `git status` 干净，
   submodule 检出干净（无残留 `.venv`/`uv.lock`）；`uv sync --extra test`（配合
   `UV_EXTRA_INDEX_URL`/`--index-strategy unsafe-best-match`）已验证能正确解析依赖（此前失败
-  是索引策略问题，已定位），但按用户要求中途手动停止，未跑完、未跑测试。
+  是索引策略问题，已定位），但按用户要求中途手动停止，未跑完、未跑测试。用户随后指出初版
+  `AGENTS.md` Commands 用 uv 与仓库已统一的 mamba 约定冲突，已修正为 mamba 并 amend
+  force-push（分支未开 PR、无人基于它工作，amend 安全）。
 - **待理解内容：** `AGENTS.md` 改写后的 Structure/Commands/Boundaries 是否需要协作者
   Hubo1231 侧确认或合并、`docs/sync-agents-guide` 是否需要开 PR，以及 `lerobot[dataset]==0.6.0`
   等新增硬依赖对本机磁盘（594G 分区仅剩约 19G）的实际影响范围。

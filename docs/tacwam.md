@@ -81,9 +81,12 @@ UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cu128" \
 2026-09-03）。
 
 2026-09-03 已在协作仓库 `Hubo1231/TacWAM` 上开新分支 `docs/sync-agents-guide`（从 `main`
-`ba42007` 分出，提交 `6e5cd18`）重写整份 `AGENTS.md`：Structure 改为对照 `src/tacwam` 实际
-目录、Commands 改为 `uv run --with-editable . --with pytest pytest` 并注明 torch/lerobot
-已是硬依赖、无免安装测试路径，Boundaries 补上"不重新引入 cosmos-framework 依赖"。已推送到
+`ba42007` 分出，提交 `c959bf5`）重写整份 `AGENTS.md`：Structure 改为对照 `src/tacwam` 实际
+目录；Commands 改指向 `b409c18`/`ba42007` 已统一确立的 `tacwam` mamba 环境
+（`mamba env create -f conda_enviroment.yaml && mamba activate tacwam && pytest`），不再
+引入并行的 uv 安装路径（首个版本一度写成 `uv run --with-editable .`，已修正），并注明
+torch/torchvision/lerobot 已是硬依赖、无免安装测试路径；Boundaries 补上"不重新引入
+cosmos-framework 依赖"。已推送到
 `https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`，PR 尚未开，`main` 尚未合并
 该修复；根仓 `.gitmodules`/`scripts/lab.py` 仍按约定跟踪 `main`，pin 未变。
 

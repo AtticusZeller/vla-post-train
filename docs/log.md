@@ -10,11 +10,13 @@
   分出），重写整份 `AGENTS.md`：Structure 对齐 `src/tacwam` 实际目录（`model_factory.py`
   四个 `create_tacwam*` 工厂、`training/config.py` 的 `TrainConfig`/`get_config()`、
   `training/data_loader.py` 惰性导入的 LeRobot DataLoader、`policies/bi_flexiv_policy.py`）；
-  Commands 改为 `uv run --with-editable . --with pytest pytest` 并注明
-  `torch`/`torchvision`/`lerobot[dataset]` 已是 `pyproject.toml` 硬依赖，没有免安装的轻量
-  测试路径；Boundaries 补上"不重新引入 cosmos-framework 依赖"。提交 `6e5cd18`，已推送到
-  `https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`，尚未开 PR、`main`
-  未合并。
+  Commands 改为指向 `b409c18`/`ba42007` 已统一的 `tacwam` mamba 环境（不再引入并行的 uv
+  安装路径——初版一度写成 `uv run --with-editable .`，用户指出后已改回 mamba 并修正 amend），
+  并注明 `torch`/`torchvision`/`lerobot[dataset]` 已是 `pyproject.toml` 硬依赖，没有免安装
+  的轻量测试路径；Boundaries 补上"不重新引入 cosmos-framework 依赖"。amend 后提交
+  `c959bf5`，已 force-push 到
+  `https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`（分支未开 PR、没有其他人
+  基于它工作，amend 安全），尚未开 PR、`main` 未合并。
 - 用户要求「环境配置不用你装，命令给我就行」：中途停止了正在进行的 uv 环境安装尝试
   （已确认无残留 `.venv`/`uv.lock`，根仓与 submodule 检出均干净）；`docs/tacwam.md` 记录了
   尝试过程中的磁盘/缓存证据（安装前 23G 可用，中止时 19G，`~/.cache/uv` 34G→38G）供用户
