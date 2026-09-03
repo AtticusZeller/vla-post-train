@@ -1,34 +1,6 @@
-[submodule "methods/flowdagger"]
-	path = methods/flowdagger
-	url = https://github.com/AtticusZeller/FlowDAgger.git
-	branch = dev
-[submodule "methods/dsrl-pi0"]
-	path = methods/dsrl-pi0
-	url = https://github.com/AtticusZeller/dsrl_pi0.git
-	branch = dev
-[submodule "methods/rlinf"]
-	path = methods/rlinf
-	url = https://github.com/AtticusZeller/RLinf.git
-	branch = personal-dev
-[submodule "methods/starvla"]
-	path = methods/starvla
-	url = https://github.com/AtticusZeller/starVLA.git
-	branch = starVLA_dev
 [submodule "methods/lerobot"]
 	path = methods/lerobot
 	url = https://github.com/AtticusZeller/lerobot.git
-	branch = workspace
-[submodule "methods/expo-ft"]
-	path = methods/expo-ft
-	url = https://github.com/AtticusZeller/expo-ft.git
-	branch = dev
-[submodule "methods/univtac"]
-	path = methods/univtac
-	url = https://github.com/AtticusZeller/UniVTAC.git
-	branch = dev
-[submodule "methods/n0-vtla"]
-	path = methods/n0-vtla
-	url = https://github.com/AtticusZeller/N0-VTLA.git
 	branch = workspace
 [submodule "methods/xense-openpi"]
 	path = methods/xense-openpi
@@ -38,18 +10,6 @@
 	path = methods/lerobot-xense
 	url = https://github.com/AtticusZeller/lerobot-xense.git
 	branch = main
-[submodule "methods/xense-lerobot-viewer"]
-	path = methods/xense-lerobot-viewer
-	url = https://github.com/XenseRobotics-AI/xense-lerobot-viewer.git
-	branch = main
-[submodule "methods/t-rex"]
-	path = methods/t-rex
-	url = https://github.com/AtticusZeller/T-Rex.git
-	branch = workspace
-[submodule "methods/tabero"]
-	path = methods/tabero
-	url = https://github.com/AtticusZeller/Tabero.git
-	branch = workspace
 [submodule "methods/fastwam"]
 	path = methods/fastwam
 	url = https://github.com/AtticusZeller/FastWAM.git

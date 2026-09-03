@@ -1,14 +1,14 @@
 ---
 name: run-experiment
-description: Run a VLA post-training experiment through this repository's traceable lab workflow. Use when the user asks to smoke-test, launch, repeat, or monitor a configuration under experiments/*/configs.
+description: Run a research experiment through this repository's traceable lab workflow. Use when the user asks to smoke-test, launch, repeat, or monitor a configuration under experiments/*/configs.
 ---
 
 # Run Experiment
 
 ## Workflow
 
-1. Identify the config and method. Read root `AGENTS.md`, then
-   `methods/<method>/AGENTS.md` and `experiments/<method>/runbook.md`.
+1. Identify the config and method. Read root `AGENTS.md`, the method's own Agent
+   rules, `docs/<method>/plan.md`, and `experiments/<method>/runbook.md`.
 2. Confirm `/mnt/data` is mounted read-write, the method environment is available, and the runbook's
    data, checkpoint, GPU, disk, W&B, and time prerequisites are satisfied.
 3. Run `./lab config validate <config>` and `./lab experiment dry-run <config>`. Show the resolved

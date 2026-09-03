@@ -6,7 +6,7 @@ import pytest
 
 from scripts import run_record
 from scripts.config import ConfigError, load_config
-from scripts.run_record import finalize_run_record, read_json, verify_run_readiness
+from scripts.run_record import finalize_run_record, verify_run_readiness
 from tests.helpers import write_config
 
 
@@ -55,17 +55,3 @@ def test_finalize_records_every_terminal_path(
     assert record["signal"] == signal_number
     status = "completed" if record["exit_code"] == 0 else "failed"
     assert status == expected_status
-
-
-def test_historical_medium_preserves_multiple_revisions() -> None:
-    path = run_record.ROOT / "experiments/rlinf/runs/historical__libero10-task0-medium/run.json"
-    record = read_json(path)
-    assert record["historical"] is True
-    assert record["method_code"] is None
-    assert len(record["code_revisions"]) == 4
-    assert {item["revision"] for item in record["code_revisions"]} == {
-        "b6b62a4b6f3ba0a031d66d718151fe40a3a5daf0",
-        "450e9272ac27a1528d334943a80d54ce80199b9a",
-        "a5780853fe1d42a81bc5e039026c1e4a1ae276ba",
-        "193a60dae89256476b67b2c08fd9d00d87343e48",
-    }

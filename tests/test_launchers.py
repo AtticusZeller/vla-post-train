@@ -1,112 +1,35 @@
-"""Method launcher argv tests."""
+"""Generic command launcher tests."""
 
-import os
-import shutil
 from pathlib import Path
 
-from scripts.config import ROOT, load_config
+import yaml
+
+from scripts.config import load_config
 from scripts.launchers import build_launch_spec
+from tests.helpers import write_config
 
 
-def test_flowdagger_argv_is_exact() -> None:
-    config = load_config("experiments/flowdagger/configs/metaworld_assembly_smoke_b16_seed42.yaml")
-    spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/flowdagger/flowdagger_pi05"
-    assert spec.argv == (
-        "conda",
-        "run",
-        "--no-capture-output",
-        "-n",
-        "dsrl_pi0",
-        "python",
-        "train_flowdagger.py",
-        *config.native["argv"],
+def test_command_launcher_preserves_argv_and_method_cwd(tmp_path: Path) -> None:
+    config_path = write_config(
+        tmp_path,
+        native={"command": ["python", "train.py", "--steps", "10"]},
     )
-    environment = dict(spec.environment)
-    conda_bin = Path(shutil.which("conda") or "").resolve()
-    expected_env_bin = conda_bin.parents[1] / "envs/dsrl_pi0/bin"
-    assert environment["PATH"].startswith(f"{expected_env_bin}:")
-    assert environment["PATH"].endswith(os.environ["PATH"])
+    config = load_config(config_path, root=tmp_path)
 
-
-def test_dsrl_argv_is_exact() -> None:
-    config = load_config("experiments/dsrl-pi0/configs/libero90_task57_smoke_seed0.yaml")
     spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/dsrl-pi0"
-    assert spec.argv == (
-        "conda",
-        "run",
-        "--no-capture-output",
-        "-n",
-        "dsrl_pi0",
-        "python",
-        "-m",
-        "examples.launch_train_sim",
-        *config.native["argv"],
-    )
+
+    assert spec.cwd == tmp_path / "methods/example"
+    assert spec.argv == ("python", "train.py", "--steps", "10")
+    assert spec.environment == ()
 
 
-def test_rlinf_argv_is_exact() -> None:
-    config = load_config("experiments/rlinf/configs/libero10_task0_medium_seed0.yaml")
+def test_command_environment_prefix_remains_declarative(tmp_path: Path) -> None:
+    config_path = write_config(tmp_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    data["environment"] = {"manager": "command", "prefix": ["env", "DEVICE=0"]}
+    config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    config = load_config(config_path, root=tmp_path)
+
     spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/rlinf"
-    assert spec.argv == (
-        "conda",
-        "run",
-        "--no-capture-output",
-        "-n",
-        "dsrl_pi0",
-        "bash",
-        "examples/offline_rl/run_libero10_task0_comparison.sh",
-        "medium",
-    )
 
-
-def test_rlinf_rlt_stage2_argv_is_exact() -> None:
-    config = load_config("experiments/rlinf/configs/rlt_maniskill_stage2_12h_seed2026.yaml")
-    spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/rlinf"
-    assert spec.argv == (
-        "bash",
-        "experiments/rlt-maniskill/launch.sh",
-        "stage2-12h",
-    )
-    assert dict(spec.environment) == {
-        "RLINF_VENV": "/root/RLinf/.venv",
-        "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
-        "UV_NO_SYNC": "1",
-    }
-
-
-def test_rlinf_rlt_stage2_unlimited_argv_is_exact() -> None:
-    config = load_config("experiments/rlinf/configs/rlt_maniskill_stage2_unlimited_seed2026.yaml")
-    spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/rlinf"
-    assert spec.argv == (
-        "bash",
-        "experiments/rlt-maniskill/launch.sh",
-        "stage2-unlimited",
-    )
-    assert dict(spec.environment) == {
-        "RLINF_VENV": "/root/RLinf/.venv",
-        "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
-        "UV_NO_SYNC": "1",
-    }
-    assert "timeout_hours" not in config.runtime
-
-
-def test_rlinf_rlt_stage2_progressive_argv_is_exact() -> None:
-    config = load_config("experiments/rlinf/configs/rlt_maniskill_stage2_progressive_seed2026.yaml")
-    spec = build_launch_spec(config)
-    assert spec.cwd == ROOT / "methods/rlinf"
-    assert spec.argv == (
-        "bash",
-        "experiments/rlt-maniskill/launch.sh",
-        "stage2-progressive",
-    )
-    assert dict(spec.environment) == {
-        "RLINF_VENV": "/root/RLinf/.venv",
-        "UV_PROJECT_ENVIRONMENT": "/root/RLinf/.venv",
-        "UV_NO_SYNC": "1",
-    }
-    assert "timeout_hours" not in config.runtime
+    assert spec.argv == ("env", "DEVICE=0", "python", "-c", "print('ok')")

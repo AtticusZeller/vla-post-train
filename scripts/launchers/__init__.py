@@ -66,16 +66,9 @@ def _native_environment(config: ExperimentConfig) -> tuple[tuple[str, str], ...]
 
 
 def build_launch_spec(config: ExperimentConfig) -> LaunchSpec:
-    """Dispatch configuration to a lightweight method launcher."""
+    """Resolve a generic command-based experiment launcher."""
 
-    if config.method == "flowdagger":
-        from scripts.launchers.flowdagger import build
-    elif config.method == "dsrl-pi0":
-        from scripts.launchers.dsrl_pi0 import build
-    elif config.method == "rlinf":
-        from scripts.launchers.rlinf import build
-    else:
-        from scripts.launchers.command import build
+    from scripts.launchers.command import build
     spec = build(config)
     return LaunchSpec(
         argv=tuple([*_environment_prefix(config), *spec.argv]),

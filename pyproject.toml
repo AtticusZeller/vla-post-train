@@ -1,6 +1,7 @@
 [project]
-name = "vla-post-train"
+name = "agent-workspace"
 version = "0.1.0"
+description = "Orchestration, documentation, and evidence tooling for an Agent Research Workspace"
 requires-python = ">=3.12"
 dependencies = [
     "pyyaml>=6.0.3",
@@ -25,3 +26,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "SIM", "UP"]
+
+[tool.ty.src]
+exclude = ["methods"]

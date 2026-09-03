@@ -1,14 +1,14 @@
 ---
 name: summarize-experiment
-description: Reconcile one VLA experiment's local record, explicit W&B evidence, and method-specific results. Use when the user asks to summarize a run, compare completed runs, or refresh a method report.
+description: Reconcile one research experiment's local record, explicit W&B evidence, and method-specific results. Use when the user asks to summarize a run, compare completed runs, or refresh a method report.
 ---
 
 # Summarize Experiment
 
 ## Workflow
 
-1. Read root `AGENTS.md`, `methods/<method>/AGENTS.md`, and
-   `experiments/<method>/runbook.md`.
+1. Read root `AGENTS.md`, the method's own Agent rules, `docs/<method>/plan.md`,
+   and `experiments/<method>/runbook.md`.
 2. Inspect the selected `run.json`, its referenced config, existing `summary.json`, external log paths,
    and only the W&B URLs recorded for that run.
 3. Check local exit code and traceback first. Distinguish engineering completion, directional evidence,

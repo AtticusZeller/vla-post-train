@@ -129,6 +129,9 @@ def test_current_profile_is_custom_without_a_match(
 def _stub_switch(monkeypatch: pytest.MonkeyPatch) -> None:
     """Plan a real switch without touching any worktree."""
 
+    selected = set(lab._METHODS)
+    selected.remove(next(iter(selected)))
+    monkeypatch.setattr(lab.focus, "load_profile", lambda _profile, _known: ("small", selected))
     monkeypatch.setattr(lab.focus, "active_methods", lambda _known: set(lab._METHODS))
     monkeypatch.setattr(lab.focus, "is_populated", lambda _method: True)
     monkeypatch.setattr(
@@ -155,7 +158,7 @@ def test_dry_run_plans_without_mutating(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     _stub_switch(monkeypatch)
-    assert lab._method_focus("xense", dry_run=True, assume_yes=False) == 0
+    assert lab._method_focus("small", dry_run=True, assume_yes=False) == 0
     assert "dry-run" in capsys.readouterr().out
 
 
@@ -163,7 +166,7 @@ def test_deletion_requires_explicit_consent_without_a_tty(monkeypatch: pytest.Mo
     _stub_switch(monkeypatch)
     monkeypatch.setattr(lab.sys.stdin, "isatty", lambda: False)
     with pytest.raises(ConfigError, match="--yes"):
-        lab._method_focus("xense", dry_run=False, assume_yes=False)
+        lab._method_focus("small", dry_run=False, assume_yes=False)
 
 
 def _git(cwd: Path, *args: str) -> str:

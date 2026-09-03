@@ -5,15 +5,7 @@
 #
 # 名称取自 scripts/lab.py 的 _METHODS 注册表；"*" 表示全部。
 
-default: xense
+default: all
 
 profiles:
   all: ["*"]
-
-  # Xense 触觉线：openpi/lerobot 触觉扩展 + 上游 LeRobot + WAM 对照
-  xense:
-    - xense-openpi
-    - lerobot-xense
-    - lerobot
-    - fastwam
-    - tacwam

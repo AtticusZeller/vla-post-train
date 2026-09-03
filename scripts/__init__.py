@@ -1,1 +1,1 @@
-"""Root orchestration package for the VLA post-training workspace."""
+"""Root orchestration package for the Agent Research Workspace."""

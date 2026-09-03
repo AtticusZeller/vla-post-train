@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scripts.config import ConfigError, load_config
+from scripts.config import ConfigError, ExperimentConfig, load_config
 from scripts.launchers import build_launch_spec
 from tests.helpers import write_config
 
@@ -49,3 +49,13 @@ def test_command_launcher_rejects_shell_string(tmp_path: Path) -> None:
     config = load_config(config_path, root=tmp_path)
     with pytest.raises(ConfigError, match="argv list"):
         build_launch_spec(config)
+
+
+def test_default_artifact_root_uses_workspace_namespace(tmp_path: Path) -> None:
+    config_path = write_config(tmp_path)
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    del data["runtime"]["artifact_root"]
+
+    config = ExperimentConfig(path=config_path, data=data, root=tmp_path)
+
+    assert config.artifact_root == Path("/mnt/data/atticux/agent-workspace")

@@ -103,7 +103,7 @@ def test_local_summary_resolves_artifact_path_placeholder(tmp_path: Path) -> Non
 
 def test_dynamic_local_metrics_use_run_record_wandb_url(tmp_path: Path) -> None:
     artifact_path = tmp_path / "artifacts" / "run-id"
-    source = artifact_path / "flowdagger_result.json"
+    source = artifact_path / "method_result.json"
     write_json(
         source,
         {"primary_metrics": [{"name": "final_success_rate", "value": 0.75, "episodes": 25}]},
@@ -112,7 +112,7 @@ def test_dynamic_local_metrics_use_run_record_wandb_url(tmp_path: Path) -> None:
         tmp_path,
         native={
             "command": ["python", "-c", "print('ok')"],
-            "summary_file": "{artifact_path}/flowdagger_result.json",
+            "summary_file": "{artifact_path}/method_result.json",
             "primary_metrics": [],
         },
         runtime={"gpus": [0]},

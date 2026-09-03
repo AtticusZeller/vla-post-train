@@ -65,7 +65,7 @@ class ExperimentConfig:
 
     @property
     def artifact_root(self) -> Path:
-        value = self.runtime.get("artifact_root", "/mnt/data/atticux/vla-post-train")
+        value = self.runtime.get("artifact_root", "/mnt/data/atticux/agent-workspace")
         return Path(str(value)).expanduser().resolve()
 
     @property

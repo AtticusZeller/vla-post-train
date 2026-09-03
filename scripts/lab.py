@@ -28,37 +28,9 @@ from scripts.run_record import (
 )
 
 _METHODS = {
-    "flowdagger": {
-        "branch": "dev",
-        "upstream": "https://github.com/microsoft/FlowDAgger.git",
-    },
-    "dsrl-pi0": {
-        "branch": "dev",
-        "upstream": "https://github.com/nakamotoo/dsrl_pi0.git",
-    },
-    "expo-ft": {
-        "branch": "dev",
-        "upstream": "https://github.com/pd-perry/expo-ft.git",
-    },
-    "rlinf": {
-        "branch": "personal-dev",
-        "upstream": "https://github.com/RLinf/RLinf.git",
-    },
-    "starvla": {
-        "branch": "starVLA_dev",
-        "upstream": "https://github.com/starVLA/starVLA.git",
-    },
     "lerobot": {
         "branch": "workspace",
         "upstream": "https://github.com/huggingface/lerobot.git",
-    },
-    "univtac": {
-        "branch": "dev",
-        "upstream": "https://github.com/univtac/UniVTAC.git",
-    },
-    "n0-vtla": {
-        "branch": "workspace",
-        "upstream": "https://github.com/neoteai/N0-VTLA.git",
     },
     "xense-openpi": {
         "branch": "main",
@@ -67,18 +39,6 @@ _METHODS = {
     "lerobot-xense": {
         "branch": "main",
         "upstream": "https://github.com/Vertax42/lerobot-xense.git",
-    },
-    "xense-lerobot-viewer": {
-        "branch": "main",
-        "upstream": "https://github.com/XenseRobotics-AI/xense-lerobot-viewer.git",
-    },
-    "t-rex": {
-        "branch": "workspace",
-        "upstream": "https://github.com/ZhuoyangLiu2005/T-Rex.git",
-    },
-    "tabero": {
-        "branch": "workspace",
-        "upstream": "https://github.com/NathanWu7/Tabero.git",
     },
     "fastwam": {
         "branch": "workspace",
@@ -99,6 +59,21 @@ def _git(path: Path, *args: str) -> tuple[int, str]:
         text=True,
     )
     return result.returncode, (result.stdout.strip() or result.stderr.strip())
+
+
+def _branch_matches(path: Path, branch: str, expected: str) -> bool:
+    """Accept a branch checkout or a submodule pin contained by its remote branch."""
+
+    if branch:
+        return branch == expected
+    code, _ = _git(
+        path,
+        "merge-base",
+        "--is-ancestor",
+        "HEAD",
+        f"refs/remotes/origin/{expected}",
+    )
+    return code == 0
 
 
 def _doctor() -> int:
@@ -153,7 +128,7 @@ def _doctor() -> int:
     mount_ok = mount.returncode == 0
     checks.append(("artifact mount", mount_text, mount_ok))
 
-    artifact_root = Path("/mnt/data/atticux/vla-post-train")
+    artifact_root = Path("/mnt/data/atticux/agent-workspace")
     mount_read_only = "ro" in {
         option for token in mount_text.split() for option in token.split(",")
     }
@@ -186,10 +161,12 @@ def _method_status() -> int:
         _, status = _git(path, "status", "--porcelain")
         _, origin = _git(path, "remote", "get-url", "origin")
         _, upstream = _git(path, "remote", "get-url", "upstream")
-        if branch != expected["branch"] or upstream != expected["upstream"]:
+        branch_matches = _branch_matches(path, branch, expected["branch"])
+        if not branch_matches or upstream != expected["upstream"]:
             failed = True
+        branch_display = branch or f"detached@{expected['branch']}"
         print(
-            f"{method}\t{branch}\t{revision}\t{'yes' if not status else 'no'}"
+            f"{method}\t{branch_display}\t{revision}\t{'yes' if not status else 'no'}"
             f"\t{origin or '-'}\t{upstream or '-'}"
         )
     return int(failed)
@@ -482,28 +459,6 @@ def _all_configs() -> int:
     return 0
 
 
-def _suite_configs(method: str) -> int:
-    if method != "flowdagger":
-        raise ConfigError(f"no suite config materializer for method: {method}")
-    from scripts.flowdagger_suite import materialize_configs
-
-    paths = materialize_configs()
-    for path in paths:
-        load_config(path)
-    print(f"materialized {len(paths)} configs")
-    return 0
-
-
-def _suite_report(method: str) -> int:
-    if method != "flowdagger":
-        raise ConfigError(f"no suite report builder for method: {method}")
-    from scripts.flowdagger_suite import build_suite_report
-
-    for path in build_suite_report():
-        print(path)
-    return 0
-
-
 def build_parser() -> argparse.ArgumentParser:
     """Build the stable root command hierarchy."""
 
@@ -533,15 +488,10 @@ def build_parser() -> argparse.ArgumentParser:
     for name in ("resume", "status", "summarize"):
         child = experiment_commands.add_parser(name)
         child.add_argument("run_id")
-    suite_configs = experiment_commands.add_parser("suite-configs")
-    suite_configs.add_argument("method")
-
     report = commands.add_parser("report")
     report_commands = report.add_subparsers(dest="report_command", required=True)
     build = report_commands.add_parser("build")
     build.add_argument("method")
-    suite = report_commands.add_parser("suite")
-    suite.add_argument("method")
     return parser
 
 
@@ -561,8 +511,6 @@ def dispatch(args: argparse.Namespace) -> int:
             raise ConfigError("provide a config path or --all")
         return _validate(args.config)
     if args.command == "experiment":
-        if args.experiment_command == "suite-configs":
-            return _suite_configs(args.method)
         if args.experiment_command == "dry-run":
             return _dry_run(args.config)
         if args.experiment_command == "run":
@@ -572,8 +520,6 @@ def dispatch(args: argparse.Namespace) -> int:
         if args.experiment_command == "status":
             return _status(args.run_id)
         return _summarize(args.run_id)
-    if args.report_command == "suite":
-        return _suite_report(args.method)
     return _report(args.method)
 
 
