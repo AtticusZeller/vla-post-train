@@ -26,11 +26,30 @@
   22 项 pytest 通过。用户侧 submodule 可恢复性验证见 `cmd.md` 待验证块，尚待用户运行确认。
 - **待理解内容：** `af24ac7` 从 FastWAM 迁移出的 Wan2.2 模型四个变体
   （`TacWAM`/`TacWAMJoint`/`TacWAMIDM`/`TacWAMOptionalIDM`）与 FastWAM 原始实现的具体
-  差异边界、仿 xense-openpi 风格 `TrainConfig`/`get_config()` 配置系统的适配方式、
-  `src/tacwam/training/data_loader.py` 的 LeRobot DataLoader 构造逻辑，以及
-  `methods/tacwam/AGENTS.md` 描述的 Cosmos3-Edge 架构与当前代码的确切偏离范围。
+  差异边界、仿 xense-openpi 风格 `TrainConfig`/`get_config()` 配置系统的适配方式，以及
+  `src/tacwam/training/data_loader.py` 的 LeRobot DataLoader 构造逻辑。（`AGENTS.md` 与
+  Cosmos3-Edge 描述的偏离已在 `docs/sync-agents-guide` 分支修复，见下条。）
 - **偿还标准：** 针对本次根提交与 TacWAM `af24ac7..ba42007` 区间运行 explain-diff-html，
   阅读解释并通过全部五题；记录日期和对应提交。
+- **偿还记录：** Pending
+
+## 2026-09-03 · TacWAM AGENTS.md 修复分支与环境安装边界
+
+- **状态：** Open（Agent 侧证据完整；用户侧未要求验证，环境安装本身按用户要求未执行）
+- **范围：** `Hubo1231/TacWAM` 新分支 `docs/sync-agents-guide`（提交 `6e5cd18`，改写
+  `AGENTS.md`）；根仓 `docs/tacwam.md`、`docs/log.md`。
+- **暂缓原因：** 只做文档修复分支的创建、推送，未开 PR、未合并 `main`，未安装环境、未运行
+  TacWAM 测试；选择 Type C−，将完整 Explain Diff 理解 Review 延后。
+- **验证证据：** `git ls-remote https://github.com/Hubo1231/TacWAM.git refs/heads/docs/sync-agents-guide`
+  返回 `6e5cd18c121fd09c55f4f1c61e88b9a57491981e`，与本地一致；根仓 `git status` 干净，
+  submodule 检出干净（无残留 `.venv`/`uv.lock`）；`uv sync --extra test`（配合
+  `UV_EXTRA_INDEX_URL`/`--index-strategy unsafe-best-match`）已验证能正确解析依赖（此前失败
+  是索引策略问题，已定位），但按用户要求中途手动停止，未跑完、未跑测试。
+- **待理解内容：** `AGENTS.md` 改写后的 Structure/Commands/Boundaries 是否需要协作者
+  Hubo1231 侧确认或合并、`docs/sync-agents-guide` 是否需要开 PR，以及 `lerobot[dataset]==0.6.0`
+  等新增硬依赖对本机磁盘（594G 分区仅剩约 19G）的实际影响范围。
+- **偿还标准：** 待用户决定是否合并该分支后，针对该提交运行 explain-diff-html，阅读解释并
+  通过全部五题；记录日期和对应提交。
 - **偿还记录：** Pending
 
 ## 2026-09-02 · FastWAM 接入与 WAM 对照边界

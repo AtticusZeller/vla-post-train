@@ -4,6 +4,27 @@
 
 <!-- 每个任务通过全部必要验证后，在本行下方追加一条 -->
 
+## 2026-09-03：修复 TacWAM AGENTS.md 过时描述（Type C−，见 cognitive-debt）
+
+- 在协作仓库 `Hubo1231/TacWAM` 开新分支 `docs/sync-agents-guide`（从 `main` `ba42007`
+  分出），重写整份 `AGENTS.md`：Structure 对齐 `src/tacwam` 实际目录（`model_factory.py`
+  四个 `create_tacwam*` 工厂、`training/config.py` 的 `TrainConfig`/`get_config()`、
+  `training/data_loader.py` 惰性导入的 LeRobot DataLoader、`policies/bi_flexiv_policy.py`）；
+  Commands 改为 `uv run --with-editable . --with pytest pytest` 并注明
+  `torch`/`torchvision`/`lerobot[dataset]` 已是 `pyproject.toml` 硬依赖，没有免安装的轻量
+  测试路径；Boundaries 补上"不重新引入 cosmos-framework 依赖"。提交 `6e5cd18`，已推送到
+  `https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`，尚未开 PR、`main`
+  未合并。
+- 用户要求「环境配置不用你装，命令给我就行」：中途停止了正在进行的 uv 环境安装尝试
+  （已确认无残留 `.venv`/`uv.lock`，根仓与 submodule 检出均干净）；`docs/tacwam.md` 记录了
+  尝试过程中的磁盘/缓存证据（安装前 23G 可用，中止时 19G，`~/.cache/uv` 34G→38G）供用户
+  自行决定何时补跑安装命令。
+- `docs/tacwam.md` 更新「Agent 指南与文档已过时」「接入边界」「验证边界」三节反映本次修复；
+  根仓 `.gitmodules`/`scripts/lab.py` 仍跟踪 `main`，pin 未变，因为修复还在独立分支未合并。
+- Agent 侧验证：`git ls-remote` 确认 `docs/sync-agents-guide` 已推送到远端且提交号一致；
+  根仓 `git status` 干净、submodule 检出干净；未运行 TacWAM 测试（需要装完整依赖，超出
+  用户此次授权范围）。
+
 ## 2026-09-03：重新接入 TacWAM（Type C−，见 cognitive-debt）
 
 - 按 2026-09-02 首次接入时确认过的理由，`methods/tacwam` 的 `origin`/`upstream` 均沿用

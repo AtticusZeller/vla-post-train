@@ -41,7 +41,7 @@ Cosmos3-Edge/`cosmos-framework` 外部依赖，而是从 [[docs/fastwam.md]] 迁
 - `scripts/train.py` 初始化 Accelerate/DeepSpeed、随机种子、checkpoint 目录、W&B，解析校验
   数据配置并构建 DataLoader；脚本在实例化模型之前结束，训练循环本身仍未实现。
 
-## 环境安装（未在本机执行）
+## 环境安装（未在本机跑完）
 
 上游 README 记录环境为 Python 3.12 + `torch==2.11.0+cu128` + `torchvision==0.26.0+cu128` +
 Transformers 5.4/5.5 + CUDA 12.8，用仓库根目录的 `conda_enviroment.yaml` 创建 `tacwam`
@@ -55,21 +55,37 @@ mamba activate tacwam
 默认从 ModelScope 下载 Wan 权重；设置 `DIFFSYNTH_DOWNLOAD_SOURCE=huggingface` 可改用
 Hugging Face。本次接入未创建该环境，未下载权重，未运行训练或推理。
 
-## Agent 指南与文档已过时
-
-`methods/tacwam/AGENTS.md` 按用户决定原样保留（不修改），但其内容仍描述已被 `af24ac7`
-替换/删除的 Cosmos3-Edge BiFlexiv 架构与 `cosmos-framework` 外部 editable 依赖，与当前
-Wan2.2 实现不符；其中记录的测试命令
+`pyproject.toml` 已把 `torch==2.11.0`、`torchvision==0.26.0`、`lerobot[dataset]==0.6.0`
+列为正式（非 test-extra）依赖，因此即便只想跑"轻量" config/transform 测试，也必须先装完整
+PyTorch/LeRobot 依赖栈——没有不装重量依赖就能跑测试的路径。本机 2026-09-03 尝试用 uv 代替
+mamba 安装（root 环境没有 mamba，只有 conda function）：
 
 ```bash
-uv run --no-project --with pytest --with numpy pytest
+cd methods/tacwam
+UV_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cu128" \
+  uv sync --extra test --python 3.12 --index-strategy unsafe-best-match
 ```
 
-在当前代码上会因未安装本地包而报 `ModuleNotFoundError: No module named 'tacwam'`
-（`tests/` 下 5 个测试模块全部导入失败，实测于 2026-09-03）。加 `--with-editable .` 可解决
-导入问题，但会触发 `pyproject.toml` 中 `torch==2.11.0+cu128` 等重量依赖的完整下载安装，
-超出本次仅登记的范围，故未执行到底。使用本仓库前应以 README/BUILD_LOG 为准，不要依赖
-AGENTS.md 的架构描述。
+按用户要求中途手动停止（"环境配置不用你装，命令给我就行"），未装完；本机磁盘当时只剩
+23G 可用（594G 分区已用 96%），过程中 `~/.cache/uv` 从 34G 涨到 38G（约缓存了 4G，主要是
+`torch==2.11.0+cu128` 单 wheel 782MiB 以及部分 nvidia-* CUDA 依赖），根仓与 submodule 检出
+均已确认恢复干净（无残留 `.venv`/`uv.lock`）。真正跑通环境安装留给用户在 `cmd.md` 或直接用
+上述命令自行执行。
+
+## Agent 指南与文档已过时（已在 `docs/sync-agents-guide` 分支修复，待合并）
+
+`methods/tacwam/AGENTS.md` 原先仍描述已被 `af24ac7` 替换/删除的 Cosmos3-Edge BiFlexiv 架构与
+`cosmos-framework` 外部 editable 依赖，与当前 Wan2.2 实现不符；其记录的测试命令
+`uv run --no-project --with pytest --with numpy pytest` 在当前代码上因未安装本地包而报
+`ModuleNotFoundError: No module named 'tacwam'`（`tests/` 下 5 个测试模块全部导入失败，实测于
+2026-09-03）。
+
+2026-09-03 已在协作仓库 `Hubo1231/TacWAM` 上开新分支 `docs/sync-agents-guide`（从 `main`
+`ba42007` 分出，提交 `6e5cd18`）重写整份 `AGENTS.md`：Structure 改为对照 `src/tacwam` 实际
+目录、Commands 改为 `uv run --with-editable . --with pytest pytest` 并注明 torch/lerobot
+已是硬依赖、无免安装测试路径，Boundaries 补上"不重新引入 cosmos-framework 依赖"。已推送到
+`https://github.com/Hubo1231/TacWAM/tree/docs/sync-agents-guide`，PR 尚未开，`main` 尚未合并
+该修复；根仓 `.gitmodules`/`scripts/lab.py` 仍按约定跟踪 `main`，pin 未变。
 
 ## 与 FastWAM 的关系
 
@@ -80,11 +96,14 @@ TacWAM 的 Wan2.2 骨干、ActionDiT 动作头及权重加载/转换代码直接
 
 ## 接入边界
 
-本次只完成 submodule 接入、根仓登记与文档；不修改 TacWAM 代码或上游 `AGENTS.md`，不创建
-`experiments/tacwam/`、配置、launcher 或 runbook，不安装环境、不下载数据集或权重，不运行
-任何训练、推理或评测。
+2026-09-03 首次接入只做 submodule 接入、根仓登记与文档，未改 TacWAM 代码。同日的后续
+`docs/sync-agents-guide` 分支修改了 `methods/tacwam/AGENTS.md` 并推送到协作仓库，但仍未
+创建 `experiments/tacwam/`、配置、launcher 或 runbook，未安装环境、未下载数据集或权重，
+未运行任何训练、推理或评测；`main` 分支与根仓 pin 均未变。
 
 ## 验证边界
 
 Agent 侧只验证了 submodule remote/branch/revision 与根仓登记的一致性（`./lab doctor`、
-`./lab method status`），以及上述测试命令的失败模式；没有可用的训练、推理或真机证据。
+`./lab method status`），`AGENTS.md` 测试命令的失败模式，以及 `docs/sync-agents-guide`
+分支已成功推送到远端（`git ls-remote` 确认）；没有可用的训练、推理或真机证据，`main`
+上是否合并该分支待用户/协作者决定。
