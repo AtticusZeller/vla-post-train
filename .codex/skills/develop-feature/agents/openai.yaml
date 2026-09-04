@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop Feature"
+  short_description: "Build a feature under a human-confirmed plan that governs review and closeout."
+  default_prompt: "Use $develop-feature to align on a plan, implement it, and close it out into docs and a pull request."

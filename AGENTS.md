@@ -98,6 +98,8 @@ Skill provides execution guidance; it does not expand task scope or authorizatio
 
 Repository workflows:
 
+- `develop-feature` — build a new feature or capability under a human-confirmed plan that then
+  governs implementation, external review, gates, and closeout.
 - `add-method` — add, replace, or register a method, framework, benchmark, or backbone submodule.
 - `run-experiment` — validate, smoke-test, launch, repeat, or monitor an experiment configuration.
 - `summarize-experiment` — reconcile evidence, summarize a run, or compare completed runs.
