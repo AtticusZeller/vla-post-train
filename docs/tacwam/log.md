@@ -3,6 +3,25 @@
 已验收的事务按 `plan.md` 的原格式整体归档于此，保留 Change / Verification / Done 三段，
 以便在不翻分支的情况下复原当时的判断依据。
 
+## 2026-09-04 · 上游合并推理端并修正两处训练/推理不一致
+
+- **背景与目的：** `feat/inference-serving` 经 PR #2 合并为 `7c314ce`。协作者随后对照缓存数据集、
+  模型 forward 与 `scripts/serve_policy.py` 复查，发现两处本工作区未能发现的静默偏差
+  （`ea4fbfe`，作者 博 胡）。本工作区据此更新 pin 与文档。
+- **两处不一致：** 其一，训练把 50 步动作块补零到 52 token，ActionDiT 始终在 52 个位置上注意，
+  而服务端只采样 50；现要求 `model.action_horizon` 等于 `(video_num_frames - 1) *
+  video_frame_stride`，loader 直接读 52 步，`TacWAMVideoInputs` 不再补零。其二，训练从 480x640
+  原图直接缩放到 224x320，而机体端默认先 letterbox 成 224x224、服务端再缩一次，实测像素均值
+  绝对差约 40、95% 像素改变；现由 data config 记录 `camera_image_size`，训练与服务两侧都校验
+  帧尺寸后再用共享的 `resize_uint8_image` 缩放。
+- **对本工作区的影响：** 机体侧启动命令必须追加
+  `--args.render-height 480 --args.render-width 640 --args.action-horizon 52`——`examples/` 是上游
+  原样拷贝、不改默认值，因此每次启动都要带。已同步进 `cmd.md`。
+- **顺带关闭的待办：** `transforms._resize_uint8_image` 已被提升为公开 `resize_uint8_image`，
+  正是此前记录的开放项；`plan.md` 中该条已移除。
+- **教训：** 这两处都在全绿测试下存在，印证了当时写明的边界——对假 model 的测试证明接线正确，
+  不证明数值行为正确。真实数据与真实 forward 的对照是不可替代的一步。
+
 ## 2026-09-04 · 与上游对齐推理端的图像与 transform 契约
 
 推理端已接入并有测试覆盖（见下一条），但当时的基线落后 `origin/main` 两个提交。上游
