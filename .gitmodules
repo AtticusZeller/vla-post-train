@@ -18,3 +18,7 @@
 	path = methods/tacwam
 	url = https://github.com/Hubo1231/TacWAM.git
 	branch = main
+[submodule "methods/tacxense"]
+	path = methods/tacxense
+	url = https://github.com/XenseRobotics-AI/TacXense.git
+	branch = feature/rlt-test
