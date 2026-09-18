@@ -16,6 +16,7 @@ EXPECTED_METHODS = {
     "lerobot",
     "lerobot-xense",
     "tacwam",
+    "tacxense",
     "xense-openpi",
 }
 
@@ -51,9 +52,19 @@ def test_docs_have_one_directory_per_current_area() -> None:
 
     assert areas == {"workspace", *EXPECTED_METHODS}
     assert {path.name for path in docs_root.iterdir() if path.is_file()} == {"AGENTS.md"}
-    for area in areas:
-        assert {"log.md", "overview.md", "plan.md"} <= {
-            path.name for path in (docs_root / area).iterdir() if path.is_file()
+    assert not (ROOT / "cmd.md").exists()
+    assert {path.name for path in (docs_root / "workspace").iterdir() if path.is_file()} == {
+        "log.md",
+        "overview.md",
+        "plan.md",
+    }
+    for method in EXPECTED_METHODS:
+        # Topic files beside the four required ones are allowed (docs/AGENTS.md).
+        assert {path.name for path in (docs_root / method).iterdir() if path.is_file()} >= {
+            "cmd.md",
+            "log.md",
+            "overview.md",
+            "plan.md",
         }
 
 

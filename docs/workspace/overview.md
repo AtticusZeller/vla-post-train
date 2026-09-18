@@ -5,9 +5,9 @@
 及相关具身智能方向。根仓库只承担 method 接入、实验编排、文档和证据管理；算法、框架、
 benchmark 与复现代码保留在独立的 `methods/*` submodule 中。
 
-当前登记五个 method：LeRobot、lerobot-xense、xense-openpi、FastWAM 与 TacWAM。它们不是
-一套统一算法栈：LeRobot 提供通用机器人学习框架，Xense 两个 fork 分别覆盖真机数据/控制
-和模型/推理，FastWAM 与 TacWAM 属于 WAM 研究线。
+当前登记六个 method：LeRobot、lerobot-xense、xense-openpi、FastWAM、TacWAM 与 TacXense。
+它们不是一套统一算法栈：LeRobot 提供通用机器人学习框架，Xense 三个仓库分别覆盖真机
+数据/控制、模型/推理和触觉 VLA 模型，FastWAM 与 TacWAM 属于 WAM 研究线。
 
 ## 实验与证据
 

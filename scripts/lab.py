@@ -48,6 +48,10 @@ _METHODS = {
         "branch": "main",
         "upstream": "https://github.com/Hubo1231/TacWAM.git",
     },
+    "tacxense": {
+        "branch": "feature/rlt-test",
+        "upstream": "https://github.com/XenseRobotics-AI/TacXense.git",
+    },
 }
 
 

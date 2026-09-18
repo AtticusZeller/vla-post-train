@@ -15,6 +15,7 @@
 | `methods/xense-openpi` | `main` | Xense 模型训练、策略服务与推理客户端 |
 | `methods/fastwam` | `workspace` | Fast-WAM 官方实现与 WAM 参照 |
 | `methods/tacwam` | `main` | 触觉机器人操作的 WAM 协作实现 |
+| `methods/tacxense` | `feature/rlt-test` | Xense 触觉 VLA 模型与 RL token 工作线 |
 
 源码被固定到精确 revision；接入不代表环境、训练、推理或真机流程已经验证。当前证据边界见
 对应的 `docs/<method>/overview.md`。
@@ -55,3 +56,4 @@ git submodule update --init --recursive
 - [`docs/workspace/overview.md`](docs/workspace/overview.md)：根仓边界与证据模型。
 - `docs/<method>/overview.md`：method 的高层理解、非显然约束与验证边界。
 - `docs/<area>/plan.md` / `log.md`：已确认的未完成事务与已验收的大改动摘要。
+- `docs/<method>/cmd.md`：该 method 需要长期保留的可复制命令；根目录不维护全局 `cmd.md`。

@@ -67,6 +67,8 @@ invalidated by a later fix.
 Inspect the final diff for unintended changes and preserve pre-existing or unrelated work. Do not
 commit or push unless the user asks.
 
+- Functions and classes must follow the single-responsibility principle to keep each unit easy to test.
+
 ## 4. Evidence and Stop Conditions
 
 A task is complete only when observable evidence satisfies every acceptance criterion. Report changed
@@ -151,6 +153,9 @@ experiment parameters live in complete YAML configurations when a concrete exper
 
 Before editing anything under `docs/`, read `docs/AGENTS.md`. Documentation is human-facing project
 context, not a copy of code or Git history.
+
+Do not create a root `cmd.md`. Reusable method commands belong in `docs/<method>/cmd.md`, beside that
+method's `plan.md`, `log.md`, and `overview.md`.
 
 - Write `AGENTS.md`, `CLAUDE.md`, repository-local Skills, code comments, and docstrings in English.
 - Write `README.md` and human-facing files under `docs/` in Chinese.

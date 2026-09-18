@@ -15,6 +15,7 @@ def test_current_method_registry_is_exact() -> None:
         "lerobot",
         "lerobot-xense",
         "tacwam",
+        "tacxense",
         "xense-openpi",
     }
 

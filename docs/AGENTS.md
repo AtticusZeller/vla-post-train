@@ -12,11 +12,19 @@ The only first-level documentation directories are:
 - `docs/workspace/` for root orchestration, governance, and cross-method work;
 - `docs/<method>/` for a method that currently exists under `methods/<method>/`.
 
-Every directory must contain `plan.md` and `log.md`. Use `overview.md` for durable understanding of the
-area. Add another topic file only when one coherent subject cannot remain clear inside `overview.md`.
+Every directory must contain `plan.md`, `log.md`, and `overview.md`. Every `docs/<method>/` directory
+must also contain `cmd.md`; `docs/workspace/` must not contain one. Add another topic file only when one
+coherent subject cannot remain clear inside `overview.md`.
 
 Do not create root-level human documentation alongside this file. Keep planning, change summaries, and
 durable understanding inside the applicable first-level directory.
+
+## `cmd.md` Contract
+
+`cmd.md` stores reusable, copyable commands for its method only. Keep each command beside a short
+purpose, prerequisites, and observable expected result. Do not store terminal output, one-off debugging
+history, cross-method commands, or checks the Agent can run itself. When no command needs long-term
+retention, write only `当前没有需要长期保留的 method 命令。`.
 
 ## `plan.md` Contract
 
@@ -76,7 +84,7 @@ details and exhaustive path lists.
 - non-obvious design rationale or distinctions;
 - verified limitations, uncertainty, and evidence boundaries.
 
-Do not copy directory trees, class/function inventories, setup command transcripts, historical commit
+Do not copy directory trees, class/function inventories, command output, historical commit
 sequences, or facts that a quick code read or command reveals. Do not turn an upstream claim into local
 verification. Use a date or pinned revision only when the conclusion is snapshot-sensitive.
 
