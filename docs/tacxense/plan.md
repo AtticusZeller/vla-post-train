@@ -203,3 +203,67 @@ rot6d 回退（仍计入 `rot6d_fallbacks`）与夹爪 [0,1] 裁剪、`reference
 - [x] `grep -rn "_check_actor_chunk\|max_position_step\|actor_gate_rejections\|validation_enabled\|_validate_actor"`
       在 `src/ scripts/ config/ examples/` 下无结果。
 - [x] 1 m 位移测试里，接管就绪时 env 收到的正是这 1 m 位移的动作，`use_actor=1`。
+
+## `rlt_fast` 与 `insert_ethernet_0917` 改用 canonical 动作空间
+
+用户决定（2026-09-18）。execution 空间下 direct 头初始输出 ≈0 即基座原点的绝对位姿；canonical 下 MLP
+输出是 VLA 自己的模型空间（18 维 TCP 为 `action − state` 按 VLA norm stats 归一化并 tanh，夹爪 sigmoid），
+≈0 即"停在当前位姿附近"。0917 的残差界原为米 / rot6d 分量单位，在 canonical 下含义改变，先置 `null`，
+数值待按 VLA norm stats 重新推导。工作区已改，未 commit；上游 `architecture.md` § 4.47。
+
+- [x] 两个 YAML 改 `action_space: canonical`；0917 `actor_residual_bound: null`，smooth 权重注释标明需复核。
+- [x] `tests/test_rlt_mlp_policy.py::test_fresh_direct_head_starts_near_state_only_in_canonical_space`：
+      rlt_fast 真实 20 维配置、新初始化 direct 头，canonical 下 decode 后离当前 TCP < 1 cm，execution 下不是。
+- [x] `tests/test_rlt_config.py` 固定两个配置的 canonical 与 0917 残差界为空；`tests/test_rlt_*.py` 全绿。
+- [ ] 需新 `exp_name` 开 stage2（RL checkpoint 绑定 codec 参数）；token checkpoint 可复用。
+
+## warmup 对齐 openpi-RLT
+
+现状：`rlt_schedule` 只在 replay 攒够 `warmup_min_units`（2 × 30 chunk）后按每 unit 8 次发更新预算；
+`rlt_fast` 在第一批 8 次 critic / 2 次 actor 更新后即可接管，0917 在约 32 次 critic 更新后接管。
+TacXense 曾有 `warmup_min_size` / `warmup_post_collect_updates`，2026-09-16 为对齐 RLinf 删除
+（`tests/test_rlt_config.py` 现在拒绝这两个键）。
+
+openpi-RLT（`rlt_online_rl/src/rlt_online_rl/trainer.py`，`configs/tasks/agilex_ethernet/online_rl.yaml`，
+同一网线插入任务）：
+
+- replay 第一次达到 `warmup_min_size: 600` 时锁存，之后一次性要求 `warmup_post_collect_updates: 20000`
+  次更新；此后每新增一条 transition 再给 `grad_updates_per_cycle: 5` 次。
+- `global_step < warmup_required_updates` 期间 actor 用 `warmup_bc_weight: 10` / `warmup_q_weight: 0.1`，
+  之后 `online_bc_weight: 5` / `online_q_weight: 0.1`；`actor_update_period: 2`。
+- 机器人端 `_wait_until_online_ready` 等到 learner 的 `ready_for_online`（replay ≥ 600 且 warmup 更新做完）
+  才让 actor 上机。
+- 数据门槛量级相近（600 条 stride-2 样本 ≈ 24 s，TacXense 60 chunk ≈ 40 s），差距在更新次数：20000 对 8~32。
+
+实测：本机 CPU 上 rlt_fast 维度（canonical，batch 256）单次 `_update` 28.8 ms，20000 次约 9.6 min，
+5000 次约 2.4 min；本机 CUDA 驱动不可用，训练机 GPU 耗时未测。
+
+用户决定（2026-09-18，替代上面"一次性 N 次"的草案）：数据门槛 ×10、达标时补齐已有数据的预算、
+critic:actor 改 2:1、BC/Q 权重保持固定 5 / 0.1、补齐的更新在达标那一轮轮末一次跑完。
+
+### Task: warmup 门槛放大到 600 chunk，达标时按全部已提交数据补齐更新
+
+**Change**
+
+- [x] `RLTScheduleConfig` 新增 `warmup_catch_up: bool = False`。为真时预算为
+      `updates_per_unit × units_committed`（达到 `warmup_min_units` 之前为 0），即达标那一轮把前面每个 unit
+      的预算一起补上——对应 openpi-RLT 不设 `warmup_post_collect_updates` 时的
+      `adds_total × grad_updates_per_cycle`。为假时保持现有公式，其他配置行为不变。
+- [x] resume 校验把 `warmup_catch_up` 与现有三个 rlt_schedule 字段同样对待：改了就拒绝恢复。
+- [x] `rlt_fast`、`insert_ethernet_0917`：`warmup_min_units: 20`（600 chunk，对齐 openpi `warmup_min_size: 600`）、
+      `warmup_catch_up: true`、`critic_actor_ratio: 2`（openpi `actor_update_period: 2`）。达标那一轮补 160 次
+      critic / 80 次 actor 更新，低于现有 `max_updates_per_train_step: 600`，当轮跑完，无需改上限。
+      `replay_window_units: 200` 足以容纳门槛。BC/Q 权重不动。
+- [x] 上游 `CHANGELOG.md`、`docs/architecture.md` 决策条目、`rlt-fast-training.md` 同步。
+
+**Verification**
+
+1. [x] 单测：`warmup_catch_up=False` 时现有预算测试不变；为真时达标前 0 次，达标那一轮 = 每 unit 预算 × 已提交
+       unit 数，之后每 unit 照常增加。
+2. [x] 单测：resume 时改 `warmup_catch_up` 被拒绝。
+3. [x] 两个 YAML 解析后取值正确；`tests/test_rlt_*.py` 全绿。
+4. [ ] 用户真机：约 6.7 分钟标注数据后第一次训练，W&B `update/critic_step` 在那一轮跳到 160。
+
+**Done**
+
+- [ ] （真机）rlt_fast 配置下，第 20 个 unit 提交的那一轮 `update_step` 从 0 变为 160、`actor_update_step` 为 80。
