@@ -1,5 +1,165 @@
 # TacXense Plan
 
+## RLT phase two MLP 输入输出统一为 quantile-normalized delta contract
+
+2026-09-19 用户确认并要求执行。任务从根仓库 `ad7509e`、TacXense `5a77e1d`
+建立独立 worktree 与 `codex/rlt-actor-io-standard` 分支；原工作区正在进行的 Pico 接管与
+critical-trace 改动不进入本事务。2026-09-19 按用户决定，未提交改动迁到已推送的根仓库 `283dba3`、TacXense
+`c52aca0`（含 Pico 接管与 anchor 窗口）之上继续；本事务的决策条目编号顺延为 § 4.50。
+
+目标是把 phase two 的 MLP I/O 收敛成唯一标准，不再让 raw/execution、canonical、direct、
+reference-residual 等模式并存。约束如下：
+
+```text
+state_raw ──quantile norm──────────────────────────────→ proprio
+VLA absolute ref ──delta mask(state_raw)──quantile norm→ ref_chunk
+
+actor input  = concat[z_rl, proprio, flatten(ref_chunk[:C])]
+actor output = Linear mean → fixed-std Gaussian sample → clip[-1, 1]
+
+clipped normalized action ──inverse quantile──→ physical delta/action
+                         ──state rebase────────→ absolute executable chunk
+                         ──rot6d/gripper projection──→ current controller
+```
+
+- `state_raw` 保留绝对当前状态，只供 delta 编解码、rot6d fallback、物理量日志与控制器适配；
+  actor/critic 不读取 raw state。
+- `proprio` 使用同一 VLA checkpoint 的 `norm_stats["state"]`；`ref_chunk`、replay action 与
+  actor output 使用 `norm_stats["actions"]`。前 18 个 action 维先按 VLA `DeltaActions` mask
+  减当前 state，夹爪保持 absolute opening，再对全部 20 维应用同一种 quantile 公式。
+- ~~输入归一化不 clip~~ **2026-09-19 用户改为**：归一化后的 proprio 与动作类输入（ref_chunk、replay
+  执行动作 / critic 输入、BC target）也 clamp 到 `[-1, 1]`，与 actor 输出同一范围；夹爪先做物理
+  `[0, 1]` 投影再归一化。越界不再留在张量里，只保留计数审计（`codec_out_of_range`、离线
+  `audit_action_range.py` 读未 clamp 的原始动作）。actor 的 Gaussian mean/sample 仍在交给 critic 或
+  inverse norm 前 `clip[-1, 1]`。代价：proprio 与 VLA 自己看到的（不 clip）不同；超出 q01/q99 的人工
+  纠正在 BC target 里被截断。
+- 机器人端 `send_action` 接口要求 absolute TCP/gripper target，所以“physical delta → controller”
+  在本仓必须经过 state rebase；不改变远程协议、机器人驱动或控制器 action schema。
+- `z_rl`、phase-one token 网络及其 prefix 路径不变；匹配同一 VLA identity 的 token checkpoint
+  可以复用。旧 stage-two actor/critic/optimizer/replay 的 I/O 含义不同，明确拒绝 resume/serving，
+  必须使用新的 `exp_name`。
+- 本事务不包含 Pico 接管、critical trace、奖励归属、UTD、RTC cadence 或算法目标调整；不带入
+  原工作区未提交改动，不提交或推送，除非用户另行要求。
+
+### Task: 文档先固定唯一 MLP I/O contract
+
+**Change**
+
+- [x] 在 `docs/tacxense/rlt.md` 写清 raw state、normalized proprio、normalized delta action、
+      actor clip、inverse norm、state rebase 与 absolute controller target 的顺序和职责。
+- [x] 在 TacXense `docs/architecture.md` 增加决策条目，说明为何移除 execution action、
+      reference-residual、gripper 特殊 sigmoid/clamp 与 `action_scale` 运行时分支；同步
+      `docs/current_state.md`，但在代码验证前标为 pending。
+
+**Verification**
+
+1. [x] 对照 VLA transform 顺序确认公式与 `DeltaActions → Normalize` 一致；对照
+       `RealEnv.send_action` 确认文档最终输出为 absolute executable target。
+2. [x] 逐项检查后续代码、测试与配置都能追溯到上面的唯一 contract，没有第二套 action space。
+
+**Done**
+
+- [x] 文档能唯一回答 actor/critic 每个输入字段和 action tensor 所处的表示空间、是否 clip、
+      使用哪份统计量，以及 controller 最终收到 absolute 还是 delta。
+
+### Task: 固定统计量预处理同时产出 raw state 与 normalized MLP observation
+
+**Change**
+
+- [x] 让 `ActionCodec` 从 VLA checkpoint 同时绑定 `state` 与 `actions` 的 q01/q99，并提供
+      `normalize_proprio(state_raw)`；缺少 quantile stats、维度不匹配或非有限统计量时启动即失败。
+- [x] action encode 统一为“delta mask → 全维 quantile norm → clamp[-1, 1]”（用户 2026-09-19 改），
+      返回 clamp 前的逐维 q01/q99 越界审计；`normalize_proprio` 同样 clamp；decode 统一为“inverse quantile → delta state rebase →
+      rot6d 投影/physical gripper clamp”。
+- [x] `FeatureExtractor` 和 replay observation 显式保存 `state`（raw）与 `proprio`（normalized）；
+      actor/critic 只拼 `proprio`，codec 和物理量指标只读 `state`。
+
+**Verification**
+
+1. [x] 用人工 q01/q99 验证 state/action 公式逐元素等于 `utils.transforms.Normalize` /
+       `Unnormalize`，包括 18D delta 与 2D absolute gripper。
+2. [x] 覆盖 ref/human / proprio 超出 q01/q99 时被 clamp 且越界被计数，以及 actor 范围内 action 的
+       encode/decode roundtrip、rot6d fallback、gripper physical clamp。
+3. [x] replay sample 同时返回 raw `state` 与 normalized `proprio`，保存/恢复保持逐位一致。
+
+**Done**
+
+- [x] 同一个 raw observation 在 online runner 与 RLT serving 中产生相同 `proprio` / `ref_chunk`；
+      改变 raw-state 数值不会绕过 fixed stats 直接进入 MLP。
+
+### Task: Actor/Critic 只保留 direct normalized-delta Gaussian contract
+
+**Change**
+
+- [x] Actor 输入顺序固定为 `[z_rl | proprio | normalized ref_chunk]`；reference dropout 只清零
+      actor 的 ref 输入，BC target 不变。Critic 输入固定为
+      `[z_rl | proprio | normalized action_chunk]`。
+- [x] Actor 最后一层保持线性；确定性路径 clip mean，采样路径先加 fixed-std Gaussian 再 clip，
+      所有 action 维统一 `[-1, 1]`，不再按 gripper 选择 sigmoid。
+- [x] 删除 `actor_output_mode` / `actor_residual_bound` / `execution_gripper_activation` /
+      `action_space` / `action_scale` 的运行时分支与 shipped YAML 键；人工干预 transition 始终把
+      BC target 换成对应的 normalized executed action。
+- [x] checkpoint 元数据增加新的 MLP-I/O / replay schema version；旧 stage-two checkpoint 给出
+      明确的不兼容错误，phase-one token checkpoint 仍按 prefix/VLA identity 规则复用。
+      实现：`mlp_io_version = "quantile-delta-v1"`；phase one 只把 codec 参数写进元数据、不参与 z_rl，
+      token 校验因此不再比较 codec 块，norm stats 由 `vla_identity` 覆盖。
+- [x] 2026-09-19 用户决定：`scripts/rlt/calibrate_action_scale.py` 去掉 `action_scale` 推荐与
+      `--write-scale`，只保留 reference / human 动作逐维 q01/q99 越界统计与退出码，改名
+      `scripts/rlt/audit_action_range.py`；`rl.dump_transitions_dir` 保留为它的输入。
+
+**Verification**
+
+1. [x] 单测锁定 concat 顺序、reference dropout、linear mean、Gaussian-before-clip、确定性 clip、
+       全维 `[-1, 1]` 与饱和区梯度行为。
+2. [x] TD target、actor loss、BC/human target、同步与 RTC 执行、serving 都只消费同一 normalized
+       action contract；测试中没有 raw action 或 raw state 进入 actor/critic。
+3. [x] 所有 `config/rlt/*.yaml` 解析后只有一个 MLP I/O contract；旧字段作为 unknown key 失败。
+
+**Done**
+
+- [x] 给定同一 `z_rl + raw observation + VLA ref`，训练采集与 serving 的 actor normalized chunk
+      和最终 absolute executable chunk 一致；旧 stage-two checkpoint 不会被静默重解释。
+
+### Task: 按计划复核、验证并同步文档
+
+**Change**
+
+- [x] 用独立 reviewer session 按本计划审查 diff；逐条复现并处理确认的问题，任何需要改变上述
+      contract 的发现先回到用户确认并更新计划。
+- [x] 验证完成后同步 TacXense `CHANGELOG.md`、`docs/architecture.md`、`docs/current_state.md`、
+      `docs/rlt-fast-training.md` 与本工作区 `docs/tacxense/rlt.md`；不把未跑的真机结果写成已验证。
+
+**Verification**
+
+1. [x] `pytest tests/`；对修改文件运行 `ruff check`、`ruff format --check` 与 `ty check`。
+2. [x] 运行不依赖真实权重的 synthetic checkpoint / serving 集成测试；检查 final diff 和两层仓库
+       `git status`，确认不含原任务改动。
+3. [ ] 若本机没有匹配的 VLA/token checkpoint，则把真机启动验收保留为用户项：新 `exp_name`
+       启动后 metadata 显示新 I/O schema，第一条 actor chunk 的 normalized 值全在 `[-1, 1]`，
+       controller 收到 finite absolute target。
+
+独立 review（2026-09-19）结论：无 blocking finding。确认并处理的问题：
+
+- [x] 没有 `metadata.pt` 且开 `allow_legacy_checkpoints` 时，serving 会静默加载旧 actor（旧 actor 输入宽度与新的
+      相同，strict load 能过）。复现后修正：缺 metadata 也按 `mlp_io_version` 不符拒绝，补测试
+      `test_serving_rejects_checkpoint_without_metadata_even_when_legacy_allowed`。
+- [x] Done 项"采集与 serving 一致"缺直接证据：补 `test_collection_and_serving_agree_on_features_and_executed_chunk`
+      （runner 存 checkpoint、serving 加载，同一 obs 的 features 与绝对 chunk 逐位相等；让 serving 用 proprio
+      decode 的变异会使其失败）。
+- [x] `encode` 在归一化前把夹爪投影到物理 [0, 1]，与原 Task 2 "输入路径不 clip" 字面不一致。用户 2026-09-19
+      决定改 contract：归一化后的 proprio 与动作类输入都 clamp 到 [-1, 1]，夹爪物理投影保留（统计量
+      超出 [0, 1] 时它仍起作用）。
+- 未处理：`docs/rlt-integration-acceptance.md`、`docs/rlt-calibration-openpi-review.md` 仍写着旧的
+  `action_scale` 校准步骤，属于历史报告，按维护者规则不改。
+
+自动证据（改为输入 clamp 之后重跑）：全量 `tests/` 1058 passed、3 failed（`test_rtc_sampler_guard.py`，改动前同样失败）；改动文件
+ruff check / format 无新增问题（改动前已不合规的文件未整体重排）；`ty check` 相对基线无新增诊断。
+
+**Done**
+
+- [x] 自动检查通过，reviewer 没有未处理的 blocking finding；文档把自动证据与待真机验证分开，
+      且两层 worktree 只包含本事务文件。
+
 ## Pico 接管的夹爪一致性与操作失误告警
 
 2026-09-19 用户要求并确认（夹爪一致按开/闭判定）。已提交 `58b1f1d`，未推送；全量 `tests/` 1090 passed、3 failed

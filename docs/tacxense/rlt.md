@@ -1,5 +1,42 @@
 # TacXense RLT 理解笔记
 
+## Phase two MLP 输入输出 contract
+
+RLT phase two 只使用一套表示：proprio 保留“当前绝对状态”的语义，手臂 action 在相对当前
+state 的 delta space 中学习，夹爪 action 保留 absolute opening。三者的数值尺度由 frozen VLA
+checkpoint 自带的 quantile stats 固定，不从在线 replay 重新估计。
+
+```text
+state_raw ──state q01/q99 ──clamp[-1, 1]────────────────→ proprio
+VLA absolute ref ──DeltaActions(state_raw)─────────────→ action representation
+                 ──action q01/q99 ──clamp[-1, 1]──────→ ref_chunk
+
+actor input  = concat[z_rl, proprio, flatten(ref_chunk[:C])]
+actor mean   = MLP 最后一层的线性输出 mu
+train action = clip(mu + sigma * epsilon, -1, 1)
+infer action = clip(mu, -1, 1)
+
+normalized action ──inverse action q01/q99─────────────→ physical delta / gripper opening
+                  ──delta dims add state_raw───────────→ absolute executable chunk
+                  ──rot6d/gripper projection──────────→ controller
+```
+
+具体语义：
+
+- `state_raw` 是 20D 当前绝对 TCP pose + gripper state，只供 action delta 编解码、rot6d fallback、
+  物理量日志与控制器适配；Actor/Critic 使用其 quantile-normalized `proprio`，不直接读取 raw state。
+- action mask 只决定是否减当前 state，不决定是否归一化：前 18D TCP position/rot6d 为 delta，
+  后 2D gripper 为 absolute opening；20D 随后都用 `norm_stats["actions"]` 做 quantile normalization。
+- normalized proprio、reference、replay action 与 BC target 都 clamp 到 `[-1, 1]`，和 Actor 输出同一范围
+  （2026-09-19 用户决定）；越界只以计数留下，离线审计用 `audit_action_range.py`。夹爪先限到物理 [0, 1]
+  再归一化。代价是 proprio 与 VLA 自己看到的不同（VLA 不 clip），超出 q01/q99 的人工纠正被截断。
+- 训练采集使用 fixed-std Gaussian sample；确定性评估与部署直接使用网络均值。二者都在最后 clip。
+- inverse norm 后的前 18D 是 physical delta，后 2D 是 physical gripper opening。本仓控制器接口接收
+  absolute target，所以 codec 必须给 delta 维加回本次 observation 的 `state_raw`；这一步是接口适配，
+  不改变 MLP 在 delta action space 学习的语义。
+- phase-one `z_rl` encoder 与 prefix 路径不变，已有匹配 VLA 的 token checkpoint 可复用；旧
+  stage-two Actor/Critic、optimizer 与 replay 的 tensor 含义不同，不能 resume 或 serving。
+
 ## Rollout warmup（`rlt_schedule.warmup_min_units`）
 
 ### 定义与语义
