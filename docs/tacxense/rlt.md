@@ -19,7 +19,7 @@ max_updates_per_train_step: int = 0
 earned = updates_per_unit * max(0, units_committed - warmup_min_units + 1)
 ```
 
-这不是 actor-takeover gate（后者在 `TDConfig.takeover` 上，按 actor 更新次数计数，语义完全不同，见下文"易混淆点"）。
+它只管训练预算，与 actor 能否执行无关。actor 曾有按更新次数计数的接管门槛（`TDConfig.takeover.min_actor_updates`），2026-09-18 已删除，现在只由键盘 `a` 手动切换。
 
 ### YAML 来源
 
@@ -60,17 +60,22 @@ earned = updates_per_unit * max(0, units_committed - warmup_min_units + 1)
 - `_log_episode_summary`（`online_runner.py:1062`）：本 episode 没有任何更新时，日志明确写"first update needs {warmup_min_units} full units of {unit_size} chunks"。
 - `load_checkpoint()`（`online_runner.py:2276`）：resume 时用 checkpoint `metadata["config"]["rl"]["algorithm"]["rlt_schedule"]` 里保存的 `warmup_min_units`（连同 `chunks_per_rollout_unit`、`updates_per_unit`）与当前 config 逐字段比对，任何一个不一致就拒绝 resume（"Resume cannot reinterpret rlt_schedule.{key}; start a new stage2 run."）——改这几个字段等于改变了已训练模型的更新预算语义，不允许在同一次 run 里静默切换。
 
-### 易混淆点：另一个同名字符串 "warmup_updates"
-
-`OnlineRunner` 里还有一处把字符串字面量 `"warmup_updates"` 作为 actor-takeover 的 skip 原因（`online_runner.py:1117`）：
-
-```python
-elif self.actor_update_step < takeover.min_actor_updates:
-    reason = "warmup_updates"
-```
-
-这是 `TDConfig.takeover.min_actor_updates`（`TakeoverConfig`，控制 actor 何时允许接管执行）在门控日志里用的原因码，和 `rlt_schedule.warmup_min_units`（控制 critic/actor **训练预算**何时开始累积）是两个完全独立的配置项、独立的机制，只是都叫"warmup"、字符串又长得像，读日志或搜代码时容易把两者当成同一个变量。
-
 ### 未验证事项
 
 以上结论转述自本工作区对 `methods/tacxense`（`feature/rlt-test` 分支）源码与 YAML 的阅读，本工作区未实际运行 phase two online RL，未观察过 warmup 阈值在真实 rollout 中触发/resume 拒绝的运行时行为。
+
+## Phase two 关键阶段采集工作流
+
+唯一规格是上游 `methods/tacxense/docs/architecture.md` § 4.49 的状态图。图的主体由用户 2026-09-18 给出，
+`◆` 是 2026-09-19 问答中确认的补充。这里不另存副本，避免两份内容以后各自改动、出现分歧；要改流程，
+先改那张图并经用户确认。
+
+要点（完整内容以图为准）：
+
+- b 进入关键阶段，从下一个 chunk 起算；Warmup / Online 由 `a` 手动切换，从下一个 chunk 起生效。
+- 按下 Pico 运动键（SDK `grip`）只是待命；手柄动到阈值、且两只手的扳机夹爪与机器人夹爪开/闭一致才接管，
+  不一致只打 warning；接管后按相对运动控制。松开运动键即结束介入，丢弃剩余动作并重新推理；松开时仍在动或
+  夹爪在翻转会打 warning。没有单独的进入 / 退出介入按键。
+- anchor 取原 policy chunk 起点、人类介入中每 C 步、重启起点；每个 anchor 取 C 步，窗口可以重叠。
+- Success / Failure 按下后，当前单元跑满才结束；最后一个窗口带 reward，`done = True`。
+- 上游旧条目（§ 4.43 等）与图冲突时，以图为准。RTC 不在范围内。
