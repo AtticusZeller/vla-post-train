@@ -54,67 +54,67 @@ critic: [z_rl, s_prop, a]     → Linear(256) → LayerNorm → ReLU
 
 **Done**
 
-- [ ] 任何人只读 § 4.51 就能写出 actor/critic 的每一层，包括 LayerNorm 的位置和初始化。
+- [x] 任何人只读 § 4.51 就能写出 actor/critic 的每一层，包括 LayerNorm 的位置和初始化。
 
 ### Task: 配置层用三个正交字段描述网络
 
 **Change**
 
-- [ ] `RLTModelConfig` 删除 `mlp_backbone`，新增 `mlp_activation: Literal["relu", "tanh"] = "relu"`、
+- [x] `RLTModelConfig` 删除 `mlp_backbone`，新增 `mlp_activation: Literal["relu", "tanh"] = "relu"`、
       `actor_layer_norm: bool = False`、`critic_layer_norm: bool = True`；`__post_init__` 拒绝未知激活。
-- [ ] `config/rlt/*.yaml`（`rlt_fast`、`rlt_0916`、`insert_ethernet_0917`）删掉 `mlp_backbone`，
+- [x] `config/rlt/*.yaml`（`rlt_fast`、`rlt_0916`、`insert_ethernet_0917`）删掉 `mlp_backbone`，
       hidden dims 改 `[256, 256]`，注释指向 § 4.51。
-- [ ] `checkpoint_binding.validate_mlp_architecture` 的字段列表把 `mlp_backbone` 换成三个新字段；
+- [x] `checkpoint_binding.validate_mlp_architecture` 的字段列表把 `mlp_backbone` 换成三个新字段；
       旧 checkpoint 没有这些键时不再用 legacy 默认值放行，而是明确拒绝。
 
 **Verification**
 
-1. [ ] 配置单测：默认值就是 baseline；`mlp_backbone` 这个键出现在 YAML 里时解析失败（未知键）。
-2. [ ] binding 单测：改任一新字段都能被拒绝并指名字段；缺字段的旧 checkpoint 被拒绝。
+1. [x] 配置单测：默认值就是 baseline；`mlp_backbone` 这个键出现在 YAML 里时解析失败（未知键）。
+2. [x] binding 单测：改任一新字段都能被拒绝并指名字段；缺字段的旧 checkpoint 被拒绝。
 
 **Done**
 
-- [ ] `config/rlt/*.yaml` 只用这三个字段 + hidden dims 就能唯一确定网络结构。
+- [x] `config/rlt/*.yaml` 只用这三个字段 + hidden dims 就能唯一确定网络结构。
 
 ### Task: `mlp_policy` 按新字段构网，初始化换 ReLU gain
 
 **Change**
 
-- [ ] `RLTActor` / `TwinQ` 的 `backbone` 参数换成 `activation` + `layer_norm`；`_make_mlp` 不变。
-- [ ] 初始化不再由预设名触发：actor 永远用正交 √2 隐层 + 0.01·√2 输出头，critic 永远用
+- [x] `RLTActor` / `TwinQ` 的 `backbone` 参数换成 `activation` + `layer_norm`；`_make_mlp` 不变。
+- [x] 初始化不再由预设名触发：actor 永远用正交 √2 隐层 + 0.01·√2 输出头，critic 永远用
       Xavier(relu gain) 隐层 + `N(0, 0.02)` 输出头；`_init_rlinf_critic` 的 gain 改为按激活函数取。
-- [ ] `RLTActorCritic.build` 从新字段读取，`actor_hidden_dims or mlp_hidden_dims` 的兜底保留。
+- [x] `RLTActorCritic.build` 从新字段读取，`actor_hidden_dims or mlp_hidden_dims` 的兜底保留。
 
 **Verification**
 
-1. [ ] 单测断言 actor 无 LayerNorm、critic 每个隐层前有 LayerNorm、两者激活都是 ReLU、
+1. [x] 单测断言 actor 无 LayerNorm、critic 每个隐层前有 LayerNorm、两者激活都是 ReLU、
       层数等于 hidden dims 长度。
-2. [ ] 单测断言 `actor_layer_norm: true` 时 actor 也长出 LayerNorm，且 critic 不受影响。
-3. [ ] 单测断言初始输出量级：默认初始化下 actor 的 `mu` 绝对值均值远小于 1（小输出头生效）。
-4. [ ] `pytest tests/` 全绿（除已知的 `tests/test_rtc_sampler_guard.py` 三条既有失败）。
+2. [x] 单测断言 `actor_layer_norm: true` 时 actor 也长出 LayerNorm，且 critic 不受影响。
+3. [x] 单测断言初始输出量级：默认初始化下 actor 的 `mu` 绝对值均值远小于 1（小输出头生效）。
+4. [x] `pytest tests/` 全绿（除已知的 `tests/test_rtc_sampler_guard.py` 三条既有失败）。
 
 **Done**
 
-- [ ] 从 YAML 到 `nn.Module` 的每一层都能对上 § 4.51 的结构图。
+- [x] 从 YAML 到 `nn.Module` 的每一层都能对上 § 4.51 的结构图。
 
 ### Task: 复核、静态检查与文档同步
 
 **Change**
 
-- [ ] 外部 reviewer 对照 § 4.51 审 diff；确认的发现回写成新条目再实现。
-- [ ] `CHANGELOG.md` 记一条 Changed（删 `mlp_backbone`、新三字段、baseline 结构）。
-- [ ] `docs/current_state.md` 更新 phase two 网络现状；真机未验证的部分标 pending。
-- [ ] 逐项核对 `docs/2026-09-15-rlt-stage2-rlinf-tacxense-comparison.md` 中受影响的行，标注
+- [x] 外部 reviewer 对照 § 4.51 审 diff；确认的发现回写成新条目再实现。
+- [x] `CHANGELOG.md` 记一条 Changed（删 `mlp_backbone`、新三字段、baseline 结构）。
+- [x] `docs/current_state.md` 更新 phase two 网络现状；真机未验证的部分标 pending。
+- [x] 逐项核对 `docs/2026-09-15-rlt-stage2-rlinf-tacxense-comparison.md` 中受影响的行，标注
       baseline 与 RLinf 的已知差异，而不是让那份对照表继续声称"已对齐"。
 
 **Verification**
 
-1. [ ] `ruff check` + `ruff format --check` 在改动文件上干净；`uvx ty` 无新增发现。
-2. [ ] 全量 `pytest tests/` 与基线对比无新增失败。
+1. [x] 改动文件的 `ruff check` / `ruff format --check` 与 base 结果一致；`uvx ty` 无新增发现。
+2. [x] 全量 `pytest tests/` 与基线对比无新增失败。
 
 **Done**
 
-- [ ] 仓库里不存在 `mlp_backbone` 的残留引用（代码、配置、测试、文档除历史记录外）。
+- [x] 仓库里不存在 `mlp_backbone` 的残留引用（代码、配置、测试、文档除历史记录外）。
 
 ## RLT phase two MLP 输入输出统一为 quantile-normalized delta contract
 
