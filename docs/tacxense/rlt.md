@@ -37,6 +37,34 @@ normalized action ──inverse action q01/q99───────────�
 - phase-one `z_rl` encoder 与 prefix 路径不变，已有匹配 VLA 的 token checkpoint 可复用；旧
   stage-two Actor/Critic、optimizer 与 replay 的 tensor 含义不同，不能 resume 或 serving。
 
+## Phase two MLP 网络结构 baseline
+
+2026-09-20 确认的唯一结构规格，完整理由见 TacXense `docs/architecture.md` § 4.51。
+
+| 项目 | 配置 |
+|---|---|
+| 输入 | `[z_rl, proprio, ref_chunk[:C]]` 直接 concat |
+| Actor 主干 | 2 × 256 |
+| Critic 主干 | Twin-Q，每个 Q 网络 2 × 256 |
+| 激活函数 | ReLU |
+| Actor LayerNorm | 默认关闭，训练不稳再开 |
+| Critic LayerNorm | 默认开启 |
+| Actor 输出 | 线性均值 → Gaussian 采样 → clip[-1, 1] → denorm |
+| Critic 输出 | 线性标量 Q，不加激活 |
+
+```text
+actor:  [z_rl, s_prop, a_ref] → Linear(256) → ReLU → Linear(256) → ReLU → Linear(C*d)
+critic: [z_rl, s_prop, a]     → Linear(256) → LayerNorm → ReLU
+                              → Linear(256) → LayerNorm → ReLU → Linear(1)
+```
+
+配置字段：`model.mlp_activation`（默认 `relu`）、`model.actor_layer_norm`（默认 `false`）、
+`model.critic_layer_norm`（默认 `true`）、`actor_hidden_dims` / `critic_hidden_dims`（都写
+`[256, 256]`）。原来把激活、LayerNorm、初始化绑在一起的 `model.mlp_backbone` 已删除。
+
+初始化：actor 隐层正交 init（gain √2）、输出头 0.01·√2 小正交 init，让第一批动作落在归一化零点
+附近；critic 隐层 Xavier（relu gain）、输出头 `N(0, 0.02)`。
+
 ## Rollout warmup（`rlt_schedule.warmup_min_units`）
 
 ### 定义与语义
