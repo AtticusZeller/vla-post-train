@@ -65,6 +65,42 @@ critic: [z_rl, s_prop, a]     → Linear(256) → LayerNorm → ReLU
 初始化：actor 隐层正交 init（gain √2）、输出头 0.01·√2 小正交 init，让第一批动作落在归一化零点
 附近；critic 隐层 Xavier（relu gain）、输出头 `N(0, 0.02)`。
 
+## Replay transition contract
+
+一条 replay row 是一个完整 C-step chunk。`curr_obs.ref_chunk` 始终保留 VLA 原始 reference；人工
+接管不会在采集时改写它。实际执行的 normalized action 存在 `actions`，逐步人工位置存在
+`intervention_mask`，训练时统一组合：
+
+```text
+ã_train = where(intervention_mask, actions, curr_obs.ref_chunk[:C])
+
+actor input = [z_rl, proprio, ã_train]
+BC target   = ã_train
+critic data = [z_rl, proprio, actions]
+```
+
+公式覆盖完整 chunk。RTC 的 `committed_len` 只把 Q 输入拼成
+`[executed committed zone | actor execution zone]`，不改变 Actor 条件输入或 BC target。
+`next_obs.ref_chunk` 是 next state 的原始 VLA reference，bootstrap 不使用当前 transition 的人工 mask。
+
+主要字段：
+
+| 字段 | 含义 |
+|---|---|
+| `curr_obs` / `next_obs` | `z_rl`、raw `state`、normalized `proprio`、raw VLA `ref_chunk` |
+| `actions` / `chunk_rewards` | normalized 实际执行 chunk / 逐步 reward |
+| `intervention_mask` / `intervene_flags` | 逐步人工 mask / 其 `any()` 派生值 |
+| `action_source` / `source` | 逐步 VLA/RL/HUMAN；chunk 级 VLA/RL/HUMAN/MIXED |
+| `episode_id` / `round_id` / `rollout_unit_id` | 关键阶段尝试 / 操作轮次 / 训练预算单元 |
+| `timestamp` / `is_critical` / `actor_enabled` | 日志对齐与采集状态 |
+| `terminated` / `truncated` / `dones` | 终止、截断与 bootstrap 信息 |
+| `valid_action_mask` / `executed_length` | 固定长度完整性校验 |
+| `end_reason` / `window_outcome` | 边界原因与成功/失败标签 |
+| `next_committed` | 仅 RTC；bootstrap state 已在途的 committed plan |
+
+实际下发的 absolute `executed_actions` 不进 replay，只留在 transition dump 供物理量审计。字段集合变化
+对应 `transition_schema_version = 4`；schema 1–3 不允许恢复，必须使用新 `exp_name`。
+
 ## Rollout warmup（`rlt_schedule.warmup_min_units`）
 
 ### 定义与语义

@@ -1,5 +1,82 @@
 # TacXense Plan
 
+## Replay transition 条目结构对齐 RLT 规格
+
+2026-09-20 用户确认：replay 中永久保留 VLA 原始 `a_ref`、实际执行的归一化 `a_exec` 与
+`intervention_mask`，训练时再组合
+`ã_train = where(m_human, a_exec, a_ref)`。同一份 `ã_train` 同时作为 Actor 条件输入和 BC target；
+Critic 继续读取真实执行动作、逐步 reward、next state 与 next state 的原始 VLA reference。
+`docs/architecture.md` § 4.52 是字段和训练语义的唯一真相。
+
+字段事务同时包含：`window_id → episode_id`、`recording_enabled → is_critical`，新增
+`round_id` / `timestamp` / chunk 级 `source`；`executed_actions` 移出 replay、只保留在 transition
+dump；`transition_schema_version` 与 `diagnostic_schema_version` 升为 4。非目标：不改变 step 如何构成
+anchor 窗口、不改变 critic TD target、不调整 warmup / buffer size / overlapping subsampling。
+
+2026-09-20 外部 review 发现一个 P1：RTC 分支把 committed zone 的 BC target 恢复成 raw VLA
+reference，而已批准公式对完整 chunk 生效。这个例外还造成同一步的 Actor 条件输入是人工动作、BC
+target 却是 VLA。确认按规格修复：`committed_len` 只控制 Q 输入的 committed/action splice，不改变
+`ã_train` 或 BC target。
+
+### Task: replay 保存可追溯的原始 reference 与执行来源
+
+**Change**
+
+- [x] 同步与 RTC row 都不再覆盖 `curr_obs.ref_chunk`；人工执行动作只保存在 normalized `actions`，
+      由 `intervention_mask` 标出。
+- [x] `TransitionBuffer` 使用 § 4.52 的字段集合；chunk 级 `source` 从逐步 `action_source` 归约，任意
+      两种来源共存即 `MIXED`；绝对物理 `executed_actions` 只留在 dump。
+- [x] schema 4 拒绝 schema 1–3 与旧 replay 字段集合。
+
+**Verification**
+
+1. [x] replay save/load 逐位一致；四类 `source` 归约可辨别；人工介入后 replay 的 `a_ref` 仍与 VLA
+       原值逐位相同，`a_exec` 可由 `actions + intervention_mask` 直接读出。
+2. [x] transition dump 保留实际下发的绝对动作，并使用 schema 4 与新 metadata 名称。
+
+**Done**
+
+- [x] 一条 transition 能同时回答“VLA 建议了什么、机器人实际执行了什么、哪些步来自人工”。
+
+### Task: Actor 输入与 BC target 共用完整 chunk 的 ã_train
+
+**Change**
+
+- [x] `td.training_reference` 是唯一组合函数；Actor loss 与 actor-output logging 共用它。
+- [x] 同步与 RTC 都把完整 chunk 的 `ã_train` 同时用于 Actor 条件输入和 BC target；RTC 的
+      `committed_len` 只作用于 Q 输入 splice，不对 BC target 增加例外。
+- [x] `next_obs.ref_chunk` 始终是 next state 的原始 VLA reference，bootstrap 不套用当前 transition
+      的人工 mask。
+
+**Verification**
+
+1. [x] 人工 mask 分别落在 RTC committed zone 与 execution zone 时，Actor 输入和 BC target 对应步
+       都等于 normalized human action；未介入步等于 VLA reference。
+2. [x] mutation：禁用 reference 组合、让 Actor 使用 raw reference、或恢复 committed-zone BC 例外，
+       相应测试必须失败。
+
+**Done**
+
+- [x] `ã_train` 逐元素等于批准公式，且 Actor 条件输入与 BC target 没有模式或分区差异。
+
+### Task: review、全量验证与文档同步
+
+**Change**
+
+- [x] 核验外部 review；确认项回写计划并修复。P1 committed-zone BC 冲突已确认。
+- [x] 同步 `CHANGELOG.md`、`docs/current_state.md`、根仓库 `docs/tacxense/rlt.md` 与 § 4.52。
+
+**Verification**
+
+1. [x] touched-file ruff / format / ty 与基线相比无新增发现。
+2. [x] 全量 `pytest tests/` 无新增失败；三条既有 `test_rtc_sampler_guard.py` 失败单独记录。
+3. [x] 搜索确认 replay 不残留 `executed_actions`、`window_id` 或 row-level `recording_enabled` 读者；
+       协议层 `recording_enabled` 与 dump row 的临时 `executed_actions` 继续保留。
+
+**Done**
+
+- [ ] 自动证据满足 § 4.52；真机只保留“新 `exp_name` 检查 replay/dump 字段与行为”的用户验收。
+
 ## Phase two MLP 网络结构收敛到 2×256 ReLU baseline
 
 2026-09-20 用户给出 baseline 规格并要求"先写文档后实现"。结构的唯一真相写在 TacXense
