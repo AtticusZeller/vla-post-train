@@ -1,5 +1,83 @@
 # TacXense Plan
 
+## Actor 执行改由 warm_up 自动决定，操作员只用手柄
+
+2026-09-21 用户指出 TacXense `docs/architecture.md` § 4.48 记错了历史：`takeover.auto_enable` 是
+`d2aa4fb`（2026-09-10）引入并在四个配置里默认开启的既定行为，`58b1f1d`（2026-09-19）删掉它之后把它写
+成了"被否的方案"，同时把 actor 挪到键盘 `a` 上，破坏了"所有操作都在手柄上完成"。用户确认恢复自动启用、
+不要 `min_actor_updates` 那类更新次数门槛，并要求 actor 的启用/退出完全不经按键：关键阶段内 warm_up
+结束即自动启用，成功/失败标记关窗即自动退出。结构与语义的唯一真相是 § 4.48。
+
+判据：`use_actor = recording_enabled and len(online_buffer) >= rlt_schedule.warm_up`，与 critic 更新
+预算共用 `OnlineRunner._warmup_done()`。非目标：不改 § 4.49 的状态图（标记后当前单元仍跑满 C 步）、
+不改 § 4.53 的 UTD/stride、不给 `auto_enable` 留配置字段、不验证 RTC（用户 2026-09-21 明确 RTC 先不管，
+本事务只让 RTC 路径跟着改字段以免 KeyError）。
+
+### Task: actor 判定与控制链
+
+**Change**
+
+- [x] sync 与 RTC 三处判定改用 `_warmup_done()`；`replay_ready` 复用同一函数。
+- [x] 删除键盘 `a`、`KeyboardSignals._actor_enabled` 与 controls 里的 `actor_enabled`；
+      `sync_controls` 只剩 `recording_enabled`；同步协议 v6→v7、RTC v5→v8。
+- [x] 状态 `reason` 由 `manual_switch_on/off` 改为 `warmup_done` / `warmup_pending`。
+
+**Verification**
+
+1. [x] 单测：replay 短于 warm_up 时开窗仍跑 VLA；跨过 warm_up 后下一轮自动跑 actor 且
+       `update_step == actor_update_step == 0`；`begin_chunk` 不再返回 `actor_enabled`；
+       按 `a` 不改变任何控制；旧协议版本握手被拒。
+2. [x] 全量 `pytest tests/`：3 failed / 1106 passed，失败全部是既有的
+       `test_rtc_sampler_guard.py` 三条，与基线一致。
+3. [x] 改动文件 `ruff check --statistics` 与 HEAD worktree 逐文件对比无新增发现。
+
+**Done**
+
+- [x] 代码里不存在操作员可切换 actor 的路径；Pico 四枚面键覆盖全部操作。
+- [ ] 真机验收待做：新 `exp_name` 跑一轮，确认第一轮全程 VLA、replay 过 `warm_up` 后的下一轮开窗即
+      由 actor 驾驶、关窗立即退回 VLA。
+
+### Task: 删掉整套键盘路径，手柄成为唯一输入
+
+2026-09-21 用户在上一个 Task 交付后确认：键盘整个删掉，纳入本次改动，只跑相关测试。
+
+**Change**
+
+- [x] `keyboard_signals.py` → `operator_signals.py`、`KeyboardSignals` → `OperatorSignals`；
+      删除 pynput 监听、`on_key`、按键去抖（`DEBOUNCE_S`/`_accept_press`）、`stop()`、
+      stdin 回车门控与 `enable_keyboard` 参数；`wait_reset` 的 `poll` 改为必填。
+- [x] 删除 `--args.rlt-keyboard-enabled`；`rlt_mode` 与 `train_rl` 本地模式在启动时要求
+      `--pico4-intervention`（否则 reset 门控会等一个永远不会到来的按键）。
+- [x] `pynput` 移出 `conda_enviroment.yaml`；测试文件改名 `test_rlt_operator_signals.py`，
+      删掉键盘去抖、stdin 门控与键盘镜像用例，其余改用面键按压。
+
+**Verification**
+
+1. [x] `pytest` 相关用例（operator signals、pico monitor/takeover、window transactions、
+       online runner、remote env、rtc、takeover safety、action contract、replay、config）：
+       262 passed。按用户要求本次不跑全量。
+2. [x] 新增回归：hub 不再有 `on_key` 属性，`begin_chunk` 的键集恰为 `{"recording_enabled"}`。
+3. [x] 改动文件 `ruff check --statistics` 与 HEAD worktree 对比无新增（测试文件 14 → 9）。
+
+**Done**
+
+- [x] 仓库里不存在任何键盘输入路径；Pico4 A/B/X/Y 是唯一操作员输入。
+- [ ] 真机验收待做：确认无键盘时四键可完整走完一轮（开窗、标记、丢弃、结束/开下一轮）。
+
+### Task: 文档纠正
+
+**Change**
+
+- [x] § 4.48 重写，并把 `auto_enable` 的真实历史与"手柄完备性被打破"这个未记录的代价写回去。
+- [x] § 4.42 / § 4.49 / § 4.45、`CHANGELOG.md`、`docs/current_state.md`、`docs/rlt-fast-training.md`、
+      根仓库 `docs/tacxense/rlt.md` 同步。
+- [x] § 4.42 补记键盘删除的决定、代价与被否的"留键盘做 fallback"；`docs/rlt-intervention-fixes.md`
+      里那条 `--args.no-rlt-keyboard-enabled` 的旧建议标为 superseded。
+
+**Done**
+
+- [x] 仓库里不再有"actor 由操作员手动切换"的说法。
+
 ## Replay transition 条目结构对齐 RLT 规格
 
 2026-09-20 用户确认：replay 中永久保留 VLA 原始 `a_ref`、实际执行的归一化 `a_exec` 与
