@@ -1161,3 +1161,50 @@ lerobot 0.5.1 而非本 fork，Task 1 无法在本机跑单测，只能代码对
 **Done**
 
 - [x] § 4.49 的接管前置条件与 `_decide_takeover` 的代码逐条对得上，没有并列保留的旧条款。
+
+## 接管期间未参与的那只手，夹爪必须保持
+
+现象（2026-09-22，真机采集，用户报告）：右手接管时左手夹爪会被松开。期望是"只有正在被接管驱动的
+那只手，夹爪跟随自己的扳机；其余情况夹爪都不动"。
+
+定位（代码分析）：`lerobot-xense` `teleop_pico4.py` 的 `get_action` 第 5 步把 `_target_pos` /
+`_target_quat` 的更新包在 `if self._enabled:` 里，第 6 步的
+`_target_gripper_pos = 1.0 − trigger × width` 却在这个判断之外无条件执行。于是没按 grip 的那侧
+手臂位姿冻结在接管瞬间（符合预期），夹爪却持续跟着自己的扳机——右手接管时左扳机松开，左爪就开。
+接管期间 `get_override_action` 把两只手的 20D 整体下发给机器人，所以这个值直达硬件。
+
+修在 tacxense 的 `intervention.py` 而不是 fork 的 teleop：即使让 teleop 在 `_enabled=False` 时
+冻结夹爪，它冻的是 `reset_to_pose` 写入的**实测**值，而夹住物体时实测停在物体宽度上，重新下发
+等于把夹持松掉。`intervention.py` 能拿到 `online_runner` 传进来的机器人最近一次夹爪**命令**，
+那才是"保持"该用的数值。副作用范围也只限接管路径，不动普通遥操录制。
+
+边界：不改运动阈值、arming 与 release 语义；不改未参与那只手臂的位姿行为（本来就冻结在接管瞬间，
+符合期望）；不改 replay / 路由 / 训练数学；不改 lerobot-xense。
+
+### Task: 夹爪来源逐手判定
+
+**Change**
+
+- [x] `poll_and_decide` 里按侧记下 grip 是否按住（复用同一套 `grip_enable_threshold` /
+      `grip_disable_threshold` 迟滞），供 `get_override_action` 使用。
+- [x] 每侧夹爪的来源逐帧判定：该侧 grip 按住 → 扳机映射值；否则 → 该侧在"停止被扳机驱动"那一刻
+      锁存的保持值（`gripper_command` 优先，没有则退回实测）。`get_override_action` 用保持值覆盖
+      20D 的第 18 / 19 维。
+- [x] 锁存值在接管期间恒定，不逐帧跟随实测，避免夹住物体时被实测值一点点松开。
+- [x] `_warn_gripper_jump` 改为逐侧触发：某一侧**开始**被扳机驱动时（接管上升沿，或接管中途另一只手
+      再按下 grip）才比较并告警，未参与的那只手不再产生这行日志。
+
+**Verification**
+
+1. [x] 新单测：右侧 grip 按住并移动过阈值触发接管，左扳机松开而机器人左爪命令为闭合时，
+       `get_override_action()` 的第 18 维等于机器人的闭合命令而不是 1.0；右侧第 19 维等于右扳机映射值。
+2. [x] 新单测：接管中途再按下左 grip，左侧第 18 维立即变为左扳机映射值，并且此刻恰好多出一行左手告警。
+3. [x] 新单测：只有右手参与时，告警里不出现 `left`。
+4. [x] `pytest tests/test_pico_takeover_motion.py tests/test_pico_button_monitor.py
+       tests/test_rlt_takeover_safety.py tests/test_rlt_window_transactions.py
+       tests/test_rlt_online_runner.py` 全绿。
+5. [x] `ruff check` / `ruff format --check` 在改动文件上与 HEAD 对比无新增发现。
+
+**Done**
+
+- [ ] （真机）左爪夹着东西时用右手接管，左爪保持夹持不松开；松开右 grip 结束介入后左爪仍然夹着。
