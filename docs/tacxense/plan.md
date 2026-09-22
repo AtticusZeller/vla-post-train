@@ -1026,3 +1026,45 @@ critic:actor 改 2:1、BC/Q 权重保持固定 5 / 0.1、补齐的更新在达�
 **Done**
 
 - [ ] （真机）rlt_fast 配置下，第 20 个 unit 提交的那一轮 `update_step` 从 0 变为 160、`actor_update_step` 为 80。
+
+## 标签后的停顿：sliding replay 特征改为批量前向
+
+现象（2026-09-22，真机评测）：人类介入之后、或打完标签重新开始时有较长停顿。用户判断介入本身不是
+原因——重新推理只有几百毫秒——怀疑卡在打标签那一下。
+
+定位结论（代码分析，非真机测量）：同步采集里正 stride 的特征物化全部压在**按下成功/失败的那一
+刻**。`_materialize_sliding_features` 对每个缺失索引单独调一次 `Policy.infer`，而 `Policy.infer` 的
+输入管线写死 `[None, ...]`，batch 恒为 1，于是一次标签要串行跑几十次 2B VLA 前向（每次还含
+`num_steps` 步 flow-matching 去噪）。`C=10`/`stride=2`/一段 150 步的 phase 需要 61 次。关键阶段越
+长停得越久，这与"介入后卡"的体感一致——因为用户通常介入结束就立刻打标签。
+
+这条与 § "wandb 上报不得阻塞训练循环" 是两个独立的停顿源：那条发生在 drain 期间，这条发生在标签
+按下到下一轮之间。删除 `max_updates_per_train_step` 之后 drain 停顿只会更长，两条都需要真机计时
+才能分清。
+
+已完成（tacxense `7361225`，决策见 `architecture.md` § 4.53）：
+
+- [x] `Policy.infer_batch`：同一套 input/output transform 与 sampler，中间的前向合并成一次。
+- [x] `FeatureExtractor.extract_batch`：逐样本快照 `last_ref_exec`，保留 § 4.52 要求的原始 reference。
+- [x] 新配置 `rl.replay_feature_batch_size`（默认 16），纯墙钟旋钮，不进 checkpoint 校验。
+- [x] 索引去重与"同一次 forward 同时取 z_rl 与 ref_chunk"——本来就已成立，只是写进了文档。
+- [x] CPU 单测：批量 == 逐样本（含 prefix）、任意 batch size 产生相同 replay 行、CUDA OOM 不被
+      误当成"不支持批量"而退回串行。
+- [x] 删除 `max_updates_per_train_step`，每次 drain 跑满 UTD 欠账。
+- [x] 三个真机配置统一到 `C=10`。
+
+**真机验收（待用户执行）**
+
+1. [ ] 日志新增的 `RLT sliding features materialized: indices=… batch_size=… forwards=… elapsed_s=…`
+       一行即可读出标签停顿的真实时长与前向次数。记录一段典型 phase 的数值。
+2. [ ] 对比 `replay_feature_batch_size: 1` 与 `16` 的 `elapsed_s`，确认加速比与前向次数之比相当；
+       若不相当，说明瓶颈不在 batch 而在别处（相机解码、CPU 侧 transform）。
+3. [ ] 确认 16 不会 OOM；显存有余量就继续调大，直到停顿可接受或显存拒绝。
+4. [ ] 分别记录标签停顿（上面这行）与回合末 drain 停顿（`pending_updates` + drain 耗时），确认
+       "介入后卡很久"到底属于哪一个；drain 现已不封顶，预期变长。
+
+**不做（2026-09-22 决定）**
+
+- 异步 learner / replay builder 拆分 + actor snapshot 发布。方案本身成立（允许 stale actor 是前提
+  而非缺陷），但改动面覆盖整个 runner 的所有权模型，而批量化之后同步时延已可接受。只有在
+  `replay_feature_batch_size` 吃满显存后停顿仍不可接受时才重新考虑。
