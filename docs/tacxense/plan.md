@@ -1068,3 +1068,96 @@ critic:actor 改 2:1、BC/Q 权重保持固定 5 / 0.1、补齐的更新在达�
 - 异步 learner / replay builder 拆分 + actor snapshot 发布。方案本身成立（允许 stale actor 是前提
   而非缺陷），但改动面覆盖整个 runner 的所有权模型，而批量化之后同步时延已可接受。只有在
   `replay_feature_batch_size` 吃满显存后停顿仍不可接受时才重新考虑。
+
+## 回合结束不开爪 + 取消接管的夹爪一致性门控
+
+现象（2026-09-22，`insert_ethernet` 真机采集）：连按两次 Pico A 结束并重开回合后，夹爪保持闭合不自动
+张开；随后手柄摇不动机械臂（用户只试了右手）。
+
+定位（代码分析，未在真机复现）：两件事，互相叠加。
+
+1. `lerobot-xense` 的 `BiFlexivRizon4RT.reset_to_initial_position()` 有两条路径。RT 快速路径只发
+   `cc.move_to_pose(start_pose)`，**完全不碰夹爪**；只有 legacy 路径经 `_move_arm_to_position` 调
+   `initialize_gripper_position(init_open)`。`go_to_start` 默认 True 且 RT 线程在跑，所以回合结束
+   `env.home()` 走的永远是快速路径，夹爪维持上一轮的开闭状态。同文件 `disconnect()` 明确写了
+   "先发开爪命令再 home，让夹爪与手臂并行动作"——快速路径漏的就是这一句。
+2. 摇不动是 § 4.49 的夹爪一致性门控按设计拦下来的：`home()` 把 `_last_gripper_command` 清空，
+   `_grippers_agree` 退回读实测值；夹爪物理闭合（≈0）而松开的扳机映射成 1.0，两者跨过 0.5 分界，
+   `_decide_takeover` 一直返回 False，policy 继续跑。门控是全局的，两只手都接管不了。
+
+用户决定（2026-09-22）：第 2 条**完全取消**门控——夹爪基本只有全开和全闭两态，接管瞬间的跳变代价
+小于永久拦住摇操的代价；接管条件的实时日志（"准备接管"提示、逐条条件是否满足）本次不做。第 1 条
+（lerobot-xense 回合结束开爪）用户当场决定**本次先不做**，Task 1 保留在计划里等下次确认。
+
+边界：不改运动阈值（5 mm / 3°）与 arming 语义；不改 release 侧的 `_warn_if_not_still`（含夹爪翻转
+告警）；不改 replay / 路由 / 训练数学。本机没有 `flexiv_rt`、`spdlog`，且 env 里装的是上游
+lerobot 0.5.1 而非本 fork，Task 1 无法在本机跑单测，只能代码对照 + 真机验收。
+
+### Task 1（用户 2026-09-22 决定本次不做，保留待确认）: 回合结束 home 时夹爪回到 init 状态（methods/lerobot-xense）
+
+**Change**
+
+- [ ] `reset_to_initial_position()` 的每侧循环体开头，在 `is_moving()` 跳过与两条分支之前，先对有夹爪
+      且 `use_gripper` 的一侧发一次非阻塞 `gripper.set_gripper_position(1.0 if gripper.config.init_open
+      else 0.0)`，try/except 记 warn 不致命，info 打印实际下发值——与 `disconnect()` 的写法一致。
+- [ ] 用 `set_gripper_position` 而不是 `initialize_gripper_position`：后者会轮询阻塞到位（最长 3 s），
+      而这里手臂本来就要走约 3 s，夹爪并行开合即可，不该再串行等。
+- [ ] legacy 分支因此会被 `_move_arm_to_position` 重复下发一次同样的目标，由
+      `initialize_gripper_position` 的"已在目标附近则跳过"吸收；换来的是 `go_to_start=False`
+      （`_go_to_home_arm` 传 `gripper=None`）这条路径同样不再漏开爪。
+
+**Verification**
+
+1. [ ] 代码对照：`reset_to_initial_position` 的两条分支与 `is_moving` 提前 continue 的情况下，
+       每侧夹爪命令都恰好下发一次（快速路径）或一次 + 一次幂等重发（legacy）。
+2. [ ] （真机，用户执行）按 A 结束回合，观察两只夹爪在手臂回程途中张开，日志出现
+       `left/right gripper: reset open command sent`；`go_to_start=False` 再跑一次同样张开。
+
+**Done**
+
+- [ ] 回合结束 home 之后，`env.observe()` 的 state[18]、state[19] 都接近 1.0（recipe 全部
+      `init_open: true`），不再需要人工掰开或重连机器人。
+
+### Task 2: 接管只看运动阈值，夹爪不一致改为接管时告警（methods/tacxense）
+
+**Change**
+
+- [x] `intervention.py` 的 `_decide_takeover` 删掉 `_grippers_agree` 调用与 `_gripper_mismatch_warned`
+      状态：按住 + 运动达阈值即接管。
+- [x] `_grippers_agree` 改写成接管上升沿的一次性诊断：比较扳机映射值与 `gripper_command`
+      （`None` 时退回 `_measured_grippers()`），跨过 0.5 分界就 warn 一行，写明哪只手、从多少跳到多少。
+      保留 `poll_and_decide(gripper_command=...)` 参数与 `online_runner` 的 `_last_gripper_command`
+      传递——它现在只喂这行告警。
+- [x] `RLTConfig.InterventionConfig` docstring 删掉"夹爪一致才接管"的描述。
+
+**Verification**
+
+1. [x] 改写 `tests/test_pico_takeover_motion.py` 里断言"夹爪不一致 → 不接管"的用例（约 :115-136）：
+       同样输入现在应接管，且 `_Log.warnings` 里恰好一行含该侧名与两个数值。
+2. [x] `pytest tests/test_pico_takeover_motion.py tests/test_pico_button_monitor.py
+       tests/test_rlt_takeover_safety.py tests/test_rlt_window_transactions.py
+       tests/test_rlt_online_runner.py` 全绿。
+3. [x] `ruff check` / `ruff format --check` 在改动文件上与 HEAD 对比无新增发现。
+
+**Done**
+
+- [ ] 机器人夹爪闭合、扳机松开的状态下按住手柄并移动 5 mm，机械臂立刻跟手；日志同时留下一行
+      夹爪跳变告警，说明接管瞬间夹爪从闭合跳到张开。
+
+### Task 3: 文档同步
+
+**Change**
+
+- [x] tacxense `docs/architecture.md` § 4.49 状态图：删掉 Human takeover 的第二个前置条件
+      （两手夹爪开闭一致）与"运动达阈但夹爪不一致 → 不接管、打 warning"两条 ◆，改为"接管只看运动
+      阈值；接管瞬间夹爪跳到扳机值，跨开闭分界时打一行 warning"。Human release 侧不动。
+- [x] tacxense `CHANGELOG.md`（`Fixed` / `Changed`）与 `docs/current_state.md` 按其 AGENTS.md 要求更新。
+- [ ] 本仓 `docs/tacxense/log.md` 记 Task 2/3，`docs/lerobot-xense/log.md` 记 Task 1。
+
+**Verification**
+
+1. [x] `grep -n "夹爪" docs/architecture.md` 在 § 4.49 范围内只剩 release 侧那条翻转告警。
+
+**Done**
+
+- [x] § 4.49 的接管前置条件与 `_decide_takeover` 的代码逐条对得上，没有并列保留的旧条款。
