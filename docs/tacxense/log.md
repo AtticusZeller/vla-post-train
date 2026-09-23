@@ -1,5 +1,29 @@
 # TacXense Log
 
+## 2026-09-23 · 接管与关键阶段的组合：sliding 观测缺失 + 组合测试
+
+- **背景与目的：** `rlt_fast`（`replay_stride=2`）真机训练在打标签后报 `Missing raw observation for
+  sliding replay index 2`。触发条件是先接管、握着按 b。用户确认接管与 b 的先后、重叠都合法，已写进
+  上游 § 4.49。原有测试只覆盖单一事件路径，没有把这些事件组合起来。
+- **实现思路：** 先做端到端组合测试，只替换机器人、手柄和特征提取器，runner、`RealEnvAdapter.step_chunk`
+  和 `OperatorSignals` 都用真实代码。oracle 从机器人侧执行日志独立计算关键阶段和应入库的 anchor。
+  修复前 612 例中有 78 例失败，对应两个问题：
+  1. 录制在一次调用中途打开时，stride 观测缺失（68 例）。修法：runner 在 stride>0 时总是请求观测，
+     机器人只在录制段存，runner 按段分配观测。网格仍然对齐，因为非最后一段都是满 C 步，且 C 能被
+     stride 整除；这一点加了断言。
+  2. stride=0 时，松手恰好落在握持段边界，留下的零长度段和随后的重启各开一个 anchor，同一窗口重复
+     入库（10 例）。修法：零长度单元的 anchor 由真正执行的单元替换。
+- **组件变化：** runner 新增按段分配观测；机器人端只在录制段做 stride 观测；remote 校验只要求录制段的
+  观测；`CriticalTrace.add_anchor` 去掉重复 anchor。wire 字段不变，语义有变化：机器人端和服务端要一起
+  更新。
+- **主要文件：** `methods/tacxense/src/tacxense/rlt/online_runner.py`、`remote_env.py`、`critical_trace.py`、
+  `tests/test_rlt_collection_matrix.py`。
+- **验证：** 组合测试 612 例全过；`test_rlt_critical_trace`、`test_rlt_window_transactions`、
+  `test_rlt_remote_env`、`test_rlt_online_runner`、`test_rlt_takeover_safety`、`test_rlt_action_contract`、
+  `test_rlt_actor_usage_tally`、`test_rlt_operator_signals`、`test_rlt_rtc`、`test_rlt_policy` 全过。
+  本机内存 15 GB，全量 `pytest tests/` 会被 OOM 杀掉，所以没有跑全量。改动文件的 ruff 发现数和格式
+  差异与 HEAD 相同，没有新增。真机未验证。
+
 ## 2026-09-17 · 切换到 feature/rlt-test，补充 RLT 理解笔记
 
 - **背景与目的：** RLT 训练实验需要在测试分支上进行，`feature/rlt` 不是实验所用分支；同时需要

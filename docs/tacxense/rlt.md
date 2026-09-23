@@ -176,6 +176,9 @@ earned = updates_per_unit * max(0, units_committed - warmup_min_units + 1)
 
 - b 进入关键阶段，从下一个 chunk 起算；Warmup / Online 不由操作员切换，replay 达到 `warm_up` 即由 actor
   执行（§ 4.48）。replay 只在轮末提交，所以切换落在轮边界。
+- b 与接管互不约束、先后任意（2026-09-23 用户确认）：非关键阶段可以接管，握着接管不松手时也可以按 b，
+  b 从握持期间的下一个 C 步段起算。这类组合由上游 `tests/test_rlt_collection_matrix.py` 端到端覆盖，
+  2026-09-23 按它修掉了两个问题（见 `log.md`）。
 - 按下 Pico 运动键（SDK `grip`）只是待命；手柄动到阈值、且两只手的扳机夹爪与机器人夹爪开/闭一致才接管，
   不一致只打 warning；接管后按相对运动控制。松开运动键即结束介入，丢弃剩余动作并重新推理；松开时仍在动或
   夹爪在翻转会打 warning。没有单独的进入 / 退出介入按键。
