@@ -235,6 +235,119 @@ replay 采样对全 buffer 均匀（`demo_buffer_ratio=0`，`replay_recency_half
 日志与此一致：训练 batch 上 actor 输出的位置二阶差分 p95 从约 2.7mm 降到 1.0mm，`bc_loss` 从约 2e-3 降到 4e-4，
 两者都在 ep100 左右走平。这个指标在训练 batch 上计算，不是真机执行轨迹，只能作为旁证。
 
+#### 2.7 成功率上不去的三个阻力（用户提出）
+
+**（用户提出）** 成功率没有继续上升，最直接的原因是三处阻力。
+
+**阻力一：actor 输入在训练和部署时分布不同。** 当前实现里，接管步上 actor 的输入与 BC 目标都是 `ã_train`，
+也就是人工动作（`td.py:183`、`td.py:199`）；部署时 actor 的输入永远是原始 VLA chunk。人工动作偏离 VLA proposal
+越多，训练时学到的东西在部署时越用不出来。
+- **（用户观察，已验证）** 之前接管动作偏离 proposal 太多时，actor 完全学不会；本轮接管动作经过精细微调、贴近 proposal，
+  才学得进去。
+- 这是有意的现行规格：architecture.md §4.52 选择让 actor 输入也用 `ã_train`（沿用 RLinf 约定），
+  并把"输入保持原始 `a_ref`、只有 BC 目标用 `ã_train`"记为被否方案，理由是偏离规格、改变训练行为，需要另做真机对照。
+- `reference_dropout_prob=0.5` 会把一半训练行的 reference 置零，所以这个差距只作用在另一半行上。
+- 现有的 RLT 复现都没有采用第一版的做法，人工步上的 actor 输入同样是人工动作：
+  - openpi-RLT（`c1e40ac`）：BC 目标是 `where(human, action, ref)`，actor 输入是 replay 里的 `ref_chunk`。
+    policy plan 被人工 override 替换时，`ref_chunk` 保留 VLA 原值；真机遥操作路径（`pika_sync_ros.py:1136`）
+    则把人工动作直接写进 `ref_action`。
+  - Evo-RLT（`8d02d99`）：actor 输入与 BC 目标是同一个 `ref_chunk`（`core/losses.py:86-89`）。训练数据构建时，
+    `human_expert` 数据和 `rl_rollout` 中人工占多数的 chunk 都执行 `ref_chunk = exec_chunk`
+    （`cli/build_bucket_cache.py:188-197`），online collector 也一样（`online_collector.py:95-97`）。
+  - 后续文献指出了同一个差距。BEE（华南理工大学、智元，arXiv 2609.27450）写道：RLT 的 actor "is trained with human
+    corrections in place of VLA proposals on intervention samples, whereas its proposal input always comes from the VLA
+    at deployment"。BEE 为每个人工纠正保留对应的 VLA proposal，actor 始终以 proposal 为输入、输出其上的残差。
+
+**阻力二：错误的 proposal 作为自主步的 BC 目标。** 见 §2.4：自主步的 BC 目标是 VLA proposal，base policy 本身插偏，
+Q 又不足以把 actor 拉回来（§2.5）；连续自主尝试、中间不插入示教时，actor 被拽回 base policy。
+
+**阻力三：人工纠正被整体当作模仿目标。** 人工步的 BC 目标是完整的 `a_h`，其中有用的分量和有害的分量权重相同。
+- **（用户观察）** 插网线需要的是"先水平横移到正确位置，再插入"。示教里只要带进了"往下插"的动作，actor 一接管就学会往下插，
+  位置没对准也往下插，而不是更关注水平对准。§2.4 里"插多了的数据会让 actor 学会往下怼"是同一现象。
+- **（用户提出）** 人工介入数据不应作为直接的模仿对象，应按可信度加权，只取其中有用的部分。
+
+---
+
+### 3 下一步
+
+以下三版是候选方案，均未确认。三版针对 §2.7 的阻力一、二，critic 都保持用 `a_exec` 做 TD；阻力三见 §3.4 的参考做法。
+
+约定：`ã` 为 VLA proposal，`a_exec` 为实际执行的动作，`a_h` 为人类动作，`μθ` 为 actor 当前输出；
+actor 损失为 `−Q(x, μθ) + β‖μθ − BC 目标‖²`，"无 BC"时只剩 `−Q`。
+
+#### 3.1 第一版：actor 输入锚定 proposal
+
+| 样本来源 | actor 输入 | BC 目标 |
+|---|---|---|
+| VLA warmup | ã | ã |
+| 人类介入 | ã | a_h |
+| actor 成功 | ã | ã |
+| actor 失败 | ã | ã |
+
+与现行规格只差一处：人类介入步的输入从 `a_h` 改回 `ã`。
+
+- [ ] 解决阻力一。replay 已保留原始 VLA reference（§4.52），不需要改字段或重采数据。
+- 观测判据：同规程下 actor 段自主成功率高于本次的 28/70；接管动作偏离 proposal 较大时，actor 仍能学到纠偏。
+- 风险：去掉了"把输入抄到输出"的捷径，人工步的 BC loss 会变大，actor 要真正学会"VLA proposal → 人工纠偏"的映射。
+  这是 §4.52 的规格变更，需要维护者确认。单独这一版不解决阻力二。
+
+#### 3.2 第二版：自主成功步按 Q 选 BC 锚点
+
+输入同第一版。warmup、人类介入、actor 失败的 BC 目标同第一版；actor 成功步的 BC 目标按下表选：
+
+| 条件 | BC 目标 | 含义 |
+|---|---|---|
+| Q(a_exec) ≥ Q(ã)，且 Q(a_exec) > Q(μθ) | a_exec | 锚点移到自己验证过的成功动作 |
+| Q(ã) > Q(a_exec)，且 Q(ã) > Q(μθ) | ã | 退化为第一版 |
+| Q(μθ) 高于两者 | 无 BC | Q 已找到更好的动作，放手 |
+
+- [ ] 在第一版基础上解决阻力二，同时保留 proposal 作为可选锚点，淡化错误 base policy 的影响。
+- 观测判据：连续自主成功之后的下一次成功率不再偏低（本次 2/10）；三个分支各自被选中的比例随训练的变化。
+- 风险：选择依赖 critic，而本次 critic 偏悲观（§2.2）；`Q(ã)` 在 actor 驾驶的状态上没有被执行过，是外推值；
+  `μθ` 每次更新都在变，BC 目标会随之跳动。
+
+#### 3.3 第三版：自主步取消 proposal BC
+
+| 样本来源 | actor 输入 | BC 目标 |
+|---|---|---|
+| VLA warmup | ã | ã |
+| 人类介入 | ã | a_h |
+| actor 成功 | ã | 无 BC |
+| actor 失败 | ã | 无 BC |
+
+"取消 proposal BC"只作用于 actor 自主步。warmup 样本保留 BC，因为那里的 `ã` 就是实际执行的动作；
+人类步的目标是 `a_h`，也保留。如果连 warmup 的 BC 也去掉，剩下的唯一锚点就是人类样本。
+
+- [ ] 最激进的一版：自主步完全靠 Q 引导。
+- [ ] **（用户提出）** 去掉自主步的 BC 后，需要限制 actor 相对 proposal 的修改幅度，参照 EXPO-FT 的 edit 上限（§3.4）。
+      当前 actor 直接输出绝对动作，只裁剪到 codec 范围 `[−1, 1]`（`mlp_policy.py:179-181`），没有相对 `ã` 的上限。
+      要加上限，需把输出改为 `ã + clip(Δ, −β, β)` 这类残差形式。这是 actor 输出结构的变更，需要单独确认。
+      β 的量级可参考本次 actor 驾驶残差（均值 2.98mm、最大 66mm）和人工纠正相对 proposal 的幅度；后者可以从 replay
+      中保留的原始 VLA reference 算出，本次日志没有记录。
+- 观测判据：同第二版；另看 actor 相对 VLA 的残差和 §2.6 的抖动指标是否失控。
+- 风险：自主失败行也失去 BC 约束，只剩 Q 把 actor 推离失败动作；而 Q 本次偏悲观、作用偏弱（§2.2、§2.5），
+  `fixed_std=0.002` 的探索也很小，actor 可能在自主步上漂移。
+
+#### 3.4 参考做法
+
+**BEE**（Intervention-Adaptive Real-World RL with VLA Models，华南理工大学、智元，arXiv 2609.27450）
+- 与第一版相同的出发点：保留每个人工纠正对应的 VLA proposal，actor 输入始终是 proposal，输出残差
+  `a_θ = ã + Δ_θ(s, ã)`；部署时只运行 VLA 和残差。
+- 针对阻力三：人工纠正不作为模仿目标，而是作为约束。一个 Correction Model 按 NLL 学习人工纠正相对 proposal 的残差分布
+  `N(μ_φ(s, ã), Σ_φ)`，actor 受 Mahalanobis 约束 `(a_θ − a_H)ᵀ Σ_φ⁻¹ (a_θ − a_H) / D`：人工纠正一致的维度约束紧，
+  不一致的维度放松。论文中各关节纠正的离散程度相差约 3 倍。
+- 用于本任务的差别：BEE 按关节维度加权，本仓库动作是 TCP delta + rot6d + 夹爪，水平与竖直位置要落在同一坐标系的维度上
+  才能分开加权。按方差加权只会放松"不一致"的维度；如果每次示教都带一点往下插，这个分量是一致的，反而会被约束得更紧。
+  所以它能不能压住"往下插"，取决于示教里往下插是否不一致，需要看数据。
+
+**EXPO-FT**（Dong, Hung, Gao, Sadigh, Finn，arXiv 2605.25477v2）
+- 执行时按 Q 选动作：候选是 base VLA 的多个采样及 edit policy 在其上的修改，取
+  `argmax Q(s, a)` 执行。edit 幅度被硬限制在 `[−β, β]` 内，edit policy 只用 `−Q` 加熵项训练，没有 BC。
+  人工介入的动作块也放进 replay。
+- 与第二版相比：两者都用 Q 在 proposal 与修改后的动作之间做选择，第二版选的是 BC 目标，EXPO-FT 选的是执行动作。
+  与第三版相比：EXPO-FT 同样没有 BC，靠 edit 幅度的硬上限代替 BC 的锚定作用。
+- 两种用法都依赖 Q 的排序可靠；本次 critic 偏悲观（§2.2），用之前需要先确认 Q 能区分好坏动作。
+
 ---
 
 ## 2026-09-24 · rlt_fast/0924-test — warm_up 降到 250，按新采集规程在线训练
