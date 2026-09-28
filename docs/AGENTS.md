@@ -14,7 +14,8 @@ The only first-level documentation directories are:
 
 Every directory must contain `plan.md`, `log.md`, and `overview.md`. Every `docs/<method>/` directory
 must also contain `cmd.md`; `docs/workspace/` must not contain one. Add another topic file only when one
-coherent subject cannot remain clear inside `overview.md`.
+coherent subject cannot remain clear inside `overview.md`. A topic whose method must be stated as a
+specification uses a `<topic>-spec.md` file (see below).
 
 Do not create root-level human documentation alongside this file. Keep planning, change summaries, and
 durable understanding inside the applicable first-level directory.
@@ -74,6 +75,29 @@ Each entry contains:
 
 Keep the explanation at design level. Mention only files needed to locate the change; omit routine code
 details and exhaustive path lists.
+
+## `<topic>-spec.md` Contract
+
+A spec file is the method-level source of truth for one topic, such as `rlt-spec.md`. Researchers read it
+first to understand the method before reading code; implementations must satisfy it.
+
+Keep:
+
+- definitions, workflow rules, state diagrams, and data structures;
+- algorithm formulas (LaTeX) for representations, losses, targets, and budgets;
+- worked numeric examples when they make a formula's consequence clear;
+- one sentence of rationale or cost where a rule is not self-evident.
+
+Exclude:
+
+- code paths, module or function inventories, and schema or protocol versions;
+- configuration values chosen for a particular run, unless the value is part of the method;
+- dates, bug stories, rejected-history narratives, and maintenance instructions; record how a rule arose
+  in `log.md`, and leave implementation mapping to the method repository's docs and commit messages.
+
+Variants that are under evaluation and not part of the baseline go in a final section titled
+`研究性选项（未验证）`. When the method changes, update the spec together with the change and add a
+`log.md` entry.
 
 ## Understanding Notes
 
