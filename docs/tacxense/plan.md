@@ -1208,3 +1208,130 @@ lerobot 0.5.1 而非本 fork，Task 1 无法在本机跑单测，只能代码对
 **Done**
 
 - [ ] （真机）左爪夹着东西时用右手接管，左爪保持夹持不松开；松开右 grip 结束介入后左爪仍然夹着。
+
+## Actor 输入与输出改为可配置选项，支撑 0924 下一步的连续对照实验
+
+2026-09-27 用户决定：不开多个分支，只维护一份代码，用配置切换 `experiments.md` 0924（`ufm32u22`）§3 的
+候选方案，连续跑几次真机实验比较效果。本事务只做其中两项：
+
+- §3.1 人工介入步的 actor 输入：现行 `ã_train`（人工步是 `a_h`）或 VLA proposal `ã`；
+- §3.3 actor 输出方式：现行直接输出，或相对 proposal 的有界残差 `ã + Δ`。
+
+再加上 §3.5 已确认的 C=10、`warm_up=300`，以 YAML 组合给出。用户明确不关心旧 checkpoint 能否沿用：
+每次评测都从头开始，光线与位置一两天就会变。
+
+**与现有规格的冲突（用户 2026-09-27 确认按下述方式推翻）：**
+
+- `architecture.md` § 4.52 规定 actor 条件输入 = `ã_train`，并把"输入保持原始 a_ref"列为被否方案，
+  注明"要以新 `exp_name` 做对照实验，不是就地改默认"。本事务正是这样做：新增选项，默认值不变。
+- § 4.50 明确删除了 `actor_output_mode` / `actor_residual_bound` 这两个运行时选项（理由是多套
+  输出语义让 checkpoint 的 tensor 含义不唯一）。本事务在单一 quantile-normalized contract 内重新引入
+  残差输出：动作空间、归一化、codec 都不变，只改 actor 均值怎么算。需要在 § 4.50 记下这次推翻及理由。
+
+**边界。** 不改 BC target（仍是 `ã_train`）、critic TD、replay 字段、采集流程、codec；§3.2（按 Q 选 BC 锚点）
+与 §3.3 的"自主步取消 BC"不在本次范围内。默认配置下训练与部署行为逐位不变。
+
+### Task: 人工步 actor 输入可选 proposal
+
+**Change**
+
+- [x] `TDConfig` 新增 `actor_input_reference: Literal["corrected", "proposal"] = "corrected"`。
+      `corrected` 即现行 `ã_train`；`proposal` 时 actor 条件输入用 replay 里原始 VLA `ref_chunk`，
+      BC target 仍是 `ã_train`，于是人工步学的是"VLA proposal → 人工纠偏"。放在 `TDConfig` 而不是
+      `RLTModelConfig`：它只改训练 loss，不改网络结构，部署时 actor 的输入本来就是原始 proposal。
+- [x] `td.actor_loss` 与 `_batch_actor_output_metrics` 按同一选项取输入 reference（抽一个共用函数），
+      保持 § 4.52"训练与日志看同一份 reference"的约束；日志残差相对 actor 实际看到的输入计算。
+
+**Verification**
+
+1. [x] 单测：人工 mask 置位的 batch，`proposal` 下 actor 收到的 reference 在人工步等于原始 VLA 值、
+       BC target 等于人工动作；`corrected` 下两者都等于人工动作（现有断言保持）。
+2. [x] mutation：让 `proposal` 仍喂 `ã_train`，新单测必须失败。
+
+**Done**
+
+- [x] 同一 batch 在两个选项下，actor 输入只在人工步不同，BC target 完全相同。
+
+### Task: actor 输出可选有界残差
+
+**Change**
+
+- [x] `RLTModelConfig` 新增 `actor_output_mode: Literal["direct", "residual"] = "direct"` 与
+      `actor_residual_bound: tuple[float, ...] | None`（长度 = `action_dim`，归一化动作空间的单位，
+      `residual` 时必填）。放在模型配置：它改变网络输出语义，serving 通过 `RLTActorCritic.build` 自动拿到。
+      用户 2026-09-27 定：β 先对 20 维统一取 0.2（约为 q01–q99 动作范围的 10%），YAML 写成逐维元组，之后按数据再调。
+- [x] `residual` 前向：`Δ = β ⊙ tanh(h / β)`，`h` 是 MLP 均值（训练时先加 `fixed_std` 噪声），
+      输出 `clip(ref[:C] + Δ, −1, 1)`。用 tanh 软上界：硬 clip 在饱和区梯度为 0，
+      tanh 不会。输出层初始化很小，所以一开始 actor 输出 ≈ proposal，而不是现在的"停在原地"。
+- [x] 残差的基准 `ref` 是 actor 本次的输入 reference，**不受 reference dropout 影响**：dropout 只清零
+      MLP 输入里那份（`rlt_fast` 的 `reference_dropout_prob=0.5`），否则一半样本的基准变成 0。
+      组合 `corrected + residual` 时人工步的基准就是 `a_h`，残差可直接学成 0；这个组合允许但不推荐，
+      文档里写明。
+- [x] checkpoint 校验单独比较这两个字段（不放进 `_MLP_ARCHITECTURE_FIELDS`，那里缺字段即拒绝），residual 权重不能被当作
+      direct 加载；只在当前 `mlp_io_version` 下把缺字段读成 `direct`，更早的 contract（含旧 `reference_residual`）
+      交给 `mlp_io_version` 校验拒绝，保持原有报错。
+
+**Verification**
+
+1. [x] 单测：输出层清零时 `residual` 的确定性输出逐位等于 `clip(ref[:C])`；输出层权重放大时
+       `|输出 − ref| ≤ β`（逐维，最终 clip 之前）。
+2. [x] 单测：训练模式下 `reference_dropout_prob=1`，`residual` 输出的基准仍是原始 reference。
+3. [x] 单测：`residual` 下 actor loss 对网络参数有非零梯度；critic bootstrap 走 `actor(next_obs)` 正常。
+4. [x] 单测：direct checkpoint 用 residual 配置加载被拒绝并点名字段；无该字段的 checkpoint 按 direct 加载。
+5. [x] `direct` 默认下相关 `tests/test_rlt_*` 全绿。唯一改动的现有断言是 `test_removed_mlp_io_options_are_unknown_keys`：
+       它断言 `actor_output_mode` / `actor_residual_bound` 是未知字段，正是本事务推翻的 § 4.50 规定；这两项移出参数表，
+       另加一条断言旧值 `reference_residual` 仍被拒绝。
+
+**Done**
+
+- [x] 用 residual 配置从头训练、存盘、serving 加载，同一观测下两边的输出逐位相同。
+- [x] 任意 MLP 输出下，residual actor 的每一维偏离 proposal 不超过配置的 β。
+
+### Task: 实验配置
+
+**Change**
+
+- [x] 在 `config/rlt/` 下新增一组完整 YAML，共用 C=10（`num_action_chunks` 与 `action_horizon`）、
+      `warm_up=300`，其余与 `rlt_fast.yaml` 相同，只在两个新选项上不同：
+
+      | 配置 | actor 输入 | actor 输出 |
+      |---|---|---|
+      | `rlt_fast_c10` | corrected | direct |
+      | `rlt_fast_c10_proposal` | proposal | direct |
+      | `rlt_fast_c10_proposal_residual` | proposal | residual |
+
+      `rlt_fast.yaml` 本身不动，保留为 0924 那几次 run 的可复现配置。
+
+**Verification**
+
+1. [x] 单测或脚本：三份 YAML 都能 `get_config` 加载并构建 `RLTActorCritic`；与 `rlt_fast.yaml` 逐字段
+       diff 只出现上表的字段、C 与 `warm_up`。
+
+**Done**
+
+- [x] 用户只换 `--config` 即可依次跑三组实验，不需要改代码。
+
+### Task: 静态检查与文档
+
+**Change**
+
+- [x] `architecture.md` § 4.50 / § 4.52 记下这次重新引入的两个选项、默认值与理由；`CHANGELOG.md`、
+      `docs/current_state.md` 同步；根仓库 `docs/tacxense/rlt.md` 与 `experiments.md` §3.1/§3.3/§3.5 标注
+      已实现为选项。
+
+**Verification**
+
+1. [x] 改动文件 `ruff check` / `ruff format --check` 无新增发现。`ty check` 只多出 7 条测试 helper 的
+       `invalid-argument-type`：helper 用 `**dict` 传参，ty 把 dict 值类型的并集逐一对到每个关键字参数上，新增字段各多一条，
+       同一 helper 对已有字段早就报同样的错；源码无新增。
+2. [ ] `pytest tests/` 全绿。用户 2026-09-28 要求只跑相关测试：`test_rlt_td` / `test_rlt_mlp_policy` / `test_rlt_checkpoint_binding` /
+       `test_rlt_policy` / `test_rlt_config` 全部 187 例通过，`test_rlt_online_runner` 相关子集 13 例通过；全量未跑。
+
+**Done**
+
+- [x] 文档里不再有"输出只有 direct 一种"或"actor 输入只能是 ã_train"的说法。
+
+### 真机验证（用户执行）
+
+- [ ] `rlt_fast_c10_proposal_residual` 过 warm_up 后，W&B `chunk/actor/residual_*` 的每一维不超过 β
+      对应的物理量；actor 第一次上场时动作接近 VLA，而不是停在原地。

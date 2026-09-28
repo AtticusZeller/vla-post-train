@@ -79,6 +79,17 @@ BC target   = ã_train
 critic data = [z_rl, proprio, actions]
 ```
 
+上面是默认配置。两个选项用于真机对照（`architecture.md` § 4.50 / § 4.52）：
+
+- `rl.algorithm.actor_input_reference: proposal`：actor 输入换成原始 `curr_obs.ref_chunk`（部署时 actor
+  看到的也是它），BC target 仍是 `ã_train`。默认 `corrected` 即上面的公式。
+- `model.actor_output_mode: residual`：actor 输出 `clip(ref[:C] + β·tanh(h/β), −1, 1)`，`ref` 是 actor 这次的
+  输入 reference（不受 reference dropout 影响），`β` 由逐维的 `model.actor_residual_bound` 给出，单位是
+  归一化动作（±1 对应 q01–q99）。默认 `direct` 是 `clip(h, −1, 1)`。
+
+`config/rlt/` 下的 `rlt_fast_c10`、`rlt_fast_c10_proposal`、`rlt_fast_c10_proposal_residual`（β 统一 0.2）
+组合了这两个选项，都用 C=10、`warm_up=300`，其余与 `rlt_fast` 相同。
+
 公式覆盖完整 chunk。RTC 的 `committed_len` 只把 Q 输入拼成
 `[executed committed zone | actor execution zone]`，不改变 Actor 条件输入或 BC target。
 `next_obs.ref_chunk` 是 next state 的原始 VLA reference，bootstrap 不使用当前 transition 的人工 mask。
