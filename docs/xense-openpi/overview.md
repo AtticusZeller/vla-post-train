@@ -20,7 +20,7 @@ xense-openpi 是 Xense 平台的模型侧 OpenPI fork，负责训练配置、模
 
 ## RLT（JAX）
 
-RLT 的方法规格见 [rlt-spec.md](../tacxense/rlt-spec.md)。xense-openpi 里的 JAX 实现在 `feature/rlt-jax` 分支：
+RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)。xense-openpi 里的 JAX 实现在 `feature/rlt-jax` 分支：
 phase one（token 编解码器、prefix cache、`scripts/rlt/train_token.py`）与 phase two（`src/openpi/rlt/` 的 collector、
 learner、replay、在线特征，`scripts/rlt/train_rl.py`，机器人端 `examples/bi_flexiv_rizon4_rt/rlt_mode.py`，serving 用
 `src/openpi/policies/rlt_policy.py`）。代码取自 XenseRobotics-AI 的 `feature/rlt-hubo`，逐个 commit 对照规格审查后

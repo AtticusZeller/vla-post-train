@@ -1,7 +1,8 @@
-# TacXense RLT phase two 规格
+# RLT phase two 规格
 
 RLT phase two 的方法规格：采集流程、MLP 表示与结构、replay transition、replay 规模与更新节奏。
-实现要满足这里的规则；规格的演变历史见 [log.md](log.md)。RTC 模式不在本规格范围内。
+tacxense 与 xense-openpi 的实现都要满足这里的规则。规格的演变历史见 [log.md](log.md)，2026-09-29 之前的见
+[tacxense 的 log.md](../tacxense/log.md)。RTC 模式不在本规格范围内。
 
 来源：tacxense `docs/architecture.md` § 4.49–§ 4.53（`881fbdb`），依次对应本文第 1–5 节；代码对应与配置
 取值仍在那几节。文末「研究性选项」来自 `1715544`，不属于 baseline。
@@ -599,7 +600,7 @@ $$
 
 ## 研究性选项（未验证）
 
-两个选项用于 0924 run 之后的真机对照实验（见 [experiments.md](experiments.md)），默认值就是上面的 baseline。
+两个选项用于 0924 run 之后的真机对照实验（见 [tacxense 的 experiments.md](../tacxense/experiments.md)），默认值就是上面的 baseline。
 
 **actor 条件输入（4.2）。** `corrected`（默认）即 $\tilde{\mathbf{a}}^{\mathrm{train}}$；`proposal` 时条件输入换成
 原始 $\mathbf{a}^{\mathrm{ref}}$，也就是部署时 actor 实际看到的输入：

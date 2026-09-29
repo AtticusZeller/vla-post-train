@@ -3,7 +3,7 @@
 ## 2026-09-29 · RLT（JAX）接入 xense-openpi：审查参考分支并补齐规格差异
 
 - **背景与目的：** RLT 的实现要从 tacxense（torch）迁到 xense-openpi（JAX）。用户决定用 JAX，从 `main` 拉自己的分支，
-  把别人已迁的代码逐个 commit 对照 [rlt-spec.md](../tacxense/rlt-spec.md) 审查，合格的 cherry-pick，缺的和不合规格的自己补。
+  把别人已迁的代码逐个 commit 对照 [rlt-spec.md](rlt-spec.md) 审查，合格的 cherry-pick，缺的和不合规格的自己补。
   参考代码只作参考，不向其报告问题；pi0 改动与 phase one（prefix 前向、encoder 训练）由其作者验证，本次不再验证模型前向。
 - **实现思路：**
   - **起点纠正。** 起初只看了 `origin/rlt-atticux` 的 7 个 commit，以为在线部分还没迁；实际 XenseRobotics-AI 的
@@ -30,7 +30,8 @@
 - **组件变化：** xense-openpi 新增 `feature/rlt-jax`：RLT phase one 与 phase two 全套（参考分支原样）加 6 个我们的 commit——
   去掉平滑惩罚与日程的调用（`736f0d5`）、A 键在标签挂起时延后（`abe0b04`）、replay 行 `source` 与 `timestamp`（`95f3ce7`）、
   X 立即关窗与间隙开窗推迟（`fffca65`）、`round_id` 从 1 开始（`3a3b5cc`）。根仓库 xense-openpi 的登记分支从 `main` 改为
-  `feature/rlt-jax`；`rlt-spec.md` 注明 stride=0 边界 anchor 只作兼容模式保留（仅 tacxense 实现）。
+  `feature/rlt-jax`；`rlt-spec.md` 注明 stride=0 边界 anchor 只作兼容模式保留（仅 tacxense 实现）。收尾时用户决定
+  RLT 主线在 xense-openpi，`rlt-spec.md` 从 `docs/tacxense/` 移到本目录，只保留这一份，tacxense 的文档改为链接过来。
 - **主要文件：** `methods/xense-openpi/examples/bi_flexiv_rizon4_rt/rlt_mode.py`（机器人端按键与段）、
   `src/openpi/rlt/{collector,learner,replay}.py`（在线轮、训练、replay 行）、`.gitmodules` 与 `scripts/lab.py`（登记分支）。
 - **验证：** RLT 测试（`src/openpi/rlt`、`examples/bi_flexiv_rizon4_rt`、`rlt_policy_test`，`JAX_PLATFORMS=cpu`，带

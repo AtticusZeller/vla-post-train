@@ -29,7 +29,7 @@ transform 栈、配置布局、serving 接口与 DDP 训练轨道，`starVLA` �
 
 本工作区把 TacXense 固定在 `feature/rlt-test`（此前为 `feature/rlt`，2026-09-17 切换），不是
 默认分支 `main`：该分支是 RL token（RLT）工作线的测试分支。RLT phase two 的方法规格见
-[rlt-spec.md](rlt-spec.md)，任务级采集规程见 [rlt.md](rlt.md)。服务侧 `serve_policy.py` 增加 `policy:rlt-checkpoint` 子
+[rlt-spec.md](../xense-openpi/rlt-spec.md)，任务级采集规程见 [rlt.md](rlt.md)。服务侧 `serve_policy.py` 增加 `policy:rlt-checkpoint` 子
 命令，switch 关闭时与纯 VLA 逐动作一致，经 `rlt_switch` kwarg 按请求切换 actor。切回其他分支
 需要同时改 `.gitmodules` 与 `scripts/lab.py::_METHODS` 的 branch 字段，只改一处会让
 `./lab method status` 失败。

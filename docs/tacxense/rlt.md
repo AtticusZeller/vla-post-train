@@ -1,11 +1,11 @@
 # TacXense RLT 采集规程
 
 RLT phase two 的方法规格（采集流程、MLP 表示与结构、replay transition、replay 规模与更新节奏）见
-[rlt-spec.md](rlt-spec.md)。本文只记任务级的采集规程。
+[rlt-spec.md](../xense-openpi/rlt-spec.md)。本文只记任务级的采集规程。
 
 ## insert-ethernet 的采集规程（2026-09-22 用户决定）
 
-[rlt-spec.md](rlt-spec.md) 第 1 节的状态图规定**机制**：按 b 怎么开窗、介入怎么判定、anchor 怎么取。这一节规定**在任务的哪个
+[rlt-spec.md](../xense-openpi/rlt-spec.md) 第 1 节的状态图规定**机制**：按 b 怎么开窗、介入怎么判定、anchor 怎么取。这一节规定**在任务的哪个
 位置用它**，属于任务级实验设计，换任务要重新定。以下两条在下一轮重跑时生效，都不需要改代码。
 
 ### 关键阶段从"还在空中"开始，不从接触开始
@@ -17,7 +17,7 @@ RLT phase two 的方法规格（采集流程、MLP 表示与结构、replay tran
 actor 既看不到失败发生前的状态，也学不到纠正动作。窗口提前意味着一段关键阶段会包含一次或多次
 失败尝试加上恢复，这正是希望 actor 接管的部分。
 
-代价要知道：关键阶段变长，[rlt-spec.md](rlt-spec.md) 第 5 节的 `N_transition/episode = floor((L-C)/s)+1`
+代价要知道：关键阶段变长，[rlt-spec.md](../xense-openpi/rlt-spec.md) 第 5 节的 `N_transition/episode = floor((L-C)/s)+1`
 直接随 `L` 增长，所以同样的 `warm_up=600` 现在对应更少的 episode；标签后的特征物化也随之变长
 （已批量化，见 plan.md 对应事务，真机时长待测）。
 
