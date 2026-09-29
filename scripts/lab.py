@@ -33,7 +33,7 @@ _METHODS = {
         "upstream": "https://github.com/huggingface/lerobot.git",
     },
     "xense-openpi": {
-        "branch": "main",
+        "branch": "feature/rlt-jax",
         "upstream": "https://github.com/XenseRobotics-AI/xense-openpi.git",
     },
     "lerobot-xense": {

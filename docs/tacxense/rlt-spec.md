@@ -17,7 +17,8 @@ Non-critical phase
 不进入 Replay
     │
     │ 到达关键阶段，按 critical-phase 键 b（Pico B）
-    │   - 在 chunk 中途按下时，从下一个 chunk 起才算关键数据
+    │   - 在 chunk 中途按下时，从下一个 chunk 起才算关键数据；在两个 chunk 之间按下时同样从再下一个
+    │     chunk 起算：即将执行的 chunk 已按"窗口未开"选好策略，窗口不能先由 VLA、再由 actor 驾驶
     │   - b 与 Human takeover 互不约束、先后任意：非关键阶段可以接管；握着接管不松手时
     │     也可以按 b。握着期间人类 step 按 C 步切成连续的段，b 从下一段的起点起算，
     │     这一段起点就是关键阶段第 0 步
@@ -96,6 +97,7 @@ Human release：
 
 ════════════ Replay 构建：边界 anchor（replay_stride=0）════════════
 
+边界 anchor 只作兼容模式保留（仅 tacxense 实现），baseline 用 sliding：replay_stride ≥ 1 且整除 C。
 replay_stride>0 时动作执行和连续时间轴不变，anchor 改为第 5 节的 phase-relative 均匀网格，
 restart / human 边界不再额外增加 row。
 
@@ -473,7 +475,7 @@ $$
 
 `replay_stride` 只改变 replay row 怎么从已执行轨迹切出，不改变机器人按 chunk 执行。
 
-`stride=0` 按 executed chunk 边界存（第 1 节的边界 anchor 模式）：
+`stride=0` 按 executed chunk 边界存（第 1 节的边界 anchor 模式，只作兼容模式保留，仅 tacxense 实现）：
 
 $$
 N_{\text{transition/ep}}
@@ -485,7 +487,8 @@ $$
 
 例：$150/10=15$ transitions/episode。
 
-sliding-window `stride=s>0` 用 phase-relative 网格 $0, s, 2s, \dots$，每个 anchor 从同一条连续 step trace 取
+sliding-window `stride=s>0`（baseline，要求 $s$ 整除 $C$，否则窗口终点落不到按 stride 抓取的观测上）用
+phase-relative 网格 $0, s, 2s, \dots$，每个 anchor 从同一条连续 step trace 取
 $[\text{anchor}, \text{anchor}+C)$；restart / human 边界只改变逐步 source / mask，不额外创建 row：
 
 $$
