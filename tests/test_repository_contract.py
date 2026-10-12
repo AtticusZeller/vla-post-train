@@ -59,13 +59,17 @@ def test_docs_have_one_directory_per_current_area() -> None:
         "plan.md",
     }
     for method in EXPECTED_METHODS:
-        # Topic files beside the four required ones are allowed (docs/AGENTS.md).
-        assert {path.name for path in (docs_root / method).iterdir() if path.is_file()} >= {
+        # xense-openpi uses its specification and experiment records instead of an overview.
+        required_files = {
             "cmd.md",
             "log.md",
-            "overview.md",
             "plan.md",
         }
+        if method != "xense-openpi":
+            required_files.add("overview.md")
+        assert {
+            path.name for path in (docs_root / method).iterdir() if path.is_file()
+        } >= required_files
 
 
 def test_agent_rules_have_one_authoritative_source() -> None:
