@@ -17,8 +17,6 @@ must also contain `cmd.md`; `docs/workspace/` must not contain one. Add another 
 coherent subject cannot remain clear inside `overview.md`. A topic whose method must be stated as a
 specification uses a `<topic>-spec.md` file (see below).
 
-`docs/xense-openpi/` does not require `overview.md`; use its specification and experiment records instead.
-
 Do not create root-level human documentation alongside this file. Keep planning, change summaries, and
 durable understanding inside the applicable first-level directory.
 
