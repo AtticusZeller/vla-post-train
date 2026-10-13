@@ -313,7 +313,8 @@ action 与 human correction 的差异，也能在不重采数据的前提下改�
 
 ### 4.2 Actor loss
 
-actor 训练使用 $(\mathbf{x}_t,\ \tilde{\mathbf{a}}^{\mathrm{train}})$。当前 actor 生成：
+`corrected` baseline 的 actor 训练使用 $(\mathbf{x}_t,\ \tilde{\mathbf{a}}^{\mathrm{train}})$；
+`rlt-jax` 正在测试的 `proposal` 方案见文末研究性选项。baseline 的 actor 生成：
 
 $$
 \mathbf{a}_\theta
@@ -346,7 +347,7 @@ $Q_\psi(\mathbf{x}_t,\mathbf{a}_\theta)$ 是 critic 网络输出的标量。acto
 > actor 的 RL loss 不直接使用 replay 中的 $\mathbf{a}^{\mathrm{exec}}$ 作为动作监督。只有发生 human intervention
 > 时，$\mathbf{a}^{\mathrm{exec}}$ 才会通过 mask 进入 $\tilde{\mathbf{a}}^{\mathrm{train}}$。
 
-- actor 的条件输入也用 $\tilde{\mathbf{a}}^{\mathrm{train}}$。已知副作用：人工步的条件输入与 BC target 相同，
+- `corrected` baseline 的 actor 条件输入也用 $\tilde{\mathbf{a}}^{\mathrm{train}}$。已知副作用：人工步的条件输入与 BC target 相同，
   actor 有"把输入抄到输出"的捷径，靠 reference dropout 缓解。另一种做法（输入保持原始
   $\mathbf{a}^{\mathrm{ref}}$、只有 BC target 用 $\tilde{\mathbf{a}}^{\mathrm{train}}$）见文末研究性选项。
 - 公式对完整 chunk 生效。RTC 的 committed 段只影响 Q 输入的拼接，不改变 actor 条件输入或 BC target。
@@ -600,9 +601,10 @@ $$
 
 ## 研究性选项（未验证）
 
-两个选项用于 0924 run 之后的真机对照实验（见 [tacxense 的 experiments.md](../tacxense/experiments.md)），默认值就是上面的 baseline。
+以下选项尚未验证效果。`corrected` 输入与 `direct` 输出是上面的 baseline；`rlt-jax` 正在测试
+`proposal` 输入，输出仍为 `direct`。
 
-**actor 条件输入（4.2）。** `corrected`（默认）即 $\tilde{\mathbf{a}}^{\mathrm{train}}$；`proposal` 时条件输入换成
+**actor 条件输入（4.2）。** `corrected`（baseline）即 $\tilde{\mathbf{a}}^{\mathrm{train}}$；`proposal` 时条件输入换成
 原始 $\mathbf{a}^{\mathrm{ref}}$，也就是部署时 actor 实际看到的输入：
 
 $$
@@ -612,6 +614,16 @@ $$
 $$
 
 critic 与 replay 字段不变。人工步于是学"VLA proposal → 人工修正"的映射，没有抄输入的捷径。
+BC target 仍只在人工接管步替换为实际人工动作，未接管步保持 VLA reference；reference dropout 只作用于
+actor 输入，不改变 BC target。该方案的真机效果正在测试，尚不能据此认定优于 `corrected` baseline。
+
+待验证的效果（理论预期）：
+
+- 减少人工步上条件输入与 BC target 相同带来的复制捷径。
+- 让 actor 学习“VLA 建议 → 人工修正”的映射，可能更有效地利用接管数据。
+- 训练与部署都以原始 VLA reference 为条件输入，减少人工替换造成的输入差异。
+
+这些预期不保证成功率提高，需要实验验证。
 
 **actor 输出（第 2 节）。** 动作空间与归一化不变，只改 actor 均值 $\mathbf{h}$ 怎么变成动作：
 
