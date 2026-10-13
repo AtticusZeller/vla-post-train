@@ -125,3 +125,9 @@ verification. Use a date or pinned revision only when the conclusion is snapshot
 
 Write human documentation in concise Chinese. Keep identifiers, paths, interface names, and established
 technical terms in their original form when translation would reduce precision.
+
+State definitions, implementation choices, and findings directly.
+Keep generic cautions about evidence and inference in agent instructions,
+rather than repeating them throughout human-facing documents.
+When uncertainty matters, identify the specific observation, hypothesis,
+or missing information beside the relevant claim.
