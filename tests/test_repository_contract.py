@@ -12,10 +12,9 @@ from scripts import lab
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_METHODS = {
-    "fastwam",
+    "expo-ft",
     "lerobot",
     "lerobot-xense",
-    "tacwam",
     "tacxense",
     "xense-openpi",
 }

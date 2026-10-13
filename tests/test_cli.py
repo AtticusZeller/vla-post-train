@@ -11,10 +11,9 @@ from scripts.run_record import read_json, write_json
 
 def test_current_method_registry_is_exact() -> None:
     assert set(lab._METHODS) == {
-        "fastwam",
+        "expo-ft",
         "lerobot",
         "lerobot-xense",
-        "tacwam",
         "tacxense",
         "xense-openpi",
     }

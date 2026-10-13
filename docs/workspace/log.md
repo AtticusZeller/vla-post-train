@@ -1,5 +1,13 @@
 # Workspace Log
 
+## 2026-09-29 · 调整现役 method
+
+- **背景与目的：** 退役 FastWAM、TacWAM，接入 EXPO-FT 与 Real-Time EXPO-FT 研究框架。
+- **实现思路：** 移除旧 method 的 gitlink、登记和现役文档；保留跨 method 历史记录。将 EXPO-FT 固定到个人 fork 的 `workspace` 分支，并登记官方上游。
+- **组件变化：** 现役 method 从六个调整为五个；未新增实验配置、launcher 或 runbook。
+- **主要文件：** `.gitmodules` 和 `scripts/lab.py` 维护 submodule 与 CLI 登记；`README.md` 和 `docs/workspace/overview.md` 说明现役职责。
+- **验证：** 当前 `main` 工作树中，仓库结构与 CLI 测试、`lab method status`、配置校验、ruff、ty 和新子模块递归初始化通过；TacXense 保留事前已有的未提交改动。
+
 ## 2026-09-03 · 重构为 Agent Research Workspace
 
 - **背景与目的：** 仓库需要从单一研究方向扩展为覆盖 VLA、WAM 与 Agent 研究的通用工作区，并清除已经退役的实验与方法入口。

@@ -40,13 +40,9 @@ _METHODS = {
         "branch": "main",
         "upstream": "https://github.com/Vertax42/lerobot-xense.git",
     },
-    "fastwam": {
+    "expo-ft": {
         "branch": "workspace",
-        "upstream": "https://github.com/yuantianyuan01/FastWAM.git",
-    },
-    "tacwam": {
-        "branch": "main",
-        "upstream": "https://github.com/Hubo1231/TacWAM.git",
+        "upstream": "https://github.com/pd-perry/expo-ft.git",
     },
     "tacxense": {
         "branch": "feature/rlt-test",
