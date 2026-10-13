@@ -88,16 +88,27 @@ Keep:
 - worked numeric examples when they make a formula's consequence clear;
 - one sentence of rationale or cost where a rule is not self-evident.
 
+For paper-reproduction specs, follow
+[write-reproduction-spec](../.codex/skills/write-reproduction-spec/SKILL.md): a brief intuitive
+overview, model definitions and implementation choices, data construction and training workflow,
+and experimental details and discussion.
+
+These specs may include implementation choices, structural parameters, the selected training recipe,
+and the experiment-informed discussion needed to explain those choices. Identify sources and scope;
+distinguish paper requirements, implementation choices, and experimental evidence, as well as code
+defaults, the selected reproduction configuration, and individual run overrides.
+
 Exclude:
 
-- code paths, module or function inventories, and schema or protocol versions;
-- configuration values chosen for a particular run, unless the value is part of the method;
-- dates, bug stories, rejected-history narratives, and maintenance instructions; record how a rule arose
-  in `log.md`, and leave implementation mapping to the method repository's docs and commit messages.
+- copied directory trees, module or function inventories, terminal output, and Git history;
+- complete run records; keep them in `experiments.md` and link the evidence relevant to a choice;
+- maintenance history and bug stories; keep them in `log.md`;
+- reusable commands; keep them in `cmd.md`.
 
-Variants that are under evaluation and not part of the baseline go in a final section titled
-`研究性选项（未验证）`. When the method changes, update the spec together with the change and add a
-`log.md` entry.
+Keep the current adopted definitions and workflow unambiguous. Discuss adopted, set-aside,
+inconclusive, and untested options in the discussion section, without presenting alternatives as
+baseline instructions. Leave detailed implementation mapping to the method repository's docs.
+When the method changes, update the spec together with the change and add a `log.md` entry.
 
 ## Understanding Notes
 
