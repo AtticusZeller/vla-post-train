@@ -15,7 +15,8 @@ The only first-level documentation directories are:
 Every directory must contain `plan.md`, `log.md`, and `overview.md`. Every `docs/<method>/` directory
 must also contain `cmd.md`; `docs/workspace/` must not contain one. Add another topic file only when one
 coherent subject cannot remain clear inside `overview.md`. A topic whose method must be stated as a
-specification uses a `<topic>-spec.md` file (see below).
+specification uses a `<topic>-spec.md` file (see below). A method's code organization uses
+`codebase.md` (see below).
 
 Do not create root-level human documentation alongside this file. Keep planning, change summaries, and
 durable understanding inside the applicable first-level directory.
@@ -110,6 +111,25 @@ inconclusive, and untested options in the discussion section, without presenting
 baseline instructions. Leave detailed implementation mapping to the method repository's docs.
 When the method changes, update the spec together with the change and add a `log.md` entry.
 
+## `codebase.md` Contract
+
+`docs/<method>/codebase.md` maps the method repository so a researcher can see what runs where, which
+file does what, and how modules interact before reading code. Create and maintain it with
+[write-codebase-doc](../.codex/skills/write-codebase-doc/SKILL.md).
+
+Keep:
+
+- one pinned snapshot: the branch and commit described;
+- an overview diagram, a startup-entry table, annotated file trees with one responsibility per file,
+  module interaction diagrams, and module input/output tables;
+- protocol tables and branch location mappings where they apply.
+
+Annotated directory trees belong here and nowhere else. Still exclude function inventories, terminal
+output, plans and proposals, method formulas, and copyable commands with prerequisites.
+
+Update it in the same task that adds, moves, or renames an entry point, module, config location, or
+protocol it describes, or that changes the registered branch.
+
 ## Understanding Notes
 
 `overview.md` and topic notes may preserve conclusions from researcher-agent discussions. Keep:
@@ -119,9 +139,10 @@ When the method changes, update the spec together with the change and add a `log
 - non-obvious design rationale or distinctions;
 - verified limitations, uncertainty, and evidence boundaries.
 
-Do not copy directory trees, class/function inventories, command output, historical commit
-sequences, or facts that a quick code read or command reveals. Do not turn an upstream claim into local
-verification. Use a date or pinned revision only when the conclusion is snapshot-sensitive.
+Do not copy directory trees (outside `codebase.md`), class/function inventories, command output,
+historical commit sequences, or facts that a quick code read or command reveals. Do not turn an
+upstream claim into local verification. Use a date or pinned revision only when the conclusion is
+snapshot-sensitive.
 
 Write human documentation in concise Chinese. Keep identifiers, paths, interface names, and established
 technical terms in their original form when translation would reduce precision.

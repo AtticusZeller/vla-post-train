@@ -54,5 +54,6 @@ git submodule update --init --recursive
 - [`docs/AGENTS.md`](docs/AGENTS.md)：文档结构与写作约束。
 - [`docs/workspace/overview.md`](docs/workspace/overview.md)：根仓边界与证据模型。
 - `docs/<method>/overview.md`：method 的高层理解、非显然约束与验证边界。
+- `docs/<method>/codebase.md`：method 代码库的启动入口、文件职责与模块交互图。
 - `docs/<area>/plan.md` / `log.md`：已确认的未完成事务与已验收的大改动摘要。
 - `docs/<method>/cmd.md`：该 method 需要长期保留的可复制命令；根目录不维护全局 `cmd.md`。

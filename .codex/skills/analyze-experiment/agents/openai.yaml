@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analyze Experiment"
+  short_description: "Analyze a run's W&B data and record it in docs/<method>/experiments.md."
+  default_prompt: "Use $analyze-experiment to analyze this W&B run and write the record."

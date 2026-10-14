@@ -105,9 +105,14 @@ Repository workflows:
 - `add-method` — add, replace, or register a method, framework, benchmark, or backbone submodule.
 - `run-experiment` — validate, smoke-test, launch, repeat, or monitor an experiment configuration.
 - `summarize-experiment` — reconcile evidence, summarize a run, or compare completed runs.
+- `analyze-experiment` — analyze a finished run's W&B data and record it in
+  `docs/<method>/experiments.md`. Use for runs launched outside `./lab experiment`.
 - `write-reproduction-spec` — create or substantially reorganize a paper-reproduction
   specification under `docs/<method>/`. Follow
   [the Skill](.codex/skills/write-reproduction-spec/SKILL.md).
+- `write-codebase-doc` — create or update `docs/<method>/codebase.md`, the visual map of a method's
+  entry points, files, module responsibilities, and module interactions. Follow
+  [the Skill](.codex/skills/write-codebase-doc/SKILL.md).
 
 General workflows used regularly in this repository:
 

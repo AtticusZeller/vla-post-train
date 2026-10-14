@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Codebase Doc"
+  short_description: "Map a method repository in docs/<method>/codebase.md: entries, files, modules, interactions."
+  default_prompt: "Use $write-codebase-doc to map this method's code organization in docs/<method>/codebase.md."
