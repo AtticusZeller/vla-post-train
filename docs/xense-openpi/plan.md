@@ -1,28 +1,5 @@
 # xense-openpi Plan
 
-## RLT（JAX）真机验证
-
-`feature/rlt-jax` 的接入、审查与修复已完成并记入 [log.md](log.md)；代码层面只有 CPU 单测与假机器人，下面这项只能由用户
-在真机上执行。机器人端与训练服务器都要用 `feature/rlt-jax`（协议 `openpi-rlt/1` 与 tacxense 不兼容）。
-
-### Task: 标签挂起时按 A 不丢关键阶段，窗口内不换驾驶者
-
-**Change**
-
-- 无代码改动。
-
-**Verification**（用户执行）
-
-1. [ ] 机器人端 `--args.rlt --args.pico4-intervention`，服务器 `scripts/rlt/train_rl.py`：一轮内按 B 开窗、按 Y 标失败后
-       立刻按 A。
-2. [ ] warm_up 之后，在机器人停着等下一个 chunk 时按 B 开窗。
-
-**Done**
-
-- [ ] 第 1 项：机器人跑满当前单元才归位，服务器终端出现 "Failure labeled: … +N transitions"，轮末摘要
-      `data : +N transitions` 中 N > 0。
-- [ ] 第 2 项：该窗口的每个 chunk 在服务器日志 / W&B chunk 轴上都是 actor（`use_actor=True`），没有先 VLA 后 actor。
-
 ## RL 后训练代码按层重组（`rl-exp`）
 
 RLT 现在平铺在 `src/openpi/rlt/`，按方法组织。后续要在同一仓库复现 EXPO-FT 等真机在线 RL 算法，让它们共用机器人连接、
@@ -37,6 +14,8 @@ VLA 封装和评测，新算法需要有明确的位置。expo-ft 按角色分�
 分支：从 `feature/rlt-jax`（`3a3b5cc`）建 `rl-exp`。`feature/rlt-jax` 冻结给真机验证，验证中的修复提交在
 `feature/rlt-jax` 上，再合并进 `rl-exp`。为了让这类合并能跟随改名，搬移单独成一个 commit，只改 import 和路径，不夹带
 逻辑改动。本事务在 `rl-exp` 上的本地 commit 属于改动本身；push 等你要求再做。
+**2026-09-30 变更：** 用户决定不再单独验证 `feature/rlt-jax`，它的两项真机检查并入「rl-exp 真机试跑」，根仓登记先切到
+`rl-exp`；`feature/rlt-jax` 停在 `3a3b5cc`，不再更新。
 
 约束：RLT 行为不变，基线是 `3a3b5cc` 上 RLT CPU 测试 85 passed、2 skipped（2026-09-29 本机实测）；机器人协议
 `openpi-rlt/1`、`serve_policy.py policy:rlt`、机器人端 `--args.rlt` 的名字都不变。
@@ -125,28 +104,31 @@ scripts/rl/rlt/           ← scripts/rlt/
 - [x] 第 3 节覆盖 `rlt-spec.md` 第 1–5 节，外加 phase one。
 - [x] 路径检查没有缺失。
 
-### Task: 真机验证通过后合并并登记 `rl-exp`
+### Task: 根仓登记 `rl-exp`
 
-前提：上面「RLT（JAX）真机验证」已完成；根仓暂存区里尚未提交的改动（包括 `.gitmodules`、`scripts/lab.py`、
-`README.md`）已由你提交。在此之前根仓继续登记 `feature/rlt-jax`；本机 submodule 检出 `rl-exp` 期间 `./lab method status`
-会报分支不符，这段时间不从本工作区发起正式运行。
+原计划等 `feature/rlt-jax` 真机验证通过再做；2026-09-30 用户决定先登记。根仓暂存区里你的改动（`.gitmodules`、
+`scripts/lab.py`、`README.md` 也在其中）还没提交，下面的登记改动只留在工作区、不暂存，和你暂存的内容分开，等你先提交
+暂存区。gitlink 等试跑结束再记：试跑期间 `rl-exp` 顶上的试跑提交会被 amend，现在记下的提交之后会从 `origin/rl-exp`
+上消失。
 
 **Change**
 
-- [ ] 把 `feature/rlt-jax` 上验证期间的修复合并进 `rl-exp`，重跑 RLT 测试。
-- [ ] 你要求后 push `rl-exp` 到 origin。
-- [ ] 根仓 `.gitmodules`、`scripts/lab.py::_METHODS`、`README.md` 的 xense-openpi 行（现在写的 `main` 已过时）改为
+- [x] 合并 `feature/rlt-jax` 上验证期间的修复：不需要，`feature/rlt-jax` 在 `3a3b5cc` 之后没有新 commit。
+- [x] push `rl-exp` 到 origin（试跑提交 `7464fec`）。
+- [x] 根仓 `.gitmodules`、`scripts/lab.py::_METHODS`、`README.md` 的 xense-openpi 行（原来写的 `main` 已过时）改为
       `rl-exp`；`docs/xense-openpi/overview.md` 的 RLT 节去掉代码路径，改为链接实现文档；`cmd.md` 换成新路径。
+- [ ] 试跑结束后把 gitlink 记到 `origin/rl-exp` 上的最终提交，你要求后提交根仓。
 
 **Verification**
 
-1. [ ] `./lab method status` 显示 xense-openpi 为 `rl-exp`、clean。
-2. [ ] 根仓 `tests/` 通过。
+1. [x] `./lab method status` 显示 xense-openpi 为 `rl-exp`（`7464fec`）、clean。
+2. [x] 根仓 `tests/` 43 passed（工作区状态，含你暂存的改动）。
+3. [x] `cmd.md` 的单测命令照原样运行：101 passed、2 skipped，skip 都是 `token_model_test` 找不到 RLinf 参照。
 
 **Done**
 
 - [ ] 根仓 gitlink 指向的提交在 `origin/rl-exp` 上。
-- [ ] `overview.md` 里不再有 `src/`、`scripts/` 路径。
+- [x] `overview.md` 里不再有 `src/`、`scripts/` 路径。
 
 ## 算法无关的带标签评测（`rl-exp`）
 
@@ -251,6 +233,9 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 与训练服务器用 `git fetch origin && git reset --hard origin/rl-exp` 同步，不用 `git pull`。第一次跑之前，把训练服务器上的
 个人 RLT 配置从 `configs/rlt/` 挪到 `configs/rl/rlt/`，加载器不再读旧目录。
 
+第 4、5 项原是 `feature/rlt-jax` 的真机验证（标签挂起时按 A 不丢关键阶段、窗口内不换驾驶者），2026-09-30 起改在 `rl-exp`
+上做；试跑提交的 commit message 里还没有这两项，下次 amend 时补上。
+
 ### Task: rl-exp 在真机上跑通 serving、训练与评测
 
 **Change**
@@ -263,11 +248,16 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 2. [ ] 机器人端 `--args.rlt --args.pico4-intervention`，服务器 `python scripts/rl/rlt/train_rl.py <配置> --exp-name <run>`
        跑一轮并给一个窗口打标签。用一个可以多加一轮数据的 run；或在配置里设 `rl.token_checkpoint`，换一个新的 `--exp-name`。
 3. [ ] 评测 smoke：即「评测服务端」的第 3 项。
+4. [ ] 同第 2 项的设置：一轮内按 B 开窗、按 Y 标失败后立刻按 A。
+5. [ ] warm_up 之后，在机器人停着等下一个 chunk 时按 B 开窗。
 
 **Done**
 
 - [ ] 第 1 项终端出现 "Serving RLT actor"：重组后的 VLA、token、actor 加载在真实 checkpoint 上可用。
 - [ ] 第 2 项服务器终端出现 "<Label> labeled: … +N transitions"，轮末摘要正常：共享的一轮会话照旧驱动机器人。
 - [ ] 第 3 项同「评测服务端」的 Done。
+- [ ] 第 4 项：机器人跑满当前单元才归位，服务器终端出现 "Failure labeled: … +N transitions"，轮末摘要
+      `data : +N transitions` 中 N > 0。
+- [ ] 第 5 项：该窗口的每个 chunk 在服务器日志 / W&B chunk 轴上都是 actor（`use_actor=True`），没有先 VLA 后 actor。
 
 没有覆盖：`precompute_prefix.py`、`train_token.py` 在真实数据上的运行。

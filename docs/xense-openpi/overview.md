@@ -20,18 +20,17 @@ xense-openpi 是 Xense 平台的模型侧 OpenPI fork，负责训练配置、模
 
 ## RLT（JAX）
 
-RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)。xense-openpi 里的 JAX 实现在 `feature/rlt-jax` 分支：
-phase one（token 编解码器、prefix cache、`scripts/rlt/train_token.py`）与 phase two（`src/openpi/rlt/` 的 collector、
-learner、replay、在线特征，`scripts/rlt/train_rl.py`，机器人端 `examples/bi_flexiv_rizon4_rt/rlt_mode.py`，serving 用
-`src/openpi/policies/rlt_policy.py`）。代码取自 XenseRobotics-AI 的 `feature/rlt-hubo`，逐个 commit 对照规格审查后
-cherry-pick，参考代码只作参考，问题在我们的分支上修。
+RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)，代码位置与模块关系见 [codebase.md](codebase.md)：`feature/rlt-jax`
+是平铺布局，根仓登记的 `rl-exp` 把同样的模块按层重排并加了带标签评测。代码取自 XenseRobotics-AI 的
+`feature/rlt-hubo`，逐个 commit 对照规格审查后 cherry-pick，参考代码只作参考，问题在我们的分支上修。
 
 与规格或参考分支的差异：只实现 sliding replay（`replay_stride ≥ 1` 且整除 C），不实现 stride=0 边界 anchor；不接入
 参考分支的 actor 平滑惩罚与 BC/Q 权重日程，actor loss 就是 $-Q+\beta\,\mathrm{BC}$；规格文末的研究性选项未迁；RTC 不在
 范围内。机器人协议是新的 `openpi-rlt/1`，与 tacxense 的协议不兼容，机器人端与训练服务器要用同一分支。
 
-验证边界：只有 CPU 单测（小维度假模型与假机器人）与 tacxense 的数值对照；pi05 真实前向与 phase one 由参考分支作者
-验证，本工作区没有复跑；没有真机运行记录。
+验证边界：本工作区自己跑过的只有 CPU 单测（小维度假模型与假机器人）与 tacxense 的数值对照。真机运行在工作区外
+启动，代码是 `feature/rlt-jax`，记录见 [experiments.md](experiments.md)；`rl-exp` 的真机试跑还没完成，见
+[plan.md](plan.md)。
 
 ## 已知限制
 
@@ -39,4 +38,4 @@ cherry-pick，参考代码只作参考，问题在我们的分支上修。
 的触觉 VLA。该方法与 lerobot-xense 共用环境，也是根仓环境隔离规则的例外。
 
 工作区登记的 upstream 与方法 README 曾出现不同仓库归属；在执行 sync 或调整远端前仍需由
-项目成员确认权威上游。当前没有根级实验配置、训练/推理记录或真机验收证据。
+项目成员确认权威上游。当前没有根级实验配置。

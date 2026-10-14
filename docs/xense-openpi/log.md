@@ -1,5 +1,15 @@
 # xense-openpi Log
 
+## 2026-10-10 · rlt-jax 可选择 actor 训练参考输入
+
+- **背景与目的：** 为真机对照测试恢复 `corrected` 训练输入，同时保留正在测试的 `proposal`。
+- **实现思路：** 通过 `rl.input_reference` 选择条件输入，默认 `corrected`；BC target、critic 与部署输入不变。
+  该字段参与 checkpoint 训练条件检查，避免两种训练方案混用。旧 checkpoint 缺少该字段时拒绝恢复。
+- **组件变化：** 配置解析、learner 参数传递、actor loss 与实验 YAML；两种模式共享现有 replay。
+- **主要文件：** 方法仓库 `src/openpi/rlt/config.py`、`learner.py`、`td.py`；用法见 [cmd.md](cmd.md)。
+- **验证：** YAML 校验、两种输入行为与 TacXense 数值对照共 13 项 CPU 测试通过；ruff 与 diff 检查通过。
+  未进行真机训练或评估。
+
 ## 2026-09-29 · RLT（JAX）接入 xense-openpi：审查参考分支并补齐规格差异
 
 - **背景与目的：** RLT 的实现要从 tacxense（torch）迁到 xense-openpi（JAX）。用户决定用 JAX，从 `main` 拉自己的分支，
