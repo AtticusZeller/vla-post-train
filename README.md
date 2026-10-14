@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | `methods/lerobot` | `workspace` | 通用数据、策略、训练和机器人框架 |
 | `methods/lerobot-xense` | `main` | Xense 真机控制、遥操作与数据采集 |
-| `methods/xense-openpi` | `main` | Xense 模型训练、策略服务与推理客户端 |
+| `methods/xense-openpi` | `rl-exp` | Xense 模型训练、策略服务与推理客户端 |
 | `methods/expo-ft` | `workspace` | EXPO-FT 与 Real-Time EXPO-FT 的 VLA 强化学习微调框架 |
 | `methods/tacxense` | `feature/rlt-test` | Xense 触觉 VLA 模型与 RL token 工作线 |
 
