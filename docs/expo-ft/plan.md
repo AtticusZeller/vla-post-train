@@ -245,6 +245,16 @@
 >   显存低于 1 GB 且利用率为 0 才在这张卡上启动 SFT；到 03:30 仍没有就不训练。checkpoint 与日志在
 >   `/root/data/atticux/agent-workspace/expo-ft/` 下。启动前在 CPU 上跑过 2 步（batch 2），数据、权重加载、LoRA
 >   冻结与存 checkpoint 都通。
+> - 后续调整（2026-10-15，用户确认）：空闲卡有几张就用几张训练（取能整除 batch 64 的 8/4/2/1 张）；训练完在同一批卡上
+>   每卡一个 checkpoint 并行评测，每个 checkpoint 先评 20 次，之后再决定对候选补评；W&B 用用户账号、entity
+>   `atticux`、项目 `expo-ft`（key 从用户工作站的登录写入服务器上仅 root 可读的文件，只导入训练进程）。
+> - CPU 上的 SFT 训练步不可靠：同一命令重复 7 次，只有第一次正常（`param_norm` 1803），其余为 NaN、2e17 或中途崩溃；
+>   关闭 XLA CPU 的 thunk runtime 则编译即断言失败。同一 CPU 上初始化重复 6 次都是 1803.249，与 donate 无关，
+>   DataLoader worker 数也不影响。判断是 XLA CPU 后端的问题，GPU 训练用同一 `train.py`（其他人的任务在跑）；
+>   这是推断，夜里第一步会验证：夜间脚本在第 0 步 `param_norm` 偏离 1803.25 超过 5 或 loss 非有限时立即终止。
+> - 评测链路已端到端跑通：learner 侧 `eval_droid_policy.py --only_base_actions` 在服务器 CPU、RoboTwin 环境端在本地
+>   GPU，经 SSH 隧道连通，跑完 24 步并输出成功率。途中修了 expo-ft `process_raw_inputs` 的假动作缺时间维
+>   （`DeltaActions` 要 (T, D)）；环境端只拨号一次，评测脚本因此先起 learner、监听后再起环境端。
 
 **Verification**
 
