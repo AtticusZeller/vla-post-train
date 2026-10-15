@@ -221,12 +221,30 @@
 
 **Change**
 
-- [ ] 下载官方 v3.0 数据，取 `beat_block_hammer` 的 50 条 clean 示教；若是多任务合并的数据集，按 task 过滤
-- [ ] xense-openpi 加 RoboTwin 的 data config 与 YAML：π₀.₅，`gemma_2b_lora` + `gemma_300m_lora`，三路相机，14 维；
+- [x] 下载官方 v3.0 数据，取 `beat_block_hammer` 的 50 条 clean 示教；若是多任务合并的数据集，按 task 过滤
+- [x] xense-openpi 加 RoboTwin 的 data config 与 YAML：π₀.₅，`gemma_2b_lora` + `gemma_300m_lora`，三路相机，14 维；
       H=16，与规格的参考配置一致（RoboTwin 常见的是 50，起点会因此变化，靠选 checkpoint 补偿）；计算 norm stats
 - [ ] 按规格的 SFT 配方训练约 4,000 步（batch 64，学习率 2.5e-5），每 500 步存一次
 - [ ] 用环境端加 `eval_droid_policy.py --only_base_actions` 在 Easy 档各评 100 次，挑一个落在 30–60% 的 checkpoint。
       如果都高于 60%，先减示教条数；仍不行就换 `click_bell`，并回来报告
+
+> **进展与出入（2026-10-15）：**
+>
+> - 数据没有用 4.1 GB 的多任务 v3.0 合并包，改取单任务原始数据 `dataset/beat_block_hammer/aloha-agilex_clean_50.zip`
+>   （229 MB，正好是 Easy 的 50 条示教，种子 0–67，与评测种子 100000 起不重叠），用 expo-ft 新增的
+>   `scripts/convert_robotwin_to_lerobot.py` 转成 v3.0：规则同 XPolicyLab 的转换（`action[t]` 取第 t+1 帧关节、
+>   `decode_image_bit` 解码、每条示教取一句 `seen` 指令作 task，fps 15）。两处不同：相机帧存图像而非视频，训练机的
+>   venv 没有 FFmpeg 动态库；动作列叫 `actions`，与 replay 插入的键一致，这样一份 data config 同时管 SFT 和 replay。
+>   结果 50 条、5682 帧，首帧与仿真渲染颜色一致，初始状态为两臂 0、夹爪 1。
+> - data config 直接用 `LeRobotAlohaDataConfig`，与 RoboTwin 官方 π₀.₅ 基线相同：`adapt_to_pi=false`，关节 delta、夹爪
+>   绝对值。它的输入变换要 CHW 图像，所以 Task 3 的预填与 Task 4 的环境端改为发 CHW uint8（原为 HWC）。YAML 是
+>   xense-openpi `configs/_examples/pi05_robotwin_beat_block_hammer_lora.yaml`；恒定学习率用 `CosineDecaySchedule`
+>   在 `warmup_steps=0`、`peak_lr = decay_lr` 时表达。norm stats 已算好。
+> - 训练机：两台训练服务器白天被一个 8 卡任务占满（预计 10-16 0:20 左右结束）。用户同意在凌晨无人训练时训练
+>   （2026-10-15）。`xense-training-h100` 上的 tmux `atticux-night-sft` 从 02:00 起每 30 s 查一次，某张卡连续 10 分钟
+>   显存低于 1 GB 且利用率为 0 才在这张卡上启动 SFT；到 03:30 仍没有就不训练。checkpoint 与日志在
+>   `/root/data/atticux/agent-workspace/expo-ft/` 下。启动前在 CPU 上跑过 2 步（batch 2），数据、权重加载、LoRA
+>   冻结与存 checkpoint 都通。
 
 **Verification**
 
