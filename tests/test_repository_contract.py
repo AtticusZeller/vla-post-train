@@ -15,6 +15,7 @@ EXPECTED_METHODS = {
     "expo-ft",
     "lerobot",
     "lerobot-xense",
+    "robotwin",
     "tacxense",
     "xense-openpi",
 }

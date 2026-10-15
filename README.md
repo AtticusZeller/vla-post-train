@@ -15,6 +15,7 @@
 | `methods/xense-openpi` | `rl-exp` | Xense 模型训练、策略服务与推理客户端 |
 | `methods/expo-ft` | `workspace` | EXPO-FT 与 Real-Time EXPO-FT 的 VLA 强化学习微调框架 |
 | `methods/tacxense` | `feature/rlt-test` | Xense 触觉 VLA 模型与 RL token 工作线 |
+| `methods/robotwin` | `workspace` | RoboTwin 2.0 双臂仿真 benchmark（benchmark），作为 EXPO-FT 的仿真环境 |
 
 源码被固定到精确 revision；接入不代表环境、训练、推理或真机流程已经验证。当前证据边界见
 对应的 `docs/<method>/overview.md`。

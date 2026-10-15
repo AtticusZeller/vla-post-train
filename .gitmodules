@@ -18,3 +18,7 @@
 	path = methods/expo-ft
 	url = https://github.com/AtticusZeller/expo-ft.git
 	branch = workspace
+[submodule "methods/robotwin"]
+	path = methods/robotwin
+	url = https://github.com/AtticusZeller/RoboTwin.git
+	branch = workspace

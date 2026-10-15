@@ -48,6 +48,10 @@ _METHODS = {
         "branch": "feature/rlt-test",
         "upstream": "https://github.com/XenseRobotics-AI/TacXense.git",
     },
+    "robotwin": {
+        "branch": "workspace",
+        "upstream": "https://github.com/RoboTwin-Platform/RoboTwin.git",
+    },
 }
 
 
