@@ -1,6 +1,6 @@
 # EXPO-FT 代码组织
 
-快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支在其上合并了
+快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支（`eed7996`）在其上合并了
 上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取、环境端与任务配置（见 5 已知耦合）。运行还要
 两个不在仓库里的 checkout：`expo_ft/agents/vla/openpi`（`workspace` 上是 pd-perry 的 OpenPI fork，`robotwin-sim`
 上是 xense-openpi 的 `expo-ft` 分支）和 `client/droid`（DROID fork）。DROID fork 本工作区没有检出，它的接口来自
@@ -70,6 +70,10 @@ train_offline_rtc.py         离线 RTC-SFT：带动作前缀条件的 pi0.5 BC�
 eval_droid_policy.py         冻结策略的真机评测
 scripts/
   convert_droid_data_to_lerobot.py   DROID 的 traj.hdf5 → LeRobot 数据集
+  convert_robotwin_to_lerobot.py     RoboTwin 每回合 HDF5 → LeRobot v3.0（动作列 actions，存图像）（robotwin-sim）
+  robotwin/                  训练机上的 RoboTwin 运行脚本（robotwin-sim）
+    night_run.sh             凌晨等空卡 → SFT（第 0 步参数护栏）→ 末个 checkpoint 分片评测 → 起联合更新
+    eval_sft_ckpt.sh  rl_joint.sh    一张卡上配对 learner 与 RoboTwin 环境端：基座评测 / EXPO-FT 联合更新
   pick/                      EXPO-FT 的一整套启动脚本
   dynamic_pick/              Real-Time EXPO-FT 的一整套启动脚本
     collect_data.sh  convert_data.sh  calculate_norm.sh        数据三步（两套相同）
@@ -109,7 +113,7 @@ expo_ft/
   env/
     env_client.py            EnvClientWrapper：learner 侧的环境 RPC，监听端口等机器人拨入
     droid_utils.py           读演示目录里的 traj.hdf5
-    lerobot_utils.py         读 LeRobot v3.0 数据集，每条演示成一个成功回合（robotwin-sim）
+    lerobot_utils.py         读 LeRobot v3.0 数据集，每条演示成一个成功回合，图像保持 CHW（robotwin-sim）
   networks/
     encoders.py              critic 的图像编码器（ResNetV2）
     pixel_multiplexer.py     编码器 + 状态 + 动作的网络外壳，包括 critic 和 edit actor
@@ -344,7 +348,7 @@ flowchart TB
 | `EnvClientWrapper` | 操作名和参数 | 回复；连接或操作出错时重建环境再试 |
 | `run_client` | 环境 RPC 请求 | 观测、实际执行的动作、`action_type`、done / success / reward / mask |
 | `DroidEnv` | 7 维动作：6 维笛卡尔速度 + 夹爪速度 | 观测：外部相机图像（两个键是同一路）、腕部图像、`cartesian_position`、`gripper_position`、prompt；成功时 reward 为 1 |
-| `RoboTwinEnv` | 14 维关节目标（两臂各 6 关节 + 夹爪），每次 `step` 是 RoboTwin 的一次 `take_action` | 观测键与 LeRobot 数据集相同：三路相机（resize_with_pad 到 224）、`observation.state`、prompt（每回合按 `seen` 生成）；成功或到 `step_lim` 时 done，成功时 reward 为 1 |
+| `RoboTwinEnv` | 14 维关节目标（两臂各 6 关节 + 夹爪），每次 `step` 是 RoboTwin 的一次 `take_action` | 观测键与 LeRobot 数据集相同：三路相机（resize_with_pad 到 224，CHW uint8）、`observation.state`、prompt（每回合按 `seen` 生成）；成功或到 `step_lim` 时 done，成功时 reward 为 1 |
 | `AsyncChunkSampler` | learner、观测、计划剩余步数 | 动作块；`delay > 0` 时提前在后台推理 |
 | `Learner.sample_actions` | 原始观测 | `(H, 7)` 动作块、新的 agent、采样信息 |
 | `Learner.update` | critic 批次、actor 批次、`utd_ratio` | 新的 agent、指标 |

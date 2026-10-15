@@ -9,5 +9,9 @@ actor 在机器人侧采集观测、执行动作。两侧使用独立的 Python 
 README 克隆匹配分支的 OpenPI 与 DROID fork；它们不是本 submodule 内的嵌套 submodule。
 启动入口、文件职责与模块交互见 [codebase.md](codebase.md)。
 
-工作区仅接入并固定源码版本。当前没有 EXPO-FT 实验配置、Xense 适配、训练运行、
-checkpoint 评估或真机验证记录。
+`robotwin-sim` 分支把 learner 接到 xense-openpi，并加了 RoboTwin 2.0 仿真环境端：仿真进程在
+RoboTwin 自己的环境里跑，作为另一个 actor 经同一协议被 learner 逐步驱动；观测键与 LeRobot
+数据集一致，SFT 与 replay 共用一份 openpi data config。
+
+验证边界（2026-10-15）：环境端、数据转换与预填、评测链路已分别验证（见 [log.md](log.md)）；
+SFT、基座评测和联合更新尚未在 GPU 上跑过，进行中的事务见 [plan.md](plan.md)。没有真机记录。

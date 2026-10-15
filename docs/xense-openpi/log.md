@@ -1,5 +1,21 @@
 # xense-openpi Log
 
+## 2026-10-15 · `expo-ft` 分支：EXPO-FT 的多样本采样与 RoboTwin SFT 配置
+
+- **背景与目的：** EXPO-FT 的 learner 改用 xense-openpi（见 [expo-ft/plan.md](../expo-ft/plan.md)），需要每个观测一次
+  采 N 个候选、在调用方的 `jax.jit` 里批量推理，以及 RoboTwin 单任务的 SFT 配置。
+- **实现思路：** 从 `rl-exp`（`bbd1c71`）开分支 `expo-ft`。`Pi0.sample_actions` 加 `num_samples` 与 `train`：prefix 只前向
+  一次，KV cache 复制给 N 条去噪序列，输出按观测分组 (b·N, H, D)；与 RTC 参数同用时报错。`Policy.infer` 加 `is_batch`
+  与 `for_training`（输出留在 jax，可在调用方 jit 内用），`num_samples`、`train` 为 static；rng 判断改为 `is not None`
+  （jit 内是 tracer）。`num_steps` 保持非 static，因为现有调用把它当可追踪值。`sample_actions_with_prefix` 不动（RLT 在用）。
+  RoboTwin SFT 配置 `configs/_examples/pi05_robotwin_beat_block_hammer_lora.yaml`：`LeRobotAlohaDataConfig`，
+  与 RoboTwin 官方 π₀.₅ 基线相同的变换，动作列 `actions`，LoRA，H=16，batch 64，恒定 2.5e-5，4,000 步。
+- **组件变化：** `src/openpi/models/pi0.py`、`src/openpi/policies/policy.py`，新增 `policy_batch_test.py` 与 YAML。
+- **主要文件：** 同上。
+- **验证：** 服务器 CPU 上：N 样本一次调用与 N 次单样本调用逐元素一致（pi0、pi05）；在调用方 jit 内构造并调用 `Policy`
+  通过；`num_samples=1` 与 `bbd1c71` 原版 8 组输出逐位相同；`cmd.md` 那组 RL 单测 107 passed、2 skipped；models 与
+  policies 下 42 passed，2 个已有失败在原版上同样复现。YAML 加载与恒定学习率已核对。
+
 ## 2026-10-10 · rlt-jax 可选择 actor 训练参考输入
 
 - **背景与目的：** 为真机对照测试恢复 `corrected` 训练输入，同时保留正在测试的 `proposal`。
