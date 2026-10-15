@@ -1,8 +1,10 @@
 # EXPO-FT 代码组织
 
-快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交。运行还要两个不在仓库里的 fork：
-OpenPI fork 克隆到 `expo_ft/agents/vla/openpi`，DROID fork 克隆到 `client/droid`。本工作区没有检出这两个 fork，
-文中它们的接口来自 expo-ft 的 import 和 README。
+快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支在其上合并了
+上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取与任务配置（见 5 已知耦合）。运行还要
+两个不在仓库里的 checkout：`expo_ft/agents/vla/openpi`（`workspace` 上是 pd-perry 的 OpenPI fork，`robotwin-sim`
+上是 xense-openpi 的 `expo-ft` 分支）和 `client/droid`（DROID fork）。DROID fork 本工作区没有检出，它的接口来自
+expo-ft 的 import 和 README。
 
 ## 1 总图
 
@@ -81,6 +83,7 @@ configs/
   task/                      任务：环境类、相机、工作空间边界、复位位姿、控制频率、语言指令
     real_base.py             DROID 公共默认
     pick.py  dynamic_pick.py  light2.py
+    robotwin_base.py         RoboTwin 公共默认：14 维关节动作、三路 critic 相机（robotwin-sim）
 ```
 
 ### 3.2 `expo_ft/`（learner 侧）
@@ -105,6 +108,7 @@ expo_ft/
   env/
     env_client.py            EnvClientWrapper：learner 侧的环境 RPC，监听端口等机器人拨入
     droid_utils.py           读演示目录里的 traj.hdf5
+    lerobot_utils.py         读 LeRobot v3.0 数据集，每条演示成一个成功回合（robotwin-sim）
   networks/
     encoders.py              critic 的图像编码器（ResNetV2）
     pixel_multiplexer.py     编码器 + 状态 + 动作的网络外壳，包括 critic 和 edit actor
@@ -132,7 +136,8 @@ client/
     vis_utils.py             回合视频
   install_pyzed.sh           单独安装 ZED 的 Python 包
 
-expo_ft/agents/vla/openpi/   OpenPI fork，不在仓库里：pi0.5 模型与训练配置、SFT 和 norm stats 脚本、openpi_client
+expo_ft/agents/vla/openpi/   OpenPI checkout，不在仓库里：pi0.5 模型与训练配置、SFT 和 norm stats 脚本、
+                             客户端包（pd-perry fork 为 openpi_client，xense-openpi 为 xense_client）
 client/droid/                DROID fork，不在仓库里：RobotEnv、轨迹写入、NUC 端 server
 ```
 
@@ -269,12 +274,12 @@ flowchart TB
         BP["batch_processor"]
     end
     subgraph LOW["env · utils · networks"]
-        EC["env/env_client · env/droid_utils"]
+        EC["env/env_client · droid_utils · lerobot_utils"]
         LP["utils/loop_utils"]
         TU["utils/train_utils"]
         NET["networks · distributions"]
     end
-    OP["OpenPI fork<br/>openpi · openpi_client"]
+    OP["OpenPI checkout<br/>openpi · 客户端包"]
     ENT --> LRN
     ENT --> RB2
     ENT --> PI
@@ -349,10 +354,11 @@ flowchart TB
 | 接口 | 现在的假设 | 位置 |
 |---|---|---|
 | 动作 | 7 维 DROID 笛卡尔速度 + 夹爪速度。人工接管、示例动作、`edit_action_xyzg`（把第 3–5 维当旋转屏蔽）都按这个布局写 | `configs/task/real_base.py`、`client/run_client.py`、`expo_ft/agents/alg/expo_ft.py` |
-| 环境类型 | 训练、RTC-SFT、评测入口只接受 `env_type == "droid"`；演示只读 DROID 的 `traj.hdf5` | 四个入口脚本、`expo_ft/env/droid_utils.py` |
+| 环境类型 | `workspace` 上四个入口只接受 `env_type == "droid"`，演示只读 DROID 的 `traj.hdf5`。`robotwin-sim` 上 `train_pi_robo.py` 与 `eval_droid_policy.py` 另接受 `robotwin`，演示从 LeRobot v3.0 读；`train_pi_robo_async.py`、`train_offline_rtc.py` 仍只认 DROID | 入口脚本、`expo_ft/env/droid_utils.py`、`expo_ft/env/lerobot_utils.py` |
 | 控制循环的位置 | learner 每个控制步发 `get_observation` 和 `step` 两次 RPC，网络往返在控制环里 | `train_pi_robo.py`、`expo_ft/env/env_client.py` |
 | 人工接管 | SpaceMouse 在机器人端逐步替换动作；transition 用 `is_hil` 标记 | `client/run_client.py` |
 | 奖励 | 稀疏：颜色阈值或手动标记判定成功给 1，其余为 0 | `client/envs/droid_env.py`、`client/real_utils/detector.py` |
-| VLA | 用 OpenPI fork 的 `get_config(name, weight_loader_path=...)` 取训练配置；采样依赖 fork 支持 `num_samples` 和 `sample_actions_with_prefix` | `expo_ft/utils/train_utils.py`、`expo_ft/agents/vla/pi05.py` |
-| critic 相机 | 默认 `base_0_rgb`、`left_wrist_0_rgb` | `expo_ft/agents/alg/batch_utils.py` |
+| VLA | `workspace` 上用 pd-perry fork 的 `get_config(name, weight_loader_path=...)`；`robotwin-sim` 上用 `get_config(name)` 后由 `dataclasses.replace` 换 `weight_loader`。采样依赖 openpi 的 `sample_actions` 支持 `num_samples`、`train`，`Policy.infer` 支持 `is_batch`、`for_training`。RTC 与 Real-Time 线路调 `model.sample_actions_with_prefix(prefix=...)`（前缀补全）；xense-openpi 的同名方法是 RLT 用的另一个接口，没有 `prefix` 参数，所以这两条线路在 `robotwin-sim` 上不能跑 | `expo_ft/utils/train_utils.py`、`expo_ft/agents/vla/pi05.py` |
+| critic 相机 | 默认 `base_0_rgb`、`left_wrist_0_rgb`；任务配置可用 `critic_camera_keys` 覆盖，RoboTwin 用三路 | `expo_ft/agents/alg/batch_utils.py`、`configs/task/robotwin_base.py` |
+| 首步动作 | 训练循环建好环境后先 `env.step(example_action)`，`example_action` 是全零。DROID 的速度动作下这是静止，RoboTwin 的关节目标下会把两臂拉向零位 | `train_pi_robo.py` |
 | 反向依赖 | `data/replay_buffer.py` import `agents/alg/batch_utils.py`；`data/batch_processor.py` 和 `utils/loop_utils.py` import `expo_ft.agents`；任务配置 import `client/envs/droid_env.py` | 见 4.4 |

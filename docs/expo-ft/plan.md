@@ -120,25 +120,53 @@
 
 **Change**
 
-- [ ] `expo_ft/agents/vla/openpi` 克隆 xense-openpi 的 `expo-ft` 分支；`pyproject.toml` 里 `openpi` 的路径不变，
+- [x] `expo_ft/agents/vla/openpi` 克隆 xense-openpi 的 `expo-ft` 分支；`pyproject.toml` 里 `openpi` 的路径不变，
       `openpi-client` 换成 `packages/xense-client` 下的 `xense-client`，`openpi_client` 的 import 换成 `xense_client`
-- [ ] `expo_ft/utils/train_utils.py`：`get_config(name)` 之后用 `dataclasses.replace` 换 `weight_loader`
-- [ ] `train_pi_robo.py`、`eval_droid_policy.py` 里 `env_type == "droid"` 的分支加上 `robotwin`
-- [ ] 新增从 LeRobot v3.0 数据集预填 replay 的读取函数，输出与 `process_droid_dataset` 相同：每条示教一个成功回合，
+- [x] `expo_ft/utils/train_utils.py`：`get_config(name)` 之后用 `dataclasses.replace` 换 `weight_loader`
+- [x] `train_pi_robo.py`、`eval_droid_policy.py` 里 `env_type == "droid"` 的分支加上 `robotwin`
+- [x] 新增从 LeRobot v3.0 数据集预填 replay 的读取函数，输出与 `process_droid_dataset` 相同：每条示教一个成功回合，
       最后一步 r=1 并终止
-- [ ] 任务配置给出 critic 相机键、动作维度和 `example_action`；`edit_action_xyzg` 关闭，它假设第 3–5 维是旋转
-- [ ] 同步更新 `docs/expo-ft/codebase.md` 里受影响的行、文件树和依赖图
+- [x] 任务配置给出 critic 相机键、动作维度和 `example_action`；`edit_action_xyzg` 关闭，它假设第 3–5 维是旋转
+- [x] 同步更新 `docs/expo-ft/codebase.md` 里受影响的行、文件树和依赖图
+
+> **与原计划的出入（2026-10-15）：**
+>
+> - 依赖：`requires-python` 与 `.python-version` 升到 3.12（xense-client 要求）；去掉 `datasets>=3.0,<4.0` 的 override，
+>   它是给旧 lerobot 的，留着会与 lerobot 0.5.1 冲突而无解。重新 lock 后 jax、flax、orbax、lerobot、datasets、torch、
+>   transformers、numpy 与 xense-openpi 的 `uv.lock` 同版本。
+> - `get_config` 只去掉 `weight_loader_path` 参数：后面已有的 `dataclasses.replace` 本来就在路径非空时换成
+>   `FlexibleCheckpointWeightLoader`。
+> - 演示读取放在新文件 `expo_ft/env/lerobot_utils.py` 的 `process_lerobot_dataset`。观测的键沿用数据集的特征名
+>   （如 `observation.images.cam_high`、`observation.state`），图像转回 HWC uint8，另加 `prompt`（取该帧的 task）。
+>   用 PyAV 解码视频：lerobot 默认的 torchcodec 要系统装 FFmpeg 动态库，本机版本不对，训练服务器上没有。
+>   这定下了两条约定：Task 4 环境端发出的观测用同一组键；Task 5 的 data config 的 repack 要从 replay 的
+>   `actions` 键读动作（replay 插入时用的是 `actions`，不是数据集的 `action`）。
+> - 任务配置是 `configs/task/robotwin_base.py`，只放 RoboTwin 公共项（`env_type`、14 维 `example_action`、三路
+>   critic 相机、`edit_action_xyzg=False`）；环境类、指令、`auto_reset_steps`、`control_hz` 留给 Task 4 的任务文件。
+> - 机器人端（`client/run_client.py`、`client/envs/utils.py`、`client/pyproject.toml`）仍是 `openpi_client`，没有改：
+>   client 环境依赖 DROID fork，本地没有检出，无法重新 lock。Task 4 搭 RoboTwin 环境端时一起换。
+> - 发现两处 Task 4/6 要处理的问题，没有在本任务里改：训练循环建好环境后先执行一次全零的 `example_action`，在
+>   RoboTwin 的关节目标语义下会把两臂拉向零位。用户确认（2026-10-15）只要零位就是两臂的初始位置即可，Task 4 实现
+>   环境端时核对 reset 后的关节状态是否为零；RTC 与 Real-Time 线路调用的 `sample_actions_with_prefix(prefix=...)`
+>   在 xense-openpi 里是 RLT 的另一个同名接口，这两条线路在本分支不能用（同步版 EXPO-FT 不受影响）。
 
 **Verification**
 
-1. [ ] learner 环境 `uv sync` 成功，`train_pi_robo.py --help` 能运行
-2. [ ] 用一个小的假 LeRobot v3.0 数据集测预填
-3. [ ] 按 write-codebase-doc 的路径检查与渲染检查过一遍改动的图
+都在本机 CPU 上跑，不加载模型。
+
+1. [x] learner 环境 `uv sync` 成功；`train_pi_robo.py --help` 打出全部 flag（退出码 1 是 absl 处理 `--help` 的固定
+      行为）；`eval_droid_policy`、`pi05`、`train_utils`、`lerobot_utils` 都能 import
+2. [x] 临时脚本用 lerobot 0.5.1 写一个假 v3.0 数据集：3 条演示（5、3、4 步），三路相机为视频、14 维 state 与 action，
+      动作里编码了回合号和步号。分别以全部、`num_data=2`、`episode_indices=[2]` 读取并逐步检查。变异检查：把每个
+      回合的步序倒过来，检查报出动作不对
+3. [x] write-codebase-doc 路径检查：报出的条目是还没提交的两个新文件和原有的外部 checkout、占位符；改动的依赖图
+      渲染正常，布局未变
 
 **Done**
 
-- [ ] learner 进程里 `openpi.__file__` 指向 xense-openpi
-- [ ] 预填出的回合数等于示教条数，每回合末步 r=1、mask=0，其余步 r=0、mask=1
+- [x] learner 进程里 `openpi.__file__` 指向 `expo_ft/agents/vla/openpi/src/openpi/__init__.py`（xense-openpi `expo-ft`
+      分支 `c57caa5`），`xense_client` 来自同一 checkout 的 `packages/xense-client`
+- [x] 预填出的回合数等于示教条数，每回合末步 r=1、mask=0，其余步 r=0、mask=1
 
 ### Task: RoboTwin 环境端
 
