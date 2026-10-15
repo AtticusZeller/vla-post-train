@@ -245,8 +245,11 @@
 >   显存低于 1 GB 且利用率为 0 才在这张卡上启动 SFT；到 03:30 仍没有就不训练。checkpoint 与日志在
 >   `/root/data/atticux/agent-workspace/expo-ft/` 下。启动前在 CPU 上跑过 2 步（batch 2），数据、权重加载、LoRA
 >   冻结与存 checkpoint 都通。
-> - 后续调整（2026-10-15，用户确认）：空闲卡有几张就用几张训练（取能整除 batch 64 的 8/4/2/1 张）；训练完在同一批卡上
->   每卡一个 checkpoint 并行评测，每个 checkpoint 先评 20 次，之后再决定对候选补评；W&B 用用户账号、entity
+> - 后续调整（2026-10-15，用户确认）：空闲卡有几张就用几张训练（取能整除 batch 64 的 8/4/2/1 张）；评测只看最后一个
+>   checkpoint，基座策略评 50 回合，分到这批卡上并行，每个分片一个种子段（`ROBOTWIN_SEED_INDEX` 0–7）；4,000 步
+>   保留（50 条示教约 45 遍数据，参考实现也是约 4,000 步），中间每 500 步的 checkpoint 留作成功率过高时回退；
+>   评完紧接着从这个 checkpoint 起 EXPO-FT 联合更新（4 卡数据并行，训练种子段 100），看
+>   `training/success_rate`（最近 10 回合）能否高于基座——这超出原 Task 6 只验工程路径的范围，由用户要求加入；W&B 用用户账号、entity
 >   `atticux`、项目 `expo-ft`（key 从用户工作站的登录写入服务器上仅 root 可读的文件，只导入训练进程）。
 > - CPU 上的 SFT 训练步不可靠：同一命令重复 7 次，只有第一次正常（`param_norm` 1803），其余为 NaN、2e17 或中途崩溃；
 >   关闭 XLA CPU 的 thunk runtime 则编译即断言失败。同一 CPU 上初始化重复 6 次都是 1803.249，与 donate 无关，
