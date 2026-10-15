@@ -172,21 +172,49 @@
 
 **Change**
 
-- [ ] 用 add-method 把 RoboTwin 登记为 `methods/robotwin`；在运行机器上按官方脚本安装并下载资产，用独立的 Python 环境
-- [ ] expo-ft `client/envs/robotwin_env.py` 实现环境 RPC 的六个操作：
+- [x] 用 add-method 把 RoboTwin 登记为 `methods/robotwin`；在运行机器上按官方脚本安装并下载资产，用独立的 Python 环境
+- [x] expo-ft `client/envs/robotwin_env.py` 实现环境 RPC 的六个操作：
       reset 按官方评测协议用专家筛种子；step 执行一个 14 维关节动作；成功由 `check_success` 判定，到 `step_lim` 按超时结束；
       观测为三路相机（缩放到 224）、14 维状态和任务指令；`action_type` 恒为 `policy`
-- [ ] `configs/task/robotwin_<task>.py` 给出环境类、相机、控制步数上限和指令
+- [x] `configs/task/robotwin_<task>.py` 给出环境类、相机、控制步数上限和指令
+
+> **进展与出入（2026-10-15）：**
+>
+> - 已登记 `methods/robotwin`：fork `AtticusZeller/RoboTwin` 作 origin，`workspace` 从上游 `main` 的 `ea8b211` 开出，
+>   只加 Agent 说明。上游已改用 XPolicyLab 做评测，环境端直接 import `envs/`，不经过 XPolicyLab。
+> - 环境端的观测键沿用 Task 3 的约定（数据集特征名）；每回合指令按官方 `seen` 规则生成；`get_info_for_step` 与
+>   DroidEnv 同约定（成功 r=1，done 时 mask=0）；`control_hz` 设为无穷大，仿真里 learner 不按墙钟等待。
+>   机器人端的 `openpi_client` 在本任务一并换成 `xense_client` 并重新 lock（借用 pd-perry 的 DROID fork 解析依赖）；
+>   `run_client` 启动时把任务配置路径转成绝对路径，因为 RoboTwinEnv 会切换工作目录。
+> - 运行机器的出入：两台训练服务器的 8 张卡都被同一个预分配显存的任务占满，每张只剩约 3.9 GB。实测 RoboTwin
+>   渲染（光线追踪 32 spp + OIDN 降噪，三路相机）约 +2.1 GB，两只手臂的 CuRobo 规划子进程各带一个 CUDA 上下文，合计
+>   超过 3 GB，会挤掉对方任务池外的余量；渲染设置是官方数据的设置，不能降。所以环境端验证改在本地笔记本
+>   （RTX 4060 8 GB）上跑，用户确认（2026-10-15）。服务器上的环境（`/root/data/atticux/robotwin`，独立 Python 3.10、
+>   CuRobo、资产）已装好，渲染要把 Vulkan ICD 指向 `libEGL_nvidia.so.0`（`/root/data/atticux/vulkan/`），
+>   等有空卡时供 Task 5/6 使用。
+> - 系统自带的 Python 3.10 没有头文件，CuRobo 编译不过；改用 uv 管理的独立 CPython 3.10。
+> - 本地环境：venv 在 `~/.venvs/robotwin`（放在 checkout 外，免得弄脏 submodule），按官方方式用 `python -m pip` 装；
+>   本地 CUDA 12.1 的 nvcc 不支持系统的 gcc 13，CuRobo 用 conda-forge 的 g++ 12（`~/.venvs/gcc12`）作宿主编译器。
+>   资产只取 `beat_block_hammer` 用到的 `embodiments/aloha-agilex`、`objects/020_hammer`，加 import 时就要读的
+>   `objects/same.json`、`objects/objaverse/list.json`；Easy 档不开随机背景，不需要 `background_texture`。
+>   环境端还要 `ml-collections`（任务配置用 `ConfigDict`）。
+> - `example_action` 改为复位姿态：复位后的关节读数是两臂 0、两夹爪 1（张开），全零会让夹爪在训练开始的第一步合上。
+>   用户此前确认零位即初始位置可以接受（2026-10-15），实测发现夹爪不是 0，改成复位姿态后第一步不动。
 
 **Verification**
 
-1. [ ] 在运行机器上跑 RoboTwin 的 `scripts/test_render.py`，确认无显示器能出图
-2. [ ] 对同一个种子先让专家 `play_once` 并记下关节动作，再 reset 到该种子，经环境端逐步回放这些动作
+1. [x] `scripts/test_render.py`：本地与服务器都输出 Render Well（服务器要用上面的 EGL ICD）
+2. [x] 本地 RTX 4060：临时脚本在专家 `play_once` 时记下每个保存帧的 14 维关节状态（与数据转换里
+      `action[t] = state[t+1]` 同一取法），再经 `RoboTwinEnv.reset` 到同一种子，用 `step` 逐帧回放。对照：同一种子
+      保持复位姿态同样步数。另跑一次 RPC 冒烟：learner 侧 `EnvClientWrapper` 经 `run_client` 驱动 RoboTwinEnv，
+      依次 create_env、reset、step（`example_action`）、get_observation、get_info_for_step、render
 
 **Done**
 
-- [ ] 渲染检查出图
-- [ ] 回放专家动作经过环境端后 `check_success` 为真。这一条同时锁住动作语义：数据里的 action 与环境端执行的是同一种
+- [x] 渲染检查出图：头部相机看到方块和锤子，三路图像 224×224 uint8
+- [x] 回放专家动作经过环境端后 `check_success` 为真：种子 100000，专家 113 帧，回放到第 107 步成功（r=1、mask=0、
+      done），每步约 0.036 s；对照组 112 步未成功。RPC 冒烟中观测键与数据集一致、prompt 为每回合生成的指令，
+      `example_action` 执行后关节状态不变。这一条同时锁住动作语义：数据里的 action 与环境端执行的是同一种
       关节目标
 
 ### Task: SFT 基座落在 30–60%

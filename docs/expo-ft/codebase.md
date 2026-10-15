@@ -1,7 +1,7 @@
 # EXPO-FT 代码组织
 
 快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支在其上合并了
-上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取与任务配置（见 5 已知耦合）。运行还要
+上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取、环境端与任务配置（见 5 已知耦合）。运行还要
 两个不在仓库里的 checkout：`expo_ft/agents/vla/openpi`（`workspace` 上是 pd-perry 的 OpenPI fork，`robotwin-sim`
 上是 xense-openpi 的 `expo-ft` 分支）和 `client/droid`（DROID fork）。DROID fork 本工作区没有检出，它的接口来自
 expo-ft 的 import 和 README。
@@ -84,6 +84,7 @@ configs/
     real_base.py             DROID 公共默认
     pick.py  dynamic_pick.py  light2.py
     robotwin_base.py         RoboTwin 公共默认：14 维关节动作、三路 critic 相机（robotwin-sim）
+    robotwin_beat_block_hammer.py    RoboTwin 任务：环境类、RoboTwin 根目录、种子起点、步数上限（robotwin-sim）
 ```
 
 ### 3.2 `expo_ft/`（learner 侧）
@@ -128,6 +129,7 @@ client/
   collect_data.py            SpaceMouse 遥操作采演示，成功的进 success/
   envs/
     droid_env.py             DroidEnv（继承 DROID 的 RobotEnv）和任务子类 PickBlocksEnv、Light2Env：观测、执行、成功判定、复位
+    robotwin_env.py          RoboTwinEnv：按官方评测协议筛种子复位、执行 14 维关节目标、判成功与超时（robotwin-sim，跑在 RoboTwin 的环境里）
     zed_recorder.py          ZED 相机录像
     utils.py                 图像缩放
   real_utils/
@@ -137,7 +139,7 @@ client/
   install_pyzed.sh           单独安装 ZED 的 Python 包
 
 expo_ft/agents/vla/openpi/   OpenPI checkout，不在仓库里：pi0.5 模型与训练配置、SFT 和 norm stats 脚本、
-                             客户端包（pd-perry fork 为 openpi_client，xense-openpi 为 xense_client）
+                             客户端包（pd-perry fork 为 openpi_client，xense-openpi 为 xense_client；robotwin-sim 两侧都用 xense_client）
 client/droid/                DROID fork，不在仓库里：RobotEnv、轨迹写入、NUC 端 server
 ```
 
@@ -342,6 +344,7 @@ flowchart TB
 | `EnvClientWrapper` | 操作名和参数 | 回复；连接或操作出错时重建环境再试 |
 | `run_client` | 环境 RPC 请求 | 观测、实际执行的动作、`action_type`、done / success / reward / mask |
 | `DroidEnv` | 7 维动作：6 维笛卡尔速度 + 夹爪速度 | 观测：外部相机图像（两个键是同一路）、腕部图像、`cartesian_position`、`gripper_position`、prompt；成功时 reward 为 1 |
+| `RoboTwinEnv` | 14 维关节目标（两臂各 6 关节 + 夹爪），每次 `step` 是 RoboTwin 的一次 `take_action` | 观测键与 LeRobot 数据集相同：三路相机（resize_with_pad 到 224）、`observation.state`、prompt（每回合按 `seen` 生成）；成功或到 `step_lim` 时 done，成功时 reward 为 1 |
 | `AsyncChunkSampler` | learner、观测、计划剩余步数 | 动作块；`delay > 0` 时提前在后台推理 |
 | `Learner.sample_actions` | 原始观测 | `(H, 7)` 动作块、新的 agent、采样信息 |
 | `Learner.update` | critic 批次、actor 批次、`utd_ratio` | 新的 agent、指标 |
@@ -357,8 +360,8 @@ flowchart TB
 | 环境类型 | `workspace` 上四个入口只接受 `env_type == "droid"`，演示只读 DROID 的 `traj.hdf5`。`robotwin-sim` 上 `train_pi_robo.py` 与 `eval_droid_policy.py` 另接受 `robotwin`，演示从 LeRobot v3.0 读；`train_pi_robo_async.py`、`train_offline_rtc.py` 仍只认 DROID | 入口脚本、`expo_ft/env/droid_utils.py`、`expo_ft/env/lerobot_utils.py` |
 | 控制循环的位置 | learner 每个控制步发 `get_observation` 和 `step` 两次 RPC，网络往返在控制环里 | `train_pi_robo.py`、`expo_ft/env/env_client.py` |
 | 人工接管 | SpaceMouse 在机器人端逐步替换动作；transition 用 `is_hil` 标记 | `client/run_client.py` |
-| 奖励 | 稀疏：颜色阈值或手动标记判定成功给 1，其余为 0 | `client/envs/droid_env.py`、`client/real_utils/detector.py` |
+| 奖励 | 稀疏：成功给 1，其余为 0。DROID 用颜色阈值或手动标记判成功，RoboTwin 用任务的 `check_success` | `client/envs/droid_env.py`、`client/real_utils/detector.py`、`client/envs/robotwin_env.py` |
 | VLA | `workspace` 上用 pd-perry fork 的 `get_config(name, weight_loader_path=...)`；`robotwin-sim` 上用 `get_config(name)` 后由 `dataclasses.replace` 换 `weight_loader`。采样依赖 openpi 的 `sample_actions` 支持 `num_samples`、`train`，`Policy.infer` 支持 `is_batch`、`for_training`。RTC 与 Real-Time 线路调 `model.sample_actions_with_prefix(prefix=...)`（前缀补全）；xense-openpi 的同名方法是 RLT 用的另一个接口，没有 `prefix` 参数，所以这两条线路在 `robotwin-sim` 上不能跑 | `expo_ft/utils/train_utils.py`、`expo_ft/agents/vla/pi05.py` |
 | critic 相机 | 默认 `base_0_rgb`、`left_wrist_0_rgb`；任务配置可用 `critic_camera_keys` 覆盖，RoboTwin 用三路 | `expo_ft/agents/alg/batch_utils.py`、`configs/task/robotwin_base.py` |
-| 首步动作 | 训练循环建好环境后先 `env.step(example_action)`，`example_action` 是全零。DROID 的速度动作下这是静止，RoboTwin 的关节目标下会把两臂拉向零位 | `train_pi_robo.py` |
+| 首步动作 | 训练循环建好环境后先 `env.step(example_action)`。DROID 的 `example_action` 全零，速度动作下是静止；RoboTwin 的 `example_action` 设为复位姿态（两臂 0、夹爪 1），关节目标下同样不动 | `train_pi_robo.py`、`configs/task/robotwin_base.py` |
 | 反向依赖 | `data/replay_buffer.py` import `agents/alg/batch_utils.py`；`data/batch_processor.py` 和 `utils/loop_utils.py` import `expo_ft.agents`；任务配置 import `client/envs/droid_env.py` | 见 4.4 |

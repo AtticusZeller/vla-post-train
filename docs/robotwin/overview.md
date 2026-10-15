@@ -12,3 +12,8 @@ RoboTwin 2.0 是基于 SAPIEN 的双臂操作 benchmark，默认机器人是 Alo
   不可缺）；pytorch3d 只用于点云，可不装。资产从 HuggingFace `TianxingChen/RoboTwin2.0` 单独下载。
 - **数据：** 官方采集数据以图像比特存相机帧，有两种字节格式，必须用 `decode_image_bit` 解码；自写解码器会在其中
   一种上把红蓝通道弄反。用现成的 LeRobot 转换结果时要核对颜色与仿真渲染一致。
+- **运行环境（2026-10-15 实测）：** 本地 RTX 4060 的 venv 在 `~/.venvs/robotwin`；CUDA 12.1 的 nvcc 不认 gcc 13，CuRobo
+  用 conda-forge 的 g++ 12 编译。训练服务器的环境在 `/root/data/atticux/robotwin`（uv 管理的 CPython 3.10，系统 Python
+  无头文件），容器里 `libGLX_nvidia` 拿不到 `vkCreateInstance`，渲染要用指向 `libEGL_nvidia.so.0` 的 Vulkan ICD。
+  一个环境进程的显存：渲染约 2.1 GB，加两只手臂的 CuRobo 规划子进程合计超过 3 GB。
+
