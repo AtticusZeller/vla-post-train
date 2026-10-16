@@ -1,5 +1,28 @@
 # EXPO-FT Log
 
+## 2026-10-16 · 联合更新的显存布局拆开、单场景调试开关
+
+- **背景与目的：** 夜里的联合更新在 GPU 0 上 OOM。按用户决定，推理卡和训练卡分开；调试 RL 只用单一场景，省掉每回合
+  换种子时的专家预跑。
+- **实现思路：**
+  - 显存布局：同步入口 `train_pi_robo.py` 原来让所有卡组成数据并行 mesh，推理又固定在 `jax.devices()[0]`，GPU 0 多放一整份
+    推理副本。改为与 `train_pi_robo_async.py` 相同：有 2 张卡及以上时 mesh 只用 `jax.devices()[1:]`，第一张卡只推理并跑
+    环境端（单卡时仍用全部）。
+  - 预取 batch：回放采样里的 `jnp.asarray` 和图像转 float32 原本落在默认设备 GPU 0，预取队列加在用批次约 45 GB。取 batch
+    的线程改在 CPU 默认设备上执行，`apply_data_sharding` 再把它直接发到更新卡。
+  - 单场景：环境端 `ROBOTWIN_FIXED_SEED=1` 时，`RoboTwinEnv.reset` 记住第一个专家能做成的种子与对应指令，之后每回合直接用它
+    搭场景；不设时仍按官方协议逐个换种子。
+  - 启动脚本：`rl_joint.sh` 的第一张卡做推理与环境端；`night_run.sh` 给 RL 取 1 + 4 张卡（只有 4 张时 1 + 2）。
+- **组件变化：** expo-ft `robotwin-sim` 新增 `e0b363b`（显存布局与取 batch）、`77cb999`（固定种子）。
+- **主要文件：** `train_pi_robo.py`（mesh 与取 batch 线程）、`client/envs/robotwin_env.py`（固定种子）、
+  `configs/task/robotwin_beat_block_hammer.py`（开关）、`scripts/robotwin/{rl_joint,night_run}.sh`。
+- **验证：**
+  - 显存：15k 基座、β=0.05、全新启动（夜里 OOM 的场景），关掉预分配。只拆卡时 GPU 0 峰值 72.9 GB，第二轮 update 已回到
+    7.4 s/次；加上 CPU 取 batch 后（`smoke_layout_split2`）3 轮 update 无 OOM，GPU 0 峰值 39.6 GB，更新卡各 68.4 GB
+    （`MEM_FRACTION=0.85` 的上限，实际需求未测）。
+  - 单场景：连续 3 次 reset 的种子、指令与初始状态相同，耗时 62.5 s、23.5 s、23.4 s。
+  - `train_pi_robo.py` 的 ruff 报错数与改动前相同（19 条，均为原有）。
+
 ## 2026-10-16 · RoboTwin 夜间运行：动作还原与 replay 修正、GPU 上跑通 SFT 与联合更新
 
 - **背景与目的：** 第一次在 `xense-training-h100` 的 GPU 上跑 [plan.md](plan.md) 的 SFT → 基座评测 → 联合更新。夜里暴露的

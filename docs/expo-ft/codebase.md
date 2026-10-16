@@ -1,6 +1,6 @@
 # EXPO-FT 代码组织
 
-快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支（`bbd07c2`）在其上合并了
+快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支（`77cb999`）在其上合并了
 上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取、环境端与任务配置（见 5 已知耦合）。运行还要
 两个不在仓库里的 checkout：`expo_ft/agents/vla/openpi`（`workspace` 上是 pd-perry 的 OpenPI fork，`robotwin-sim`
 上是 xense-openpi 的 `expo-ft` 分支）和 `client/droid`（DROID fork）。DROID fork 本工作区没有检出，它的接口来自
@@ -64,7 +64,7 @@ flowchart LR
 ### 3.1 入口、脚本与配置
 
 ```text
-train_pi_robo.py             在线 RL，单线程：控制循环和梯度更新轮流
+train_pi_robo.py             在线 RL，单线程：控制循环和梯度更新轮流；≥2 卡时卡 0 采样、其余更新
 train_pi_robo_async.py       在线 RL，多线程：卡 0 采样驱动机器人，其余卡更新
 train_offline_rtc.py         离线 RTC-SFT：带动作前缀条件的 pi0.5 BC，是 Real-Time 线路的基座
 eval_droid_policy.py         冻结策略的真机评测
@@ -135,7 +135,7 @@ client/
   collect_data.py            SpaceMouse 遥操作采演示，成功的进 success/
   envs/
     droid_env.py             DroidEnv（继承 DROID 的 RobotEnv）和任务子类 PickBlocksEnv、Light2Env：观测、执行、成功判定、复位
-    robotwin_env.py          RoboTwinEnv：按官方评测协议筛种子复位、执行 14 维关节目标、判成功与超时（robotwin-sim，跑在 RoboTwin 的环境里）
+    robotwin_env.py          RoboTwinEnv：按官方评测协议筛种子复位（`fixed_seed` 时反复用同一种子）、执行 14 维关节目标、判成功与超时（robotwin-sim，跑在 RoboTwin 的环境里）
     zed_recorder.py          ZED 相机录像
     utils.py                 图像缩放
   real_utils/

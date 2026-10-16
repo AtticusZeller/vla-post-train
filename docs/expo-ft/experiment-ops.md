@@ -17,7 +17,8 @@
 | 磁盘 | 一个 LoRA SFT checkpoint 约 9 GB；RL 每条 transition 单独存一个文件，一次运行十几到几十 GB |
 
 单进程的量：SFT 8 卡约 0.41 s/步（需 32 个 DataLoader worker）；评测一对 learner + 环境端占一张卡约 47 GB，一回合
-最长 400 步、约 2 分钟；联合更新学习端用 4 张卡且每张接近占满，环境端约 3.5 GB，应放在另一张卡上。
+最长 400 步、约 2 分钟；联合更新用 5 张卡：GPU 0 推理加环境端，峰值约 40 GB；4 张更新卡各约 68 GB（`MEM_FRACTION=0.85` 的上限）。
+联合更新每步约 0.45 s，几乎都在环境侧；换种子时每回合 reset 约 60 s，`ROBOTWIN_FIXED_SEED=1` 后约 23 s。
 
 ## 夜间运行的组织
 

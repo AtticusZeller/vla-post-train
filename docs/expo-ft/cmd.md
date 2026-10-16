@@ -72,10 +72,10 @@ N_EDIT=0 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin
 用途：从一个 SFT checkpoint 起 EXPO-FT 联合更新（同名运行带 `--resume`，会从最近的 agent checkpoint 接上），并从 W&B
 读已结束的回合。
 
-前提：学习端 4 张空卡，另有一张卡放环境端；参数取参考默认，`EDIT_SCALE` 可覆盖 β。
+前提：5 张空卡。第一张做推理并放环境端，其余 4 张做更新（更新卡数要能整除 batch 64）；参数取参考默认，`EDIT_SCALE` 可覆盖 β。单场景调试加 `ROBOTWIN_FIXED_SEED=1`：每回合都用训练种子段里第一个专家能做成的种子（种子段 100 是 10100000），reset 从约 60 s 降到约 23 s。
 
 ```bash
-tmux new-session -d -s atticux-rl "ENV_GPU=4 MEM_FRACTION=0.95 EDIT_SCALE=0.05 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
+tmux new-session -d -s atticux-rl "EDIT_SCALE=0.05 ROBOTWIN_FIXED_SEED=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
 ```
 
 ```bash
