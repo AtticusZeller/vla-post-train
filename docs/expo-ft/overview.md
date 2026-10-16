@@ -13,5 +13,5 @@ README 克隆匹配分支的 OpenPI 与 DROID fork；它们不是本 submodule �
 RoboTwin 自己的环境里跑，作为另一个 actor 经同一协议被 learner 逐步驱动；观测键与 LeRobot
 数据集一致，SFT 与 replay 共用一份 openpi data config。
 
-验证边界（2026-10-15）：环境端、数据转换与预填、评测链路已分别验证（见 [log.md](log.md)）；
-SFT、基座评测和联合更新尚未在 GPU 上跑过，进行中的事务见 [plan.md](plan.md)。没有真机记录。
+验证边界（2026-10-16）：SFT、基座评测和联合更新都已在 GPU 上跑通；`beat_block_hammer` 上 15k 步 LoRA 基座 72%，
+联合更新的显存布局与编辑幅度仍待讨论（见 [experiments.md](experiments.md) 与 [plan.md](plan.md)）。没有真机记录。

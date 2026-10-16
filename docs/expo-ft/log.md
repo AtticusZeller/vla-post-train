@@ -1,5 +1,34 @@
 # EXPO-FT Log
 
+## 2026-10-16 · RoboTwin 夜间运行：动作还原与 replay 修正、GPU 上跑通 SFT 与联合更新
+
+- **背景与目的：** 第一次在 `xense-training-h100` 的 GPU 上跑 [plan.md](plan.md) 的 SFT → 基座评测 → 联合更新。夜里暴露的
+  问题按用户授权就地排查修复；结果见 [experiments.md](experiments.md)。
+- **实现思路：**
+  - 动作还原：`process_transformed_outputs` 原先给输出变换一个全零 state，`Unnormalize` 把它还原成状态区间中值，
+    `AbsoluteActions` 加回的是假状态，增量动作配置下机械臂被拉向固定姿态（评测全部 400 步失败）。改为记下最近一次
+    `process_raw_inputs` 的归一化 state 交给输出变换。DROID 配置没有增量动作，参考实现里不暴露。
+  - replay 回填：`insert` 把新动作按当前行的 state 转成增量后，原样填进前 H−1 行的动作块；那些块应相对各自的首个 state。
+    按两行归一化 state 之差乘每维 `scale_state/scale_action`（从 `DeltaActions` mask 与 norm stats 推出）修正。
+  - 恢复：orbax 恢复出的数组固定在单卡，update 的 jit 拒绝与复制的 rng 混用；恢复后把单卡叶子复制到全部设备。
+  - 启动脚本：`night_run.sh` 只保留最新 checkpoint、DataLoader worker 8→32、日志行带时间戳故护栏 grep 去掉 `^`，加
+    `TRAIN_MODE`（续训）、`SKIP_TRAIN`（只评测与 RL）、`NO_RL`、`EXTRA_TRAIN_ARGS`、低于 30% 交接与定时停；从 checkout 调用
+    同目录脚本。`rl_joint.sh` 加 `ENV_GPU`、`MEM_FRACTION`、`EDIT_SCALE`；新增完整策略评测 `eval_full_policy.sh` 与从 W&B
+    读回合结果的 `rl_episodes.sh`。
+  - 环境：服务器 RoboTwin venv 补装 `ml-collections`（任务配置在环境端导入它，本地装过、服务器漏装）。
+- **组件变化：** expo-ft `robotwin-sim` 新增 `40127b5`、`75bc4b3`、`54a64b5`、`2a5a1e8`、`bbd07c2`。
+- **主要文件：** `expo_ft/agents/vla/pi05.py`（输出变换的 state）、`expo_ft/data/replay_buffer.py`（回填修正）、
+  `train_pi_robo.py`（恢复后复制）、`scripts/robotwin/`（启动与诊断脚本）。
+- **验证：**
+  - 动作还原：数据集一帧经输入、输出变换往返，最大误差 3e-17（零 state 时 1.35）；修复后 15k 基座评测第一回合 8/8 成功。
+  - replay：服务器隔离副本上把示教第 0 条插入 buffer，5 个位置的动作块与按真实首帧 state 变换的真值比对，最大误差 2e-7
+    （修复前 1.91）。
+  - 恢复：同一 checkpoint 续跑后第一轮 3 次 update 完成，无设备错误。
+  - GPU 上 SFT：第 0 步 `param_norm` 1803.86，与 1803.25 相差 0.6，loss 有限；CPU 上的参数损坏没有在 GPU 复现。32 worker
+    时 8 卡每步 0.41 s（8 worker 时 1.18 s，受 CPU 解码限制）。
+  - 夜间遇到的其他情况：checkpoint 存于 4 卡时在 2 卡上 `--resume` 报 sharding 为 None，改用权重初始化新实验；`pgrep -f`
+    会匹配到 ssh 自身的命令行，只按明确 PID 停进程；正在执行的 bash 脚本不能原地改写。
+
 ## 2026-10-15 · expo-ft 接上 xense-openpi 与 RoboTwin 仿真
 
 - **背景与目的：** 按 [expo-ft-spec.md](../xense-openpi/expo-ft-spec.md) 4.4 的复现路线，先在 RoboTwin 仿真单任务上跑

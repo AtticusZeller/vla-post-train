@@ -138,6 +138,9 @@ in independent `methods/*` Git submodules.
 
 - Before changing a method, read its own `AGENTS.md` or `CLAUDE.md`. Before running a configured
   experiment, also read `experiments/<method>/runbook.md` when it exists.
+- Before launching or monitoring unattended runs on a shared training server, read
+  `docs/<method>/experiment-ops.md` when it exists: machine limits, the night routine, monitoring, and
+  what the agent may do without the user.
 - Keep method-specific environments isolated unless a method's own documentation explicitly defines a
   shared environment.
 - Formal runs require a clean method checkout, a committed root configuration, and root and method

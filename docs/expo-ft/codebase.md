@@ -1,6 +1,6 @@
 # EXPO-FT 代码组织
 
-快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支（`eed7996`）在其上合并了
+快照：`workspace` 分支的 `aaf1599`，即上游 `pd-perry/expo-ft` 导入后的单个提交；`robotwin-sim` 分支（`bbd07c2`）在其上合并了
 上游 reward 对齐修复，learner 改用 xense-openpi，并加了 RoboTwin 的演示读取、环境端与任务配置（见 5 已知耦合）。运行还要
 两个不在仓库里的 checkout：`expo_ft/agents/vla/openpi`（`workspace` 上是 pd-perry 的 OpenPI fork，`robotwin-sim`
 上是 xense-openpi 的 `expo-ft` 分支）和 `client/droid`（DROID fork）。DROID fork 本工作区没有检出，它的接口来自
@@ -73,7 +73,9 @@ scripts/
   convert_robotwin_to_lerobot.py     RoboTwin 每回合 HDF5 → LeRobot v3.0（动作列 actions，存图像）（robotwin-sim）
   robotwin/                  训练机上的 RoboTwin 运行脚本（robotwin-sim）
     night_run.sh             凌晨等空卡 → SFT（第 0 步参数护栏）→ 末个 checkpoint 分片评测 → 起联合更新
-    eval_sft_ckpt.sh  rl_joint.sh    一张卡上配对 learner 与 RoboTwin 环境端：基座评测 / EXPO-FT 联合更新
+    eval_sft_ckpt.sh  eval_full_policy.sh   一张卡上配对 learner 与环境端：基座策略 / 完整 EXPO 策略评测
+    rl_joint.sh              学习端多卡 + 环境端一卡的 EXPO-FT 联合更新
+    rl_episodes.sh           从 W&B 读 RL 运行已结束的回合（learner 日志不记）
   pick/                      EXPO-FT 的一整套启动脚本
   dynamic_pick/              Real-Time EXPO-FT 的一整套启动脚本
     collect_data.sh  convert_data.sh  calculate_norm.sh        数据三步（两套相同）
@@ -107,7 +109,7 @@ expo_ft/
       vla_base.py            Model 接口：预处理、采样、反归一化、actor 训练批次
       pi05.py                Pi05Agent 与 build_pi05：包住 OpenPI fork 的 pi0.5
   data/
-    replay_buffer.py         PiReplayBuffer：逐步存 transition，按 replan_steps 切块采样，带 OpenPI transform
+    replay_buffer.py         PiReplayBuffer：逐步存 transition，按 replan_steps 切块采样，带 OpenPI transform；增量动作回填时按各块首个 state 修正
     batch_processor.py       每次更新取 critic 批次和 actor 批次，可混合在线与离线数据
     dataset.py               Dataset 基类
   env/
@@ -366,6 +368,7 @@ flowchart TB
 | 人工接管 | SpaceMouse 在机器人端逐步替换动作；transition 用 `is_hil` 标记 | `client/run_client.py` |
 | 奖励 | 稀疏：成功给 1，其余为 0。DROID 用颜色阈值或手动标记判成功，RoboTwin 用任务的 `check_success` | `client/envs/droid_env.py`、`client/real_utils/detector.py`、`client/envs/robotwin_env.py` |
 | VLA | `workspace` 上用 pd-perry fork 的 `get_config(name, weight_loader_path=...)`；`robotwin-sim` 上用 `get_config(name)` 后由 `dataclasses.replace` 换 `weight_loader`。采样依赖 openpi 的 `sample_actions` 支持 `num_samples`、`train`，`Policy.infer` 支持 `is_batch`、`for_training`。RTC 与 Real-Time 线路调 `model.sample_actions_with_prefix(prefix=...)`（前缀补全）；xense-openpi 的同名方法是 RLT 用的另一个接口，没有 `prefix` 参数，所以这两条线路在 `robotwin-sim` 上不能跑 | `expo_ft/utils/train_utils.py`、`expo_ft/agents/vla/pi05.py` |
+| 增量动作的 state | `robotwin-sim` 上 `Pi05Agent.process_transformed_outputs` 用最近一次 `process_raw_inputs` 记下的归一化 state 还原绝对动作，两者必须对同一观测成对调用；replay 回填增量动作块时按各块首个 state 修正 | `expo_ft/agents/vla/pi05.py`、`expo_ft/data/replay_buffer.py` |
 | critic 相机 | 默认 `base_0_rgb`、`left_wrist_0_rgb`；任务配置可用 `critic_camera_keys` 覆盖，RoboTwin 用三路 | `expo_ft/agents/alg/batch_utils.py`、`configs/task/robotwin_base.py` |
 | 首步动作 | 训练循环建好环境后先 `env.step(example_action)`。DROID 的 `example_action` 全零，速度动作下是静止；RoboTwin 的 `example_action` 设为复位姿态（两臂 0、夹爪 1），关节目标下同样不动 | `train_pi_robo.py`、`configs/task/robotwin_base.py` |
 | 反向依赖 | `data/replay_buffer.py` import `agents/alg/batch_utils.py`；`data/batch_processor.py` 和 `utils/loop_utils.py` import `expo_ft.agents`；任务配置 import `client/envs/droid_env.py` | 见 4.4 |

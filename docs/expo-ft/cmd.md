@@ -35,17 +35,52 @@ cd <workspace> && JAX_PLATFORMS=cpu HF_LEROBOT_HOME=<lerobot home> <expo-ft>/.ve
 
 ## 训练机上的夜间 SFT → 评测 → 联合更新
 
-用途：凌晨卡空时自动训练 SFT、评最后一个 checkpoint 的基座成功率、再起 EXPO-FT 联合更新。
+用途：凌晨卡空时自动训练 SFT、评最后一个 checkpoint 的基座成功率，不低于 30% 时再起 EXPO-FT 联合更新。
 
-前提：`xense-training-h100` 上 `/root/data/atticux/agent-workspace/expo-ft/` 已有 `src/expo-ft`（含 learner venv 与
-xense-openpi checkout）、数据集、norm stats；`/root/data/atticux/robotwin` 有 RoboTwin 环境；三份脚本与
-`scripts/robotwin/` 相同，放在 `/root/data/atticux/`（`night_sft.sh` 即 `night_run.sh`）；W&B key 在
-`/root/data/atticux/.wandb_key`。可用 `START`、`DEADLINE`、`EVAL_EPISODES`、`EXP`、`RL_RUN` 环境变量覆盖默认值。
+前提：`xense-training-h100` 上 `/root/data/atticux/agent-workspace/expo-ft/` 已有 `src/expo-ft`（`robotwin-sim` checkout、
+learner venv、xense-openpi checkout）、数据集与 norm stats；`/root/data/atticux/robotwin` 有 RoboTwin 环境；W&B key 在
+`/root/data/atticux/.wandb_key`。资源与规则见 [experiment-ops.md](experiment-ops.md)。常用环境变量：`START`、`DEADLINE`
+（等卡窗口）、`TRAIN_STOP`、`RL_STOP`、`EXP`、`STEPS`、`NO_RL=1`（评完即停）、`TRAIN_MODE=--resume`（同卡数续训）、
+`SKIP_TRAIN=<gpu 列表>`（只评测与 RL）、`EXTRA_TRAIN_ARGS`（例如 `--weight-loader.params-path=<step>/params`）。
 
 ```bash
-tmux new-session -d -s atticux-night-sft "/root/data/atticux/night_sft.sh > /root/data/atticux/agent-workspace/expo-ft/logs/night_$(date +%Y%m%d).log 2>&1"
+tmux new-session -d -s atticux-night-sft "EXP=sft_bbh_clean50_10k STEPS=10000 NO_RL=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/night_run.sh > /root/data/atticux/agent-workspace/expo-ft/logs/night_$(date +%Y%m%d).log 2>&1"
 ```
 
-预期：日志先写 `waiting until ... 02:00`；有空卡后依次出现 `step 0 ok`、`training exited rc=0`、各分片结果与
-`base-policy success: k/50`、`starting RL`。单独评测或单独起 RL 用 `eval_sft_ckpt.sh <gpu> <step_dir> <port>
-<episodes> <out_dir> [seed_index]` 与 `rl_joint.sh <gpus> <step_dir> <run_name>`。
+预期：日志先写 `waiting until ... 01:30`；有空卡后依次出现 `step 0 ok`、`training exited rc=0`、各分片结果与
+`base-policy success: k/50`；未设 `NO_RL` 且不低于 30% 时接着 `starting RL`。退出码 2 表示低于 30%、停在 RL 之前。
+
+## 单独评测一个 checkpoint
+
+用途：基座策略（`eval_sft_ckpt.sh`）或完整 EXPO 策略（`eval_full_policy.sh`，新初始化的 edit actor 与 critic）评若干回合。
+
+前提：同上；一对 learner 与环境端占一张卡约 47 GB；并行时每对用不同端口与 `seed_index`。完整策略可用 `N_EDIT`、
+`EDIT_SCALE` 覆盖编辑样本数与幅度。
+
+```bash
+/root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/eval_sft_ckpt.sh <gpu> <step_dir> <port> <episodes> <out_dir> <seed_index>
+```
+
+```bash
+N_EDIT=0 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/eval_full_policy.sh <gpu> <step_dir> <port> <episodes> <out_dir> <seed_index>
+```
+
+预期：`<out_dir>/eval.log` 每回合一行 `success=... len=...`，结尾 `Evaluation complete: success_rate=... (k/n)`。
+
+## 单独起联合更新并查看回合结果
+
+用途：从一个 SFT checkpoint 起 EXPO-FT 联合更新（同名运行带 `--resume`，会从最近的 agent checkpoint 接上），并从 W&B
+读已结束的回合。
+
+前提：学习端 4 张空卡，另有一张卡放环境端；参数取参考默认，`EDIT_SCALE` 可覆盖 β。
+
+```bash
+tmux new-session -d -s atticux-rl "ENV_GPU=4 MEM_FRACTION=0.95 EDIT_SCALE=0.05 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
+```
+
+```bash
+/root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_episodes.sh $(cat /root/data/atticux/agent-workspace/expo-ft/rl/<run_name>/checkpoints/wandb_id.txt)
+```
+
+预期：`rl/<run_name>/learner.log` 出现 `EnvClient listening` 与 tqdm 步数，10 回合后出现 update 进度；`rl_episodes.sh` 输出回合数、
+成功数与最近 6 回合的 `(step, success, length)`。
