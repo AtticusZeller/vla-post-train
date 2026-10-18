@@ -1,5 +1,41 @@
 # EXPO-FT Log
 
+## 2026-10-18 · RoboTwin 单任务上跑通 EXPO-FT（事务完成）
+
+- **背景与目的：** [expo-ft-spec.md](../xense-openpi/expo-ft-spec.md) 4.4 复现路线的第一步：仿真、无人工介入、按参考实现
+  联合更新，在 `beat_block_hammer`（Easy）上把代码调通，并看 RL 能否把成功率推到 SFT 基座之上。
+- **实现思路：** 2026-10-15 至 10-16 接好 learner（xense-openpi）、RoboTwin 环境端、数据转换与 replay 预填，修掉动作还原、
+  replay 回填、恢复与显存布局的问题（见下面各条）；调试只用一个固定种子，超参取参考默认，β=0.05。
+- **组件变化：** 这一事务的代码都在 expo-ft `robotwin-sim`（`40127b5` 至 `77cb999`）。
+- **主要文件：** 见 [codebase.md](codebase.md)。
+- **验证：** 用户结论（2026-10-18）：代码通过，原算法有效。固定种子上 15k 基座（官方协议 72%）更新前 6/10、最近 50 回合
+  49/50；约 7k 基座（31%）1/10 → 46/50；20 回合滑动成功率首次到 90% 分别用 3.2 h 与 4.2 h。证据边界：单任务、单种子、
+  在线训练回合、每个基座一次（[experiments.md](experiments.md)）。
+
+## 2026-10-18 · 第二台训练机、并行 RL、单次尝试判定与 checkpoint 上限
+
+- **背景与目的：** `xense-training-h100` 被占满时改用 `02-xense-training`，并在一台 8 卡机上同时跑两个基座；RL 的 agent
+  checkpoint 把共享盘吃得太快；训练数据要只含一次成功的轨迹（用户 2026-10-18）。
+- **实现思路：**
+  - 02 的容器只注入了 NVIDIA 计算库，缺 EGL/GLX、glcore、rtcore 等图形库，RoboTwin 光线追踪渲染起不来。Codex 把
+    h100 上同版本（580.65.06）的这些库复制到共享盘，环境端靠 `LD_LIBRARY_PATH` 加载，不改系统目录与原 ICD。
+  - `rl_joint.sh` 新增可覆盖的 `PORT` 与 `N_EDIT`，两次运行用不同端口；W&B 汇总改用 `rl_status.sh`（替换 `rl_episodes.sh`），
+    多给每 10 回合成功率与 critic 走势。
+  - `initialize_checkpoint_dir` 与 `train_pi_robo.py` 加 `max_to_keep`（默认 100 不变），`rl_joint.sh` 只留最新两份。
+  - 单次尝试判定（用户在本机写）：RoboTwin 原协议允许没打中后重试到 `step_lim`；`HammerStrikeJudge` 按锤头相对木块的
+    高度判断第一次落锤，没成功就结束回合、记失败。`ROBOTWIN_SINGLE_ATTEMPT` 默认 1，训练与评测都用；0 回到官方协议。
+- **组件变化：** expo-ft `e0aba36`（判定）、`c408f62`（checkpoint 上限）、`2be2105`（启动与汇总脚本）；共享盘新增
+  `/root/data/atticux/nvidia-gl-580.65.06/` 与 `vulkan/nvidia_icd_egl_02.json`。
+- **主要文件：** `client/envs/robotwin_attempts.py`（判定）、`expo_ft/agents/alg/agent.py`（保留份数）、
+  `scripts/robotwin/{rl_joint,rl_status}.sh`。
+- **验证：**
+  - 02：复制的 10 个库与源文件 SHA-256 一致；环境端三路图像正常，进程加载的是新目录的 rtcore 与 glvkspirv；1 + 4 与
+    1 + 2 两种布局都跑过 update、无 OOM，随后两次 RL 并行跑了 11 h 以上。
+  - `max_to_keep=2`：临时目录里存 4 个 checkpoint，只剩最新两份。
+  - `rl_status.sh` 在两次运行中的 W&B 上输出分段成功率与 Q 走势。
+  - 判定：编译通过，引用的 `hammer`、`block` 与功能点在 RoboTwin 任务里存在；阈值取自用户会话里的专家回放测量，
+    Agent 没有在仿真里跑过这个判定。
+
 ## 2026-10-16 · 联合更新的显存布局拆开、单场景调试开关
 
 - **背景与目的：** 夜里的联合更新在 GPU 0 上 OOM。按用户决定，推理卡和训练卡分开；调试 RL 只用单一场景，省掉每回合

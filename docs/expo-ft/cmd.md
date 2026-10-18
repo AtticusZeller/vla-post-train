@@ -72,15 +72,18 @@ N_EDIT=0 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin
 用途：从一个 SFT checkpoint 起 EXPO-FT 联合更新（同名运行带 `--resume`，会从最近的 agent checkpoint 接上），并从 W&B
 读已结束的回合。
 
-前提：5 张空卡。第一张做推理并放环境端，其余 4 张做更新（更新卡数要能整除 batch 64）；参数取参考默认，`EDIT_SCALE` 可覆盖 β。单场景调试加 `ROBOTWIN_FIXED_SEED=1`：每回合都用训练种子段里第一个专家能做成的种子（种子段 100 是 10100000），reset 从约 60 s 降到约 23 s。
+前提：5 张空卡。第一张做推理并放环境端，其余做更新（更新卡数要能整除 batch 64，1 + 2 张也行）；参数取参考默认，`EDIT_SCALE`
+可覆盖 β。同一台机器并行第二次运行时换卡并设 `PORT=8401`。单场景调试加 `ROBOTWIN_FIXED_SEED=1`：每回合都用训练种子段里第一个
+专家能做成的种子（种子段 100 是 10100000），reset 从约 60 s 降到约 23 s。默认按单次尝试判定（第一次没打中即失败），
+`ROBOTWIN_SINGLE_ATTEMPT=0` 恢复官方协议。在 `02-xense-training` 上先 `export LD_LIBRARY_PATH=/root/data/atticux/nvidia-gl-580.65.06`。
 
 ```bash
 tmux new-session -d -s atticux-rl "EDIT_SCALE=0.05 ROBOTWIN_FIXED_SEED=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
 ```
 
 ```bash
-/root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_episodes.sh $(cat /root/data/atticux/agent-workspace/expo-ft/rl/<run_name>/checkpoints/wandb_id.txt)
+/root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_status.sh $(cat /root/data/atticux/agent-workspace/expo-ft/rl/<run_name>/checkpoints/wandb_id.txt)
 ```
 
-预期：`rl/<run_name>/learner.log` 出现 `EnvClient listening` 与 tqdm 步数，10 回合后出现 update 进度；`rl_episodes.sh` 输出回合数、
-成功数与最近 6 回合的 `(step, success, length)`。
+预期：`rl/<run_name>/learner.log` 出现 `EnvClient listening` 与 tqdm 步数，10 回合后出现 update 进度；`rl_status.sh` 输出回合数、
+每 10 回合成功数（第一段在 update 之前）、最新 critic/actor 指标与 Q 走势；`checkpoints/` 下只留最新两份 agent checkpoint。
