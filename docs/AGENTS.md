@@ -152,3 +152,11 @@ Keep generic cautions about evidence and inference in agent instructions,
 rather than repeating them throughout human-facing documents.
 When uncertainty matters, identify the specific observation, hypothesis,
 or missing information beside the relevant claim.
+
+## Attributing Judgments
+
+Write clear experimental results (measured numbers, observed curves) directly in the existing style.
+Label every judgment that is not a direct measurement with its source and date: the human's
+conclusions, decisions, and inferences from discussion as `用户判断` / `用户结论` / `用户决定（YYYY-MM-DD）`,
+and the agent's inferences as `Agent 推断`, with `未验证` when nothing has tested them yet. Never
+merge the two into an unattributed claim, and never upgrade an inference into a finding.
