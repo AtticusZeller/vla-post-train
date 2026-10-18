@@ -14,6 +14,7 @@ def test_current_method_registry_is_exact() -> None:
         "expo-ft",
         "lerobot",
         "lerobot-xense",
+        "rlinf",
         "robotwin",
         "tacxense",
         "xense-openpi",

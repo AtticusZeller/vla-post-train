@@ -52,6 +52,10 @@ _METHODS = {
         "branch": "workspace",
         "upstream": "https://github.com/RoboTwin-Platform/RoboTwin.git",
     },
+    "rlinf": {
+        "branch": "workspace",
+        "upstream": "https://github.com/RLinf/RLinf.git",
+    },
 }
 
 

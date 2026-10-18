@@ -22,3 +22,7 @@
 	path = methods/robotwin
 	url = https://github.com/AtticusZeller/RoboTwin.git
 	branch = workspace
+[submodule "methods/rlinf"]
+	path = methods/rlinf
+	url = https://github.com/AtticusZeller/RLinf.git
+	branch = workspace
