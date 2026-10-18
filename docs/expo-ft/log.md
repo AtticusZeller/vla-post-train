@@ -1,5 +1,17 @@
 # EXPO-FT Log
 
+## 2026-10-18 · 恢复时保留 checkpoint 之后已落盘的回放
+
+- **背景与目的：** `--resume` 原先把回放截到最近的 agent checkpoint 并从它的步数重新计数：之后已落盘的回放被丢弃
+  （最多一个 checkpoint 间隔，约 15 分钟采样），W&B 步数倒退，新回合要等超过原最大步数才显示（用户同意改法 2026-10-18）。
+- **实现思路：** 恢复时读入全部已落盘的回放，丢掉末尾没有终止 transition 的半个回合，起始步数接在最后一条之后；网络
+  权重仍回到 checkpoint，checkpoint 的步数只是权重的标签。`train_pi_robo_async.py` 仍按 checkpoint 截断，未改。
+- **组件变化：** expo-ft `cb4a760`。
+- **主要文件：** `expo_ft/data/replay_buffer.py`（`restore_replay_buffer` 的 `complete_episodes_only`，返回最后恢复的步数）、
+  `train_pi_robo.py`（起始步数）。
+- **验证：** 假回放目录（两个完整回合、一个虚拟动作、一个未结束回合）：完整回合模式只恢复两个完整回合、返回最后一步，
+  不加参数时全读，按步数截断与原来一致。GPU 上的停止再恢复放在下一次运行里验证（[plan.md](plan.md)）。
+
 ## 2026-10-18 · RoboTwin 单任务上跑通 EXPO-FT（事务完成）
 
 - **背景与目的：** [expo-ft-spec.md](../xense-openpi/expo-ft-spec.md) 4.4 复现路线的第一步：仿真、无人工介入、按参考实现
