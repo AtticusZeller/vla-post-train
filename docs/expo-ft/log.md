@@ -1,5 +1,39 @@
 # EXPO-FT Log
 
+## 2026-10-19 · RoboTwin 10 任务数据与联训 LoRA 基座
+
+- **背景与目的：** 在 bbh 之外构建多任务 baseline（用户 2026-10-18 选定 10 个任务）：所有任务共用一个联训 SFT 基座做 RL 起点。
+- **实现思路：** 转换脚本接受多个任务目录，写成一个多任务 LeRobot 数据集，每回合用自己任务的指令；联训配置沿用 bbh 配方
+  （batch 64、恒定 2.5e-5、无 EMA），8 卡 30k 步。任务配置与评测脚本按任务名参数化，场景配置与指令类型也可选，用来评 Hard。
+- **组件变化：** expo-ft `31e467a`（多任务转换、`configs/task/robotwin_task.py`、`eval_sft_ckpt.sh` 的 `TASK`/`PI05_CONFIG`/
+  `ASSET_ID`）、`1a9993d`（`ROBOTWIN_TASK_CONFIG`、`ROBOTWIN_INSTRUCTION_TYPE`）、`3338fbf`（`rl_joint.sh` 按任务起 RL、
+  `robotwin_task.py` 的步数上限）；xense-openpi `1045ecc`（`pi05_robotwin_cotrain10_lora`）。
+- **主要文件：** `scripts/convert_robotwin_to_lerobot.py`、`configs/task/robotwin_task.py`、`scripts/robotwin/eval_sft_ckpt.sh`、
+  `scripts/robotwin/rl_joint.sh`。
+- **验证：** 联训数据集 500 回合、80,173 帧，等于 10 个单任务数据集之和，prompt 抽查正确。`sft_cotrain10_30k`（h100 8 卡，
+  10-18 23:07–10-19 02:40）的 29999 在 Easy 上 8 个任务 ≥80%（bbh 100%），只有 click_alarmclock 42%、handover_block 16%；
+  3000 步也已大多 ≥80%，按“30–70% 的基座”往前找不到合适的 checkpoint，用户改为在 Hard 上挑任务（[plan.md](plan.md)、
+  [experiments.md](experiments.md)）。
+
+## 2026-10-19 · 提高 RoboTwin 上 EXPO-FT 的训练效率（事务完成）
+
+- **背景与目的：** 单任务跑通后，固定种子上到 90% 要 3–4.5 h，一晚只够跑一个基座。这个事务让同样的验证跑得更快，并放开种子。
+- **实现思路：**
+  - 跨回合复用 RoboTwin task 对象（照官方评测），机器人与 curobo planner 只建一次：reset 从约 27 s 降到 1 s 以内，专家检查
+    每个种子约 1 s。
+  - 照 RLinf 离线算有效种子表（启动时读表，reset 按顺序取，不跑专家检查），序列与在线检查相同。复用 task 对象之后，种子表
+    每回合只省约 1 s。
+  - 回合判定：单次尝试判定（第一次没成功即失败）300 回合内停在 63%；改为步数上限 150、上限内重试成功也算，固定种子 1.8 h
+    到 90%（官方 400 步协议 3.2 h），随机种子也能学（201–300 回合 83%）。
+  - 异步训练与多环境实现后放弃（见下面 10-18 一条）。
+  - 用户定的单任务标准实验环境：随机种子（种子表）+ 步数上限 150、可以重试；每次运行到第 300 回合。
+- **组件变化：** expo-ft `3fbdd2d`（复用 task 对象）、`ca1a4d9`（`ROBOTWIN_STEP_LIMIT`）、`a75e8e6`（`ROBOTWIN_SEED_TABLE` 与
+  `scripts/robotwin/make_seed_table.py`）。
+- **主要文件：** `client/envs/robotwin_env.py`、`configs/task/robotwin_beat_block_hammer.py`、`scripts/robotwin/make_seed_table.py`。
+- **验证：** 本机复用前后同一种子 reset 的状态与图像逐像素相同，种子序列不变；用表时前 3 次 reset 的种子、指令与观测和在线
+  检查一致；bbh demo_clean 训练种子表 600 个候选 451 个有效（`data/robotwin_seeds/beat_block_hammer_demo_clean/`）。四次 RL
+  运行的对照见 [experiments.md](experiments.md) 顶部的 RL 总表。证据边界：单任务、每个设定一次运行。
+
 ## 2026-10-18 · RoboTwin 异步多环境训练（实现后放弃）与回合步数上限
 
 - **背景与目的：** 为提高 RoboTwin 上的训练效率，照参考实现的异步训练接上 RoboTwin，并让多个环境共享一个 learner

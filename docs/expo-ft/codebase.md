@@ -73,8 +73,10 @@ scripts/
   convert_robotwin_to_lerobot.py     RoboTwin 每回合 HDF5 → LeRobot v3.0（动作列 actions，存图像）（robotwin-sim）
   robotwin/                  训练机上的 RoboTwin 运行脚本（robotwin-sim）
     night_run.sh             凌晨等空卡 → SFT（第 0 步参数护栏）→ 末个 checkpoint 分片评测 → 起联合更新
-    eval_sft_ckpt.sh  eval_full_policy.sh   一张卡上配对 learner 与环境端：基座策略 / 完整 EXPO 策略评测
-    rl_joint.sh              学习端多卡 + 环境端一卡的 EXPO-FT 联合更新
+    eval_sft_ckpt.sh  eval_full_policy.sh   一张卡上配对 learner 与环境端：基座策略 / 完整 EXPO 策略评测（TASK 选任务）
+    rl_joint.sh              学习端多卡 + 环境端一卡的 EXPO-FT 联合更新（TASK、PI05_CONFIG、ASSET_ID 选任务与基座）
+    rl_async.sh              异步训练 + 多个环境进程（2026-10-18 实现后放弃，不再使用）
+    make_seed_table.py       离线算专家能做成的种子与指令，供 ROBOTWIN_SEED_TABLE 使用
     rl_status.sh             从 W&B 汇总 RL 运行：每 10 回合成功率、最新 critic/actor 指标与 Q 走势（learner 日志不记回合）
   pick/                      EXPO-FT 的一整套启动脚本
   dynamic_pick/              Real-Time EXPO-FT 的一整套启动脚本
@@ -364,10 +366,10 @@ flowchart TB
 | 接口 | 现在的假设 | 位置 |
 |---|---|---|
 | 动作 | 7 维 DROID 笛卡尔速度 + 夹爪速度。人工接管、示例动作、`edit_action_xyzg`（把第 3–5 维当旋转屏蔽）都按这个布局写 | `configs/task/real_base.py`、`client/run_client.py`、`expo_ft/agents/alg/expo_ft.py` |
-| 环境类型 | `workspace` 上四个入口只接受 `env_type == "droid"`，演示只读 DROID 的 `traj.hdf5`。`robotwin-sim` 上 `train_pi_robo.py` 与 `eval_droid_policy.py` 另接受 `robotwin`，演示从 LeRobot v3.0 读；`train_pi_robo_async.py`、`train_offline_rtc.py` 仍只认 DROID | 入口脚本、`expo_ft/env/droid_utils.py`、`expo_ft/env/lerobot_utils.py` |
+| 环境类型 | `workspace` 上四个入口只接受 `env_type == "droid"`，演示只读 DROID 的 `traj.hdf5`。`robotwin-sim` 上 `train_pi_robo.py` 与 `eval_droid_policy.py` 另接受 `robotwin`，演示从 LeRobot v3.0 读；`train_pi_robo_async.py` 也接了 `robotwin`（多环境，已放弃不用），`train_offline_rtc.py` 仍只认 DROID | 入口脚本、`expo_ft/env/droid_utils.py`、`expo_ft/env/lerobot_utils.py` |
 | 控制循环的位置 | learner 每个控制步发 `get_observation` 和 `step` 两次 RPC，网络往返在控制环里 | `train_pi_robo.py`、`expo_ft/env/env_client.py` |
 | 人工接管 | SpaceMouse 在机器人端逐步替换动作；transition 用 `is_hil` 标记 | `client/run_client.py` |
-| 奖励 | 稀疏：成功给 1，其余为 0。DROID 用颜色阈值或手动标记判成功，RoboTwin 用任务的 `check_success`；`single_attempt`（默认开）时第一次尝试失败即结束回合并记失败 | `client/envs/droid_env.py`、`client/real_utils/detector.py`、`client/envs/robotwin_env.py`、`client/envs/robotwin_attempts.py` |
+| 奖励 | 稀疏：成功给 1，其余为 0。DROID 用颜色阈值或手动标记判成功，RoboTwin 用任务的 `check_success`。回合结束由环境变量控制：`ROBOTWIN_STEP_LIMIT` 把步数上限降到 n（上限内重试成功也算，现行标准）；`ROBOTWIN_SINGLE_ATTEMPT=1` 时第一次尝试失败即结束并记失败（bbh 配置默认开，通用配置默认关，已不再用） | `client/envs/droid_env.py`、`client/real_utils/detector.py`、`client/envs/robotwin_env.py`、`client/envs/robotwin_attempts.py` |
 | VLA | `workspace` 上用 pd-perry fork 的 `get_config(name, weight_loader_path=...)`；`robotwin-sim` 上用 `get_config(name)` 后由 `dataclasses.replace` 换 `weight_loader`。采样依赖 openpi 的 `sample_actions` 支持 `num_samples`、`train`，`Policy.infer` 支持 `is_batch`、`for_training`。RTC 与 Real-Time 线路调 `model.sample_actions_with_prefix(prefix=...)`（前缀补全）；xense-openpi 的同名方法是 RLT 用的另一个接口，没有 `prefix` 参数，所以这两条线路在 `robotwin-sim` 上不能跑 | `expo_ft/utils/train_utils.py`、`expo_ft/agents/vla/pi05.py` |
 | 增量动作的 state | `robotwin-sim` 上 `Pi05Agent.process_transformed_outputs` 用最近一次 `process_raw_inputs` 记下的归一化 state 还原绝对动作，两者必须对同一观测成对调用；replay 回填增量动作块时按各块首个 state 修正 | `expo_ft/agents/vla/pi05.py`、`expo_ft/data/replay_buffer.py` |
 | critic 相机 | 默认 `base_0_rgb`、`left_wrist_0_rgb`；任务配置可用 `critic_camera_keys` 覆盖，RoboTwin 用三路 | `expo_ft/agents/alg/batch_utils.py`、`configs/task/robotwin_base.py` |

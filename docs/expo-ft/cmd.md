@@ -12,8 +12,27 @@
 ROBOTWIN_ROOT=<robotwin checkout> PYTHONPATH=$PWD:$PWD/expo_ft/agents/vla/openpi/packages/xense-client/src <robotwin venv>/bin/python -m client.run_client --host <learner host> --port <port> --config-task-path configs/task/robotwin_beat_block_hammer.py
 ```
 
-预期：日志出现 `Environment robotwin_beat_block_hammer_train_1 created successfully`；每次 reset 先跑一次专家筛种子，
-再按该种子摆场景。
+预期：日志出现 `Environment robotwin_beat_block_hammer_train_1 created successfully`；每次 reset 先跑一次专家筛种子
+（约 1 s），再按该种子摆场景；设了 `ROBOTWIN_SEED_TABLE` 时直接从表里取种子。其他任务用 `configs/task/robotwin_task.py`，
+两侧都要设 `ROBOTWIN_TASK=<task>`。
+
+## 生成训练种子表
+
+用途：离线算出专家能做成的种子与对应指令，RL 的 reset 按表取种子（`ROBOTWIN_SEED_TABLE`），与在线逐个检查的序列相同。
+
+前提：RoboTwin 环境（服务器上加 `VK_ICD_FILENAMES` 与 `CUDA_VISIBLE_DEVICES`，02 另加 `LD_LIBRARY_PATH`）；在 `methods/expo-ft`
+下运行。每张卡一个进程，各查一段连续的种子；训练种子段从 10100000 起。Hard 加 `--task_config demo_randomized`。
+
+```bash
+ROBOTWIN_ROOT=<robotwin checkout> PYTHONPATH=$PWD:$PWD/expo_ft/agents/vla/openpi/packages/xense-client/src <robotwin venv>/bin/python scripts/robotwin/make_seed_table.py check --task <task> --task_config demo_clean --start 10100000 --count 200 --out <dir>/shard_0.json
+```
+
+```bash
+<robotwin venv>/bin/python scripts/robotwin/make_seed_table.py merge --out <dir>/train_seeds.json <dir>/shard_*.json
+```
+
+预期：每个种子一行 `seed ... ok=... 1.0s`（Hard 更慢）；合并后输出 `k/n seeds in [start, end)`。bbh demo_clean 600 个候选
+451 个有效。
 
 ## RoboTwin 示教转 LeRobot 并算 norm stats
 
@@ -44,7 +63,7 @@ learner venv、xense-openpi checkout）、数据集与 norm stats；`/root/data/
 `SKIP_TRAIN=<gpu 列表>`（只评测与 RL）、`EXTRA_TRAIN_ARGS`（例如 `--weight-loader.params-path=<step>/params`）。
 
 ```bash
-tmux new-session -d -s atticux-night-sft "EXP=sft_bbh_clean50_10k STEPS=10000 NO_RL=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/night_run.sh > /root/data/atticux/agent-workspace/expo-ft/logs/night_$(date +%Y%m%d).log 2>&1"
+tmux new-session -d -s atx_night_sft "EXP=sft_bbh_clean50_10k STEPS=10000 NO_RL=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/night_run.sh > /root/data/atticux/agent-workspace/expo-ft/logs/night_$(date +%Y%m%d).log 2>&1"
 ```
 
 预期：日志先写 `waiting until ... 01:30`；有空卡后依次出现 `step 0 ok`、`training exited rc=0`、各分片结果与
@@ -55,7 +74,9 @@ tmux new-session -d -s atticux-night-sft "EXP=sft_bbh_clean50_10k STEPS=10000 NO
 用途：基座策略（`eval_sft_ckpt.sh`）或完整 EXPO 策略（`eval_full_policy.sh`，新初始化的 edit actor 与 critic）评若干回合。
 
 前提：同上；一对 learner 与环境端占一张卡约 47 GB；并行时每对用不同端口与 `seed_index`。完整策略可用 `N_EDIT`、
-`EDIT_SCALE` 覆盖编辑样本数与幅度。
+`EDIT_SCALE` 覆盖编辑样本数与幅度。其他任务与联训基座加 `TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora
+ASSET_ID=robotwin/cotrain10_aloha_clean_50`；bbh 用官方协议要加 `ROBOTWIN_SINGLE_ATTEMPT=0`（它的配置默认开单次尝试判定）；
+Hard 加 `ROBOTWIN_TASK_CONFIG=demo_randomized`（指令保持默认 seen）。
 
 ```bash
 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/eval_sft_ckpt.sh <gpu> <step_dir> <port> <episodes> <out_dir> <seed_index>
@@ -73,12 +94,14 @@ N_EDIT=0 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin
 读已结束的回合。
 
 前提：5 张空卡。第一张做推理并放环境端，其余做更新（更新卡数要能整除 batch 64，1 + 2 张也行）；参数取参考默认，`EDIT_SCALE`
-可覆盖 β。同一台机器并行第二次运行时换卡并设 `PORT=8401`。单场景调试加 `ROBOTWIN_FIXED_SEED=1`：每回合都用训练种子段里第一个
-专家能做成的种子（种子段 100 是 10100000），reset 从约 60 s 降到约 23 s。默认按单次尝试判定（第一次没打中即失败），
-`ROBOTWIN_SINGLE_ATTEMPT=0` 恢复官方协议。在 `02-xense-training` 上先 `export LD_LIBRARY_PATH=/root/data/atticux/nvidia-gl-580.65.06`。
+可覆盖 β。同一台机器并行第二次运行时换卡并设不同的 `PORT`。单任务标准实验环境（用户 2026-10-19）：随机种子
+（`ROBOTWIN_SEED_TABLE`）+ `ROBOTWIN_STEP_LIMIT`（bbh 150，其余为示教平均长度的 1.3 倍）+ `ROBOTWIN_SINGLE_ATTEMPT=0`；每次运行到
+第 300 回合手动停。其他任务与联训基座加 `TASK`、`PI05_CONFIG`、`ASSET_ID`（同评测），Hard 加 `ROBOTWIN_TASK_CONFIG=demo_randomized`。
+单场景调试用 `ROBOTWIN_FIXED_SEED=1`（每回合用种子段里第一个有效种子）。在 `02-xense-training` 上先
+`export LD_LIBRARY_PATH=/root/data/atticux/nvidia-gl-580.65.06`。
 
 ```bash
-tmux new-session -d -s atticux-rl "EDIT_SCALE=0.05 ROBOTWIN_FIXED_SEED=1 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
+tmux new-session -d -s atx_rl "EDIT_SCALE=0.05 ROBOTWIN_SINGLE_ATTEMPT=0 ROBOTWIN_STEP_LIMIT=150 ROBOTWIN_SEED_TABLE=/root/data/atticux/agent-workspace/expo-ft/data/robotwin_seeds/beat_block_hammer_demo_clean/train_seeds.json /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
 ```
 
 ```bash
