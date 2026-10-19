@@ -10,21 +10,26 @@
 
 - 主要慢在仿真，不在策略计算与更新（用户判断；实测见 [experiments.md](experiments.md) 白天诊断一节：每步约 0.45 s 几乎
   都在环境侧，固定种子时 reset 约 23 s，update 约 22 s/回合）。
-- 训练与平时评测用单次尝试判定：第一次尝试没成功就判失败、结束回合，不考虑 recovery；写论文的完整评测再用官方协议
-  （`ROBOTWIN_SINGLE_ATTEMPT=0`）。理由（用户判断）：真机评测一次没成功就算失败，多次尝试的数据示教里通常没有，对编辑
-  策略学习没有意义，还增加复杂度。`beat_block_hammer` 的判定已在 expo-ft `e0aba36`。
+- **单任务标准实验环境（用户 2026-10-19 定）：随机种子（种子表）+ 步数上限 150、上限内重试成功也算。** 单次尝试判定不再用：
+  300 回合内停在 63%（用户推断：Q 能从重试中学到有用的东西，未验证）。150 与 200 步回推只差约 1%，不再跑 200 步对照；
+  300 回合内成功率主要受回合数限制，不受步数上限限制（官方协议 400 步的 201–300 回合也只有 85%）。随机种子不论快慢都用：
+  真实情况需要泛化（用户判断）；它是否加速学习，再多观察几次运行。写论文的完整评测用官方协议（`ROBOTWIN_SINGLE_ATTEMPT=0`）。
+- 其余任务的步数上限（用户 2026-10-19 定）：示教平均长度的 1.3 倍、取整到 10（bbh 正好 150），做 RL 前再用 Hard 下成功
+  回合的步数核对（数据见 [experiments.md](experiments.md) 10 任务联训一节）。
+- 联训的 3k–27k 九个 checkpoint（约 81 GB）是否删除，Hard 评完再定（用户 2026-10-19）。
+- 每次 RL 运行到第 300 回合停（用户 2026-10-18）：最终要上真机，总回合本来就不该这么多。比较时看同一回合段的成功率。
 - debug 阶段超参不变（含 β=0.05 与 `adjust_target_entropy=False`），评估超参时再看。
-- 效率提上去之后再恢复场景随机性（不再只用固定种子）。
+- 放开种子（用户 2026-10-18 晚）：放开后单任务的标准实验环境才算完成，但 reset 不能太慢。照搬 RLinf 的种子表
+  （`rlinf/envs/sim/robotwin/seeds/train_seeds.json`：启动时读表，reset 按顺序取下一个，不跑专家检查），给我们的配置
+  （aloha-agilex、demo_clean）自己算。与在线逐个检查得到的种子序列相同，只把专家检查挪到训练前。先只算
+  `beat_block_hammer`；其余 9 个任务的种子表还没算，做 RL 前再算。
 - 暂不评测“去掉编辑策略、只用 RL 后的 π₀.₅”；留到消融或研究 π₀.₅ 吸收了多少时再做。
 - 改用单次尝试判定后不重测基座：评测只用来判断 checkpoint 可不可用，不求精确。
 - 先做环境端；learner 是否也迁移，之后再看适配复杂度。
 - 不做“块末只渲染一次”（RLinf 的默认做法）：它让 replay 只在动作块起点有图像，属于算法与数据的改动。
-- **加速路线：参考实现的异步训练，加上多个环境共享一个 learner。** 这个事务的目标是尽快把 baseline 跑出来，所以接受与
-  原文的两处不一致（用户决定 2026-10-18）：
-  - 多个环境同时 rollout，相当于多台真机；
-  - 用异步训练（`train_pi_robo_async.py`），新参数可以在动作块级别换上。异步下 update 不再按“每回合 3 次”计，
-    其余超参不变。
-  现在 `train_pi_robo_async.py` 只接 DROID，要像 `train_pi_robo.py` 那样接上 RoboTwin，再改成多环境。
+- **异步训练与多环境放弃**（用户 2026-10-18 晚）。N=4（修掉线程共享 `_last_state` 之后）与 N=1 在单次尝试判定下
+  成功率都低于同步，N=1 每小时回合只比同步多约 13%（[experiments.md](experiments.md)）。代码留在 expo-ft `f85fc6a`
+  与 `8798c5d`，不再使用。提速改走两条：缩短回合（上面的判定）与放开种子时的种子表（见下面的 Task）。
 
 **RLinf 环境端调研**（2026-10-18；RLinf `a78b6d7`，它依赖的 RoboTwin 是官方 `RLinf_support` 分支 `dca9ec6`，
 `robotwin/envs/vector_env.py`）
@@ -69,31 +74,9 @@
      - 每个环境有自己的动作计划、回合状态与转移队列。
      - replay 的动作块回填要求同一回合的转移连续写入，所以一个回合结束后才整段写入。
      - 推理先逐个环境调用现有的 `sample_actions`（单次约 70 ms），不改 agent。
-   - 收益估计见下面待讨论第 2 条。
+   - 收益估计见 [experiments.md](experiments.md) 10-18 两节；多环境已放弃。
 
-**待讨论**
-
-1. **多环境用 (a) 还是 (b)。** 用户 2026-10-18：等扩展测试出来再定，训练机晚上空了再测。Agent 建议：除非线程的扩展
-   明显好于进程，否则选 (a)，改动面小，也没有 GIL 风险。每个环境约 3.5 GB 显存，和推理共用 GPU 0（推理峰值约 40 GB），
-   最多约 8 个环境。
-2. **收益估计。** 用户 2026-10-18 已接受多环境（相当于多台真机）用于 baseline，见已定。每个环境一回合结束就写进
-   replay，不等其他环境；“整段写入”只是 replay 的存储要求（同一回合的转移要连续存放）。
-   - Agent 推断（未验证），按同步、每回合 3 次 update 计：一回合的时间账（15k 基座、固定种子）是走步约 45 s（约 100 步 × 0.45 s，其中渲染 212 ms、
-     物理 46 ms），加上回合之间 reset 27 s 与 update 22 s 中较长的那个，合计约 72 s，对上实测的 50 回合/h。
-     - 复用 task 对象后，回合之间由 update 的 22 s 决定，约 67 s/回合，只快约 8%。不固定种子时，加上种子表，
-       可从约 125 s/回合降到约 67 s/回合。
-     - 多环境只能并行“走步”这一段。update 仍是每回合 22 s、而且串行，所以上限约 160 回合/h。若 update 阻塞所有
-       环境，4 个环境约 108 回合/h，8 个约 130 回合/h。
-   - 参考实现的异步训练仍是一台机器人：更新线程在其余卡上连续 update，把新参数交给采样线程，省掉的是回合结束时
-     等 update 的时间（README：回合很长时才用）。它解决 update 挡住走步，多环境解决走步太慢，两者叠加后不再受
-     “每回合 22 s”的上限约束。
-3. **验收方式。** 用户意见：迁移后直接评估效果，不预设提速比例。具体看什么（同一固定种子上到 90% 的墙钟时间、每小时
-   回合数），随方案确定。
-4. **恢复随机种子时的种子表。** 用户 2026-10-18 倾向照 RLinf 的做法，给我们自己的配置（aloha-agilex、demo_clean）
-   离线算一份有效种子表。种子按同样的顺序检查，生成的种子序列与官方评测协议一致，reset 时不再跑约 60 s 的专家检查
-   （第一次 reset 实测 79.6 s）。到恢复场景随机性时再定。
-
-**沿用的技术路线**（2026-10-14 至 10-16 确定；环境端的提速按上面的调研与待讨论改）
+**沿用的技术路线**（2026-10-14 至 10-16 确定；环境端的提速按上面的调研改）
 
 - learner 是 expo-ft 参考实现（JAX），π₀.₅ 的 SFT、候选采样与 BC 用 xense-openpi。代码版本：expo-ft `robotwin-sim`，
   learner 内的独立 checkout 是 xense-openpi `expo-ft`，RoboTwin 是 `methods/robotwin` 的 `workspace`。每次运行记下
@@ -125,37 +108,51 @@
   不会一次收多台机器的数据再训练。可以另做一个方案单独评测。
 - 可做的消融：编辑策略更新后，新参数是在回合结束时换上，还是在动作块级别就换上。
 
-### Task: RoboTwin 上的异步训练与多环境
+### Task: 同步训练上比较两种回合判定
 
-用户 2026-10-18 定：今晚 20:00 起在训练机上调试，夜里监督训练，早上汇报。数据和时间允许的话，固定这套做法，再换其他
-任务，构建我们自己的 baseline 里的 EXPO-FT 结果。
+用户 2026-10-18 晚定。都在 `02-xense-training` GPU 0–4，同步联合更新（`rl_joint.sh`，参考默认、β=0.05），15k 基座，固定种子，
+各跑到第 300 回合，先后进行。
 
 **Change**
 
-- [x] `train_pi_robo_async.py` 接上 RoboTwin（LeRobot 演示读取），并移入同步脚本在 `robotwin-sim` 上的修复：在 CPU 上取
-      batch（否则推理卡多占约 45 GB）、恢复后复制单设备的叶子、新的恢复语义、`--max_to_keep`。update 的起点与频率沿用
-      参考实现的异步做法（buffer 够一个 batch 就开始，更新线程连续跑），属于已定里接受的偏差。更新线程另加了与同步脚本
-      相同的一步预取（不加时取 batch 约 12 s 串行，每次 update 约 20 s；加后约 8 s）。
-- [x] 多环境按接法 (a)：N 个环境进程各拨一个端口，learner 每个环境一个 actor 线程（各自的连接、采样器、回合状态与
-      转移队列），共用推理卡上的参数，在动作块边界换上更新线程发布的新参数；一回合结束时在 buffer 锁内整段写入并标记
-      成功；W&B 与 checkpoint 用全局步数（写入 replay 的转移数）。扩展测试线程不随数量增长，(a) 定下。
-- [x] `scripts/robotwin/rl_async.sh`：起 learner 与 N 个环境进程（端口 `PORT` 到 `PORT+N-1`，每个环境一张渲染卡）
-      （以上 2026-10-18，expo-ft `f85fc6a`）
+- [x] expo-ft `ROBOTWIN_STEP_LIMIT`：回合在第 n 步判失败（覆盖任务的 `step_lim`），上限内重试成功也算成功；0 保持原样
+      （2026-10-18，expo-ft `ca1a4d9`）
 
 **Verification**
 
-1. [x] 训练机扩展测试：线程与同卡多进程都不增长，一卡一个环境线性增长；用户定 N=4（见 experiments.md）
-2. [x] N=1 短跑：回合、update 与 W&B 指标正常，推理卡显存不涨到同步脚本修复前的水平
-       同时看：单次尝试判定的失败回合在第一次落锤后约 10 步内结束（失败回合 82–217 步结束，未跑满 400 步；没抬起锤子的
-       回合仍跑满 400 步，符合判定设计）
-3. [x] N>1 短跑：每个环境的回合各自完整写入 replay（回合数、成功标记与各环境日志对得上），停止再 `--resume` 能接上
-4. [ ] 固定种子整夜运行（15k 基座、β=0.05、单次尝试判定）：`rl_status.sh` 看分段成功率与 critic 走势
-       （2026-10-18 18:46 起，`expo_bbh_async4_fs_b005`，h100，N=4）
+1. [x] 只跑环境端（本机）：`ROBOTWIN_STEP_LIMIT=150` 时两个原地不动的回合都在第 150 步结束，判失败、mask 为 0
+2. [x] 单次尝试判定 `expo_bbh_sync_fs_b005_sa`（W&B `pontu579`，19:54 起）跑到第 300 回合停（10-19 01:40）
+3. [x] 步数上限 150 `expo_bbh_sync_fs_b005_sl150`（W&B `6j0thy2w`）紧接着起，跑到第 300 回合停（10-19 01:43–06:45）
 
 **Done**
 
-- [ ] 每小时回合数、20 回合滑动成功率首次到 90% 的墙钟时间写进 [experiments.md](experiments.md)，与 10-18 夜里同步
-      运行的 50 回合/h、3.2 h 并列
+- [x] 两次运行与 10-18 官方协议那次的分段成功率（1–10、11–50、51–100、101–200、201–300）、每小时回合数、20 回合滑动成功率
+      首次到 90% 的墙钟时间并列写进 [experiments.md](experiments.md)（10-19：步数上限 150 固定种子 1.8 h 到 90%，单次尝试没到；待用户定是否改用步数上限）
+
+### Task: 随机种子上的步数上限 150 运行
+
+用户 2026-10-18 晚定。与 02 上固定种子的步数上限 150 运行并行，看放开种子后的学习速度。
+
+**Change**
+
+- [x] expo-ft `ROBOTWIN_SEED_TABLE`：reset 按表里的顺序取种子与指令，不跑专家检查；建场景报 `UnStableError` 时顺延到下一个
+- [x] `scripts/robotwin/make_seed_table.py`：每个进程检查一段连续的候选种子，再按种子号合并（以上 expo-ft `a75e8e6`）
+- [x] `beat_block_hammer` 训练种子表：从 10100000（`ROBOTWIN_SEED_INDEX=100`，与在线训练相同）起检查 600 个候选，451 个
+      有效，`data/robotwin_seeds/beat_block_hammer_demo_clean/train_seeds.json`。300 回合每回合一个新种子，够用；表用完
+      会报错，不循环
+- [x] h100 GPU 0–4 起 `expo_bbh_sync_rs_b005_sl150`（W&B `hf4w1so7`，10-19 02:40–08:28）：随机种子（种子表）、步数上限 150、可以重试，15k 基座，β=0.05，
+      跑到第 300 回合（种子表在 02 GPU 5–7 上趁联训期间算；联训约 02:30 结束后起）
+
+**Verification**
+
+1. [x] 本机：用表时前 3 次 reset 的种子、指令、关节状态与头部图像均值都和在线检查一致；reset 0.4 s（在线检查 1.3–1.8 s）
+2. [x] 训练机（02 GPU 5–7，3 进程）：600 个候选 451 个有效，每个约 1.0 s（第一个含 planner 初始化 22 s），共约 4 min。
+       复用 task 对象之后在线检查本来就只多约 1 s/回合，种子表省得很少；原先估的 20–60 s 是复用之前的数字
+3. [x] 运行中回合的种子逐个不同、指令与表一致（`hf4w1so7` 前 10 回合的 prompt 与表的前 10 项一一对应）
+
+**Done**
+
+- [x] 随机种子与固定种子两次步数上限 150 运行的分段成功率、每小时回合数并列写进 [experiments.md](experiments.md)（随机种子 201–300 回合 83%）
 
 ### Task: 跨回合复用 RoboTwin task 对象
 
@@ -183,10 +180,18 @@ curobo planner 只在第一次建。不改 RoboTwin，也不改协议与 learner
 ## RoboTwin 10 任务 baseline：联训 LoRA 基座
 
 在 `beat_block_hammer` 之外选一组任务，构建我们自己 baseline 里的 EXPO-FT 结果。先训一个所有任务共用的 SFT 基座，
-再逐任务做 RL（RL 的排期等基座选定后再定）。
+再逐任务做 RL。
 
-今晚（2026-10-18）的两件事：`xense-training-h100` 上跑异步多环境的整夜运行（上一节的 Task），`02-xense-training` 的
-8 张卡空闲，用来做本节的数据与联训 SFT。
+**2026-10-19 晚的安排**（用户 2026-10-19 定；卡从 00:00 起可用，不保证都空，有几组卡就起几组）
+
+1. 00:00 起，用 seen 指令把 29999 的 Hard 从头评一遍：10 个任务各 50 回合（两片各 25），两台机 16 张卡，约 2 h。白天那批
+   用的是 unseen，只作参考。同时占 1–2 张卡给 RL 做 smoke（约 20 min）。
+2. 按 seen 的 Hard 成功率严格挑 30–70% 的任务；给每个选中的任务算 Hard 种子表（`demo_randomized`、seen，600 个候选，
+   3 张卡约 20 min），按示教平均长度 1.3 倍定步数上限，并用 Hard 下成功回合的步数核对。
+3. 约 02:30 起 RL：每台机 GPU 0–4（1 张推理与环境、4 张更新）与 GPU 5–7（1+2）各一组，最多 4 组；卡不够按优先级
+   `beat_block_hammer`、`place_empty_cup`、`stack_blocks_two`、`place_phone_stand`（只取落在区间里的）。每组跑到第 300 回合。
+   3 卡的组 update 较慢，与 5 卡的组比较时要打折扣。
+4. 早上把结果补进 RL 总表，再定是否删联训 3k–27k 的 checkpoint。
 
 **已定**（用户 2026-10-18）
 
@@ -197,8 +202,15 @@ curobo planner 只在第一次建。不改 RoboTwin，也不改协议与 learner
 - 联训一个 π₀.₅ LoRA（10 个任务的示教合在一个数据集里），所有任务统一用同一个 checkpoint 做 RL 起点，省空间。
 - RL 起点的基座成功率要在 30–70%：太高 RL 没有意义。挑一个大多数任务落在区间里的 checkpoint，区间外的任务不做 RL。
 - 不和官方 π₀.₅ 联训对比（我们是 LoRA，官方是全参）。
-- 只做 Easy：训练与评测都用 `demo_clean`。Hard（clean2random）训练数据相同，评测换成 `demo_randomized`（桌上有杂物、
-  随机背景与光照、桌高 ±3 cm、未见过的指令），考的是泛化，这里不做。
+- SFT 只用 Easy（`demo_clean`）数据。Hard（clean2random）训练数据相同，评测换成 `demo_randomized`（桌上有杂物、
+  随机背景与光照、桌高 ±3 cm）。
+- **只看场景泛化，不看语言泛化（用户 2026-10-19）：** RL 训练与 Hard 评测都用 seen 指令（`ROBOTWIN_INSTRUCTION_TYPE`
+  保持默认 `seen`）；官方榜单 Hard 用的 unseen 指令不用。
+- RL 的 replay 预填用该任务微调用的 50 条 clean 示教（`<task>_aloha_clean_50`，即联训数据里属于该任务的部分），与 Hard
+  场景不一致，照 bbh 的做法不改（用户 2026-10-19）。
+- **RL 做在 Hard 上（用户 2026-10-19 定）。** 微调就能到很高成功率的任务，现实中做 RL 没有意义；RL 是为微调上不去的任务
+  （用户判断与偏好）。联训 29999 在 Easy 上 8 个任务已超过 80%，所以用最强的 checkpoint（29999）评 Hard，挑 Hard 成功率
+  在 30–70% 的任务，在 `demo_randomized` 上做 RL；Easy 不再往前评更早的 checkpoint（3k、9k 已评的部分记在 experiments.md）。
 - 不用 RoboDojo：仿真换成 Isaac Sim（H100 没有 RT core，大概率渲染不了，未核实），任务基座成功率太低，榜单比的是一个
   策略做全部任务；作为以后的第二个 benchmark。
 - 参考数字：官方榜单（`robotwin-platform.github.io/leaderboard`）的“π₀ 单任务”是每个任务一个 checkpoint；“π₀.₅ 联训”
@@ -214,59 +226,57 @@ curobo planner 只在第一次建。不改 RoboTwin，也不改协议与 learner
 
 ### Task: 10 任务数据与联训 SFT
 
-**交接状态（2026-10-18 20:25）**
+**进度（2026-10-18 23:00）**
 
-- 卡：本来计划 02 的 8 张卡联训，但另一会话 19:54 起在 02 GPU 0–4 跑同步对照 `expo_bbh_sync_fs_b005_sa`，在 h100
-  GPU 0–5 跑异步 N=1 `expo_bbh_async1_fs_b005_sa`。现在空的只有 02 GPU 5–7、h100 GPU 6–7。batch 64 要整除卡数，
-  02 只能用 2 张。用户定（2026-10-18）：等 02 的卡空了再 8 卡联训（约 4 h），不用两卡先训。
-- 数据（`02-xense-training` 与 h100 共享 `/root/data/atticux/agent-workspace/expo-ft/data/`）：
-  - 原始示教 `raw/dataset/<task>/aloha-agilex_clean_50/`，10 个任务各 50 回合，共 7.3 GB。
-  - 单任务 LeRobot 数据集 `lerobot/robotwin/<task>_aloha_clean_50`（20:23 时已完成 6 个：pick_dual_bottles 6,129 帧、
-    move_can_pot 7,568、place_empty_cup 8,617、handover_block 14,084、stack_blocks_two 15,647、press_stapler；
-    剩 place_phone_stand、move_playingcard_away、click_alarmclock 在 tmux `atx_conv_per` 里依次跑，约 15 min）。
-  - 联训数据集 `lerobot/robotwin/cotrain10_aloha_clean_50`：tmux `atx_conv` 里在转，20:23 时 304/500 回合，约 25 min。
-  - 日志 `logs/convert/<task>.log`、`logs/convert/cotrain10.log`，结束时末行 `EXIT=0`。
-  - 转换脚本在 02 上用的是数据目录里的副本 `data/convert_robotwin_to_lerobot.py`（与本机 expo-ft 未提交的改动相同），
-    共享 checkout 保持干净；转完可删。
-- 环境端检查（Verification 2 的一部分）已过：02 GPU 7 上 10 个任务都能建环境并 reset，指令与步数上限正确，状态 14 维、
-  图像 3×224×224（handover_block 第一个种子专家失败，取了下一个，属正常）。learner 侧推理还没测。
-- 本机 expo-ft（`robotwin-sim`）未提交的改动：
-  - `scripts/convert_robotwin_to_lerobot.py`：`--raw_dir` 收多个目录；
-  - `configs/task/robotwin_task.py`（新）：任务名取 `ROBOTWIN_TASK`，步数上限读 `_eval_step_limit.yml`，单次尝试判定
-    默认关（官方协议）；本机 10 个任务都能加载，步数上限 400/500/800 正确；
-  - `scripts/robotwin/eval_sft_ckpt.sh`：`TASK`、`PI05_CONFIG`、`ASSET_ID` 三个环境变量，默认值仍是 bbh；
-  - xense-openpi（expo-ft 里的 submodule，分支 `expo-ft`）`configs/_examples/pi05_robotwin_cotrain10_lora.yaml`（新）：
-    bbh 配方，数据换成联训数据集，30k 步、每 3k 存一次且全留，去掉了 bbh 的 default_prompt。02 上已放一份到 openpi
-    checkout 的 `configs/`（gitignored，供训练直接用）。
-- 接下来（数据转完后）：
-  1. norm stats：在 `/root/data/atticux/agent-workspace/expo-ft` 下
-     `JAX_PLATFORMS=cpu HF_LEROBOT_HOME=$W/data/lerobot $SRC/.venv/bin/python $O/scripts/compute_norm_stats.py --config-name pi05_robotwin_cotrain10_lora`
-     （写到 `assets/pi05_robotwin_cotrain10_lora/robotwin/cotrain10_aloha_clean_50/`）。
-  2. 核对联训数据集：500 回合，帧数等于 10 个单任务之和（bbh 5,682）。
-  3. 02 的 8 张卡空出来后训练，命令同 `night_run.sh` 的训练段：在 `$O` 下
-     `scripts/train.py pi05_robotwin_cotrain10_lora --exp-name=sft_cotrain10_30k --project-name=expo-ft --assets-base-dir=$W/assets --checkpoint-base-dir=$W/checkpoints --overwrite --num-workers=32`
-     （W&B key 与 `network_accelerate` 同 `night_run.sh`）。
-  4. 9k 起每 6k 评一次：`TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora ASSET_ID=robotwin/cotrain10_aloha_clean_50`
-     加 `eval_sft_ckpt.sh`；bbh 还要 `ROBOTWIN_SINGLE_ATTEMPT=0`（它的配置默认开判定）。
+- 数据（`/root/data/atticux/agent-workspace/expo-ft/data/lerobot/robotwin/`）：10 个单任务数据集与联训数据集
+  `cotrain10_aloha_clean_50` 都已转完；数据目录里转换脚本的副本 `data/convert_robotwin_to_lerobot.py` 可以删。
+- norm stats 已算，在 `assets/pi05_robotwin_cotrain10_lora/robotwin/cotrain10_aloha_clean_50/`（在 `$W` 下运行
+  `compute_norm_stats.py`，它不收 `--assets-base-dir`）。
+- 联训 `sft_cotrain10_30k`：h100 GPU 0–7，tmux `atx_cotrain`，23:00 起，日志 `logs/sft/sft_cotrain10_30k.log`
+  （末行 `TRAIN_EXIT=`），checkpoint 在 `checkpoints/pi05_robotwin_cotrain10_lora/sft_cotrain10_30k/`。
+- 评测命令：`TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora ASSET_ID=robotwin/cotrain10_aloha_clean_50` 加
+  `eval_sft_ckpt.sh`；bbh 还要 `ROBOTWIN_SINGLE_ATTEMPT=0`（它的配置默认开判定）。
 
 **Change**
 
 - [x] expo-ft `scripts/convert_robotwin_to_lerobot.py`：`--raw_dir` 接受多个任务目录，写成一个多任务数据集，每回合用
-      自己任务的指令（单任务时输出不变）（未提交）
-- [ ] 数据：下载 9 个新任务的原始示教，转出联训数据集 `robotwin/cotrain10_aloha_clean_50` 与 9 个单任务数据集
-      （单任务的给之后 RL 的 replay 预填）（已下载；代理返回 403，改走 `hf-mirror.com`；转换进行中，见交接状态）
-- [ ] xense-openpi `pi05_robotwin_cotrain10_lora`：配方同 bbh，数据换成联训数据集；在联训数据上算 norm stats
-      （配置已写、未提交；norm stats 未算）
-- [x] expo-ft 任务配置与评测脚本按任务名参数化：`configs/task/robotwin_task.py` 与 `eval_sft_ckpt.sh`（未提交）
-- [ ] 联训（等 02 的 8 张卡空出来）
+      自己任务的指令（单任务时输出不变）
+- [x] 数据：下载 9 个新任务的原始示教（代理返回 403，改走 `hf-mirror.com`），转出联训数据集
+      `robotwin/cotrain10_aloha_clean_50` 与 9 个单任务数据集（单任务的给之后 RL 的 replay 预填）
+- [x] xense-openpi `pi05_robotwin_cotrain10_lora`：配方同 bbh，数据换成联训数据集；在联训数据上算 norm stats
+      （xense-openpi `1045ecc`）
+- [x] expo-ft 任务配置与评测脚本按任务名参数化：`configs/task/robotwin_task.py` 与 `eval_sft_ckpt.sh`
+      （以上代码 2026-10-18，expo-ft `31e467a`）
+- [x] 联训 30k 步（h100 8 卡，W&B 见 checkpoint 目录的 `wandb_id.txt`；23:07–02:40，`TRAIN_EXIT=0`）
 
 **Verification**
 
-1. [ ] 联训数据集：500 回合，各任务帧数之和与 9 个单任务数据集加 bbh 的 5682 帧一致，抽查每个任务的 prompt 是本任务的指令
+1. [x] 联训数据集：500 回合、80,173 帧，等于 10 个单任务数据集之和；每个任务抽查一回合，prompt 是本任务的指令
 2. [ ] 每个任务用联训配置跑一次推理（不必成功），确认 10 个任务的环境端都能起、步数上限与指令正确
-       （环境端已过，learner 侧未测）
-3. [ ] 9k、15k、21k、27k 步的 checkpoint 各评 10 个任务、每个 50 回合（8 片并行，官方协议）
+       （环境端已过；learner 侧由 29999 的评测验证：6 个任务的推理正常、已有成功回合）
+3. [x] 29999 的 Easy，每个任务 50 回合、官方协议（10-19 02:40–06:18）：8 个任务 ≥80%，click_alarmclock 42%，handover_block 16%
+4. [ ] 29999 的 Hard（`ROBOTWIN_TASK_CONFIG=demo_randomized`，seen 指令），每个任务 50 回合，10-19 00:00 起（见本节开头的安排）。
+       10-19 09:00–10:10 用 unseen 评过一部分后按用户要求停了，结果只作参考（experiments.md）
 
 **Done**
 
-- [ ] 各 checkpoint 在 10 个任务上的成功率表写进 [experiments.md](experiments.md)，选出 RL 用的 checkpoint 与任务
+- [ ] 29999 在 10 个任务上的 Easy 与 Hard 成功率表写进 [experiments.md](experiments.md)，按 Hard 30–70% 选出做 RL 的任务
+
+### Task: 联训基座上的 Hard RL（2026-10-19 晚）
+
+**Change**
+
+- [x] expo-ft `rl_joint.sh` 按任务参数化：`TASK`、`PI05_CONFIG`、`ASSET_ID`，默认仍是 bbh 单任务基座；`robotwin_task.py`
+      加 `ROBOTWIN_STEP_LIMIT`
+- [ ] 每个选中任务的 Hard 种子表与步数上限
+- [ ] 每组：联训 29999、随机种子（种子表）、步数上限、`demo_randomized`、seen 指令、β=0.05、参考默认，跑到第 300 回合
+      （bbh 走自己的配置 `robotwin_beat_block_hammer.py`，默认开单次尝试判定，要设 `ROBOTWIN_SINGLE_ATTEMPT=0`）
+
+**Verification**
+
+1. [x] 本机只跑环境端：通用配置 `robotwin_task.py`（用 bbh，本机缺其他任务的物体资源）在 `ROBOTWIN_STEP_LIMIT=150` 下第 150 步结束
+2. [ ] 训练机 smoke：每组前几回合场景逐个不同、失败回合在上限处结束、10 回合后开始 update
+
+**Done**
+
+- [ ] 各组的分段成功率、首次到 80%/90% 的回合与墙钟时间写进 experiments.md 的 RL 总表

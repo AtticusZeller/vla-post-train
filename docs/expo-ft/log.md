@@ -1,5 +1,20 @@
 # EXPO-FT Log
 
+## 2026-10-18 · RoboTwin 异步多环境训练（实现后放弃）与回合步数上限
+
+- **背景与目的：** 为提高 RoboTwin 上的训练效率，照参考实现的异步训练接上 RoboTwin，并让多个环境共享一个 learner
+  （用户接受与原文的偏差）。单次尝试判定下对照后，用户 2026-10-18 晚决定放弃这条路线，改为缩短回合：再比较一种
+  “步数上限 150、上限内可以重试”的判定。
+- **实现思路：** 每个环境一个进程、一个端口、一张渲染卡，learner 每个环境一个 actor 线程，回合结束时在 buffer 锁内整段
+  写入；更新线程连续 update 并发布参数，actor 在动作块边界换上。步数上限在 setup 之后覆盖 RoboTwin 任务的 `step_lim`。
+- **组件变化：** expo-ft `f85fc6a`（异步多环境）、`8798c5d`（`Pi05Agent` 的上一帧状态改为线程私有，N>1 时原先会把
+  动作加到别的环境的关节状态上）、`ca1a4d9`（`ROBOTWIN_STEP_LIMIT`）。异步代码保留，不再使用。
+- **主要文件：** `train_pi_robo_async.py`、`expo_ft/utils/loop_utils.py`（`EpisodeSink.commit_episode`）、
+  `scripts/robotwin/rl_async.sh`、`expo_ft/agents/vla/pi05.py`、`client/envs/robotwin_env.py`。
+- **验证：** 一卡一个环境时吞吐线性扩展；N=4 恢复后 replay 逐回合连续、0 处错位；修 bug 后 400 步超时从约 20/46 降到 2/30。
+  单次尝试下异步 N=1 每小时回合只比同步多约 13%，成功率更低（[experiments.md](experiments.md)）。步数上限本机只测环境端：
+  150 时原地不动的回合在第 150 步判失败。
+
 ## 2026-10-18 · 恢复时保留 checkpoint 之后已落盘的回放
 
 - **背景与目的：** `--resume` 原先把回放截到最近的 agent checkpoint 并从它的步数重新计数：之后已落盘的回放被丢弃
