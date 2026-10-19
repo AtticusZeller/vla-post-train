@@ -75,7 +75,7 @@ tmux new-session -d -s atx_night_sft "EXP=sft_bbh_clean50_10k STEPS=10000 NO_RL=
 
 前提：同上；一对 learner 与环境端占一张卡约 47 GB；并行时每对用不同端口与 `seed_index`。完整策略可用 `N_EDIT`、
 `EDIT_SCALE` 覆盖编辑样本数与幅度。其他任务与联训基座加 `TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora
-ASSET_ID=robotwin/cotrain10_aloha_clean_50`；bbh 用官方协议要加 `ROBOTWIN_SINGLE_ATTEMPT=0`（它的配置默认开单次尝试判定）；
+ASSET_ID=robotwin/cotrain10_aloha_clean_50`；
 Hard 加 `ROBOTWIN_TASK_CONFIG=demo_randomized`（指令保持默认 seen）。
 
 ```bash
@@ -95,13 +95,13 @@ N_EDIT=0 /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin
 
 前提：5 张空卡。第一张做推理并放环境端，其余做更新（更新卡数要能整除 batch 64，1 + 2 张也行）；参数取参考默认，`EDIT_SCALE`
 可覆盖 β。同一台机器并行第二次运行时换卡并设不同的 `PORT`。单任务标准实验环境（用户 2026-10-19）：随机种子
-（`ROBOTWIN_SEED_TABLE`）+ `ROBOTWIN_STEP_LIMIT`（bbh 150，其余为示教平均长度的 1.3 倍）+ `ROBOTWIN_SINGLE_ATTEMPT=0`；每次运行到
+（`ROBOTWIN_SEED_TABLE`）+ `ROBOTWIN_STEP_LIMIT`（bbh 150，其余为示教平均长度的 1.3 倍）；每次运行到
 第 300 回合手动停。其他任务与联训基座加 `TASK`、`PI05_CONFIG`、`ASSET_ID`（同评测），Hard 加 `ROBOTWIN_TASK_CONFIG=demo_randomized`。
 单场景调试用 `ROBOTWIN_FIXED_SEED=1`（每回合用种子段里第一个有效种子）。在 `02-xense-training` 上先
 `export LD_LIBRARY_PATH=/root/data/atticux/nvidia-gl-580.65.06`。
 
 ```bash
-tmux new-session -d -s atx_rl "EDIT_SCALE=0.05 ROBOTWIN_SINGLE_ATTEMPT=0 ROBOTWIN_STEP_LIMIT=150 ROBOTWIN_SEED_TABLE=/root/data/atticux/agent-workspace/expo-ft/data/robotwin_seeds/beat_block_hammer_demo_clean/train_seeds.json /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
+tmux new-session -d -s atx_rl "EDIT_SCALE=0.05 ROBOTWIN_STEP_LIMIT=150 ROBOTWIN_SEED_TABLE=/root/data/atticux/agent-workspace/expo-ft/data/robotwin_seeds/beat_block_hammer_demo_clean/train_seeds.json /root/data/atticux/agent-workspace/expo-ft/src/expo-ft/scripts/robotwin/rl_joint.sh 0,1,2,3,4 <sft_step_dir> <run_name> > /root/data/atticux/agent-workspace/expo-ft/logs/rl_<run_name>.log 2>&1"
 ```
 
 ```bash

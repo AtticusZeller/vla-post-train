@@ -17,6 +17,18 @@
    3 卡的组 update 较慢，与 5 卡的组比较时要打折扣。
 4. 早上把结果补进 RL 总表，再定是否删联训 3k–27k 的 checkpoint。
 
+**交接状态（2026-10-19 10:40）**
+
+- 两台机 16 张卡都空着，没有我们的 tmux 会话与进程；`/root/data` 用了 66%。服务器 checkout 在 expo-ft `1fcffc9`，与远端一致。
+- 已删：10-18 夜里到 10-19 的三次 bbh RL 运行目录（结果在 W&B 与 RL 总表）。保留：联训 `sft_cotrain10_30k` 的 3k–29999
+  （约 90 GB，3k–27k 等 Hard 评完再定）、`evals/`（Easy 29999 全部，3000/9000 部分）、`evals_hard/29999/`（unseen 的部分，
+  只作参考；seen 重评另起目录，比如 `evals_hard_seen/29999/`）。
+- Hard 评测：`ROBOTWIN_TASK_CONFIG=demo_randomized TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora
+  ASSET_ID=robotwin/cotrain10_aloha_clean_50 eval_sft_ckpt.sh <gpu> <ckpt> <port> 25 <out> <seed_index 0/1>`；02 上先导出
+  `LD_LIBRARY_PATH`。10 个任务×2 片=20 片，16 张卡时 4 张卡各跑两片（短任务排第二片）。
+- 到第 300 回合停 RL 没有现成脚本：上一会话用本机脚本每 4 分钟查 W&B 回合数（按 `display_name` 找 run），到了向 tmux 发
+  Ctrl-C，再用 `pgrep -f '[r]un_name=<run>'` 确认进程退出（坑见 experiment-ops.md）。新会话要重写。
+
 **已定**
 
 - 任务（用户 2026-10-18）：10 个，Aloha-AgileX，每个 50 条官方示教 `aloha-agilex_clean_50`：bbh、`pick_dual_bottles`、
@@ -37,7 +49,7 @@
 - RL 的 replay 预填用该任务微调用的 50 条 clean 示教（`<task>_aloha_clean_50`），与 Hard 场景不一致，不改（用户 2026-10-19）。
 - 超参用参考默认（N=K=8、UTD 20、每回合 3 次 update、10 回合后开始更新），β=0.05、`adjust_target_entropy=False`；评估超参时
   再看。同步联合更新；异步与多环境已放弃（用户 2026-10-18）。
-- 写论文的完整评测用官方协议（`ROBOTWIN_SINGLE_ATTEMPT=0`、任务自己的步数上限）。
+- 写论文的完整评测用官方协议（不设 `ROBOTWIN_STEP_LIMIT`，用任务自己的步数上限）。
 - 不和官方 π₀.₅ 联训对比（我们是 LoRA，官方是全参）。参考：官方榜单 bbh 上 π₀ 单任务 43%、π₀.₅ 联训（50 个任务）93%。
 - 不用 RoboDojo：仿真换成 Isaac Sim（H100 没有 RT core，大概率渲染不了，未核实），任务基座成功率太低；作为以后的第二个
   benchmark。
@@ -80,8 +92,8 @@
 - [x] expo-ft `rl_joint.sh` 按任务参数化：`TASK`、`PI05_CONFIG`、`ASSET_ID`，默认仍是 bbh 单任务基座；`robotwin_task.py`
       加 `ROBOTWIN_STEP_LIMIT`（2026-10-19，expo-ft `3338fbf`）
 - [ ] 每个选中任务的 Hard 种子表与步数上限
+- [x] 单次尝试判定默认关（bbh 配置原先默认开；2026-10-19，expo-ft `1fcffc9`）
 - [ ] 每组：联训 29999、随机种子（种子表）、步数上限、`demo_randomized`、seen 指令、β=0.05、参考默认，跑到第 300 回合
-      （bbh 走自己的配置 `robotwin_beat_block_hammer.py`，默认开单次尝试判定，要设 `ROBOTWIN_SINGLE_ATTEMPT=0`）
 
 **Verification**
 
