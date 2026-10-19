@@ -110,6 +110,17 @@ xense-openpi `1045ecc`。评测 `eval_sft_ckpt.sh --only_base_actions`，Easy（
 | place_phone_stand | 4/4 | 10/12 |
 | handover_block | 2/26 | 8/29 |
 
+第 29999 步的 Hard（`demo_randomized`、**unseen** 指令，10-19 09:00–10:10，两片各 25 回合，按用户要求中途停）。用户之后定
+Hard 评测用 seen 指令（只看场景泛化），这批只作参考：
+
+| 任务 | 已评 | 成功 | 任务 | 已评 | 成功 |
+|---|---|---|---|---|---|
+| pick_dual_bottles | 48 | 35（73%） | press_stapler | 33 | 7（21%） |
+| place_empty_cup | 45 | 31（69%） | handover_block | 16 | 1 |
+| stack_blocks_two | 22 | 10（45%） | move_can_pot | 25 | 1 |
+| place_phone_stand | 39 | 16（41%） | click_alarmclock、move_playingcard_away | 0 | — |
+| beat_block_hammer | 36 | 11（31%） | | | |
+
 ### 2 结果分析
 
 - **29999 太强，不适合做 RL 起点。** 只有 click_alarmclock（42%）落在 30–70%，8 个任务在 80% 以上。plan 里“联训 30k 步约等于
