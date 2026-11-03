@@ -1,5 +1,17 @@
 # EXPO-FT Log
 
+## 2026-10-21 · 联训 29999 的 Hard 评测与选任务；环境端清渲染缓存
+
+- **背景与目的：** RL 做在 Hard 上，先用 seen 指令评联训基座、按 30–70% 选任务；夜里 Hard RL 的环境端显存随回合增长，
+  最终渲染报 `cannot create buffer`，learner 随之卡住。
+- **实现思路：** 10 个任务各评 50 回合（handover_block 只评 25），按 30–70%（含端点，用户 2026-10-21 定）选出 6 个任务，
+  优先级 4 个任务算了 Hard 种子表。显存问题照 RoboTwin 官方评测：每 `clear_cache_freq`（任务配置里为 5）回合在
+  `close_env` 时清 SAPIEN 渲染缓存，Hard 场景每回合换纹理与杂物，不清就一直累积。
+- **组件变化：** expo-ft `4b58d63`：`RoboTwinEnv.reset` 定期清缓存。
+- **主要文件：** `client/envs/robotwin_env.py`。
+- **验证：** Hard 评测结果见 [experiments.md](experiments.md)。清缓存：本机 Easy 场景清缓存时机正确、清后渲染正常；02 GPU 7
+  上 bbh Hard 30 次 reset，不清时环境端 7.7 → 13.3 GB，清时稳定在 8–9 GB，reset 平均慢约 1.2 s。
+
 ## 2026-10-19 · RoboTwin 10 任务数据与联训 LoRA 基座
 
 - **背景与目的：** 在 bbh 之外构建多任务 baseline（用户 2026-10-18 选定 10 个任务）：所有任务共用一个联训 SFT 基座做 RL 起点。

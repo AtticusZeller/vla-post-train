@@ -70,4 +70,7 @@
   起，`train_pi_robo.py`）。
 - Agent 的安全检查拦截目标含变量的 `rm -rf`（无人值守时没人能批准），删除只能写字面绝对路径；需要定期清理的东西应靠
   程序自身的保留策略（如 `--max_to_keep`），不靠清理循环。
+- Hard（`demo_randomized`）的环境端显存起步约 8–11 GB，不清渲染缓存时每回合涨约 0.2 GB，与 learner 同卡时最终报
+  `cannot create buffer`，环境端重连后 learner 不再前进（2026-10-21）。`RoboTwinEnv` 已改为每 5 回合清一次缓存。
+  1+2 张卡的组更新卡要 `MEM_FRACTION=0.85`，0.75、0.82 都会 OOM。
 - 服务器与本地的 venv 可能不一致（这次服务器 RoboTwin venv 缺 `ml-collections`）；新环境先做一次端到端短跑。

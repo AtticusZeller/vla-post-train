@@ -6,30 +6,26 @@
 在 Hard 场景上逐任务做 RL。前两个事务（单任务跑通、提高训练效率）已完成，见 [log.md](log.md)；各次 RL 运行的对照见
 [experiments.md](experiments.md) 顶部的 RL 总表。
 
-**2026-10-19 晚的安排**（用户 2026-10-19 定；卡从 10-20 01:00 用到 09:00，不保证都空，有几组卡就起几组）
+**夜间安排**（用户 2026-10-22 定：10-22 晚重跑 RL，卡从 10-23 00:00 用到 09:00，有几组卡就起几组。原定 10-22 00:30 那次，00:29–05:26 两台机 16 卡一直被他人训练占满，没有起）
 
-1. 01:00 起，用 seen 指令把联训 29999 的 Hard 从头评一遍：10 个任务各 50 回合（两片各 25），两台机 16 张卡，约 2 h。同时占
-   1–2 张卡给 RL 做 smoke（约 20 min）。
-2. 按 seen 的 Hard 成功率严格挑 30–70% 的任务；给每个选中的任务算 Hard 种子表（`demo_randomized`、seen，600 个候选，
-   3 张卡约 20 min），按示教平均长度 1.3 倍定步数上限，并用 Hard 下成功回合的步数核对。优先级里的 4 个候选任务各自评完
-   且落在区间里就先算种子表，不等 10 个任务全部评完。
-3. 约 03:30 起 RL：每台机 GPU 0–4（1 张推理与环境、4 张更新）与 GPU 5–7（1+2）各一组，最多 4 组；卡不够按优先级
-   bbh、`place_empty_cup`、`stack_blocks_two`、`place_phone_stand`（只取落在区间里的）。每组跑到第 300 回合。
-   3 卡的组 update 较慢，与 5 卡的组比较时要打折扣。
-   之前 5 卡的组跑 300 回合要 5.0–5.8 h，03:30 到 09:00 只有 5.5 h，不一定跑得到 300 回合；09:00 前全部停，记下各组实际跑到的回合数。
-4. 09:00 后把结果补进 RL 总表，再定是否删联训 3k–27k 的 checkpoint。
+1. 服务器 checkout 用 expo-ft `4b58d63`（含清缓存修复，已推送）。
+2. 选中的任务（10-21 Hard seen，30–70% 含端点，用户 2026-10-21 定）：pick_dual_bottles 70%、place_empty_cup 58%、
+   stack_blocks_two 48%、place_phone_stand 40%、bbh 38%、click_alarmclock 30%（[experiments.md](experiments.md)）。
+   RL 优先级仍是 bbh、`place_empty_cup`、`stack_blocks_two`、`place_phone_stand`；这 4 个的 Hard 种子表已有，步数上限
+   bbh 150、cup 220、stack 410、phone 180。
+3. 00:00 起 RL：每台机 GPU 0–4（1 张推理与环境、4 张更新）与 GPU 5–7（1+2）各一组，`MEM_FRACTION=0.85`（修复后环境端
+   约 9 GB，与 learner 同卡放得下，1+2 的更新卡也要 0.85；未在 RL 中验证）。每组跑到第 300 回合或 09:00 前停，记下回合数。
+4. 09:00 后把结果补进 RL 总表，再定是否删联训 3k–27k 的 checkpoint 与 10-21 的 `rl_cotrain_hard_bbh_1021b`（45 GB）。
 
-**交接状态（2026-10-19 10:40）**
+**交接状态（2026-10-21 09:10）**
 
-- 两台机 16 张卡都空着，没有我们的 tmux 会话与进程；`/root/data` 用了 66%。服务器 checkout 在 expo-ft `1fcffc9`，与远端一致。
-- 已删：10-18 夜里到 10-19 的三次 bbh RL 运行目录（结果在 W&B 与 RL 总表）。保留：联训 `sft_cotrain10_30k` 的 3k–29999
-  （约 90 GB，3k–27k 等 Hard 评完再定）、`evals/`（Easy 29999 全部，3000/9000 部分）、`evals_hard/29999/`（unseen 的部分，
-  只作参考；seen 重评另起目录，比如 `evals_hard_seen/29999/`）。
-- Hard 评测：`ROBOTWIN_TASK_CONFIG=demo_randomized TASK=<task> PI05_CONFIG=pi05_robotwin_cotrain10_lora
-  ASSET_ID=robotwin/cotrain10_aloha_clean_50 eval_sft_ckpt.sh <gpu> <ckpt> <port> 25 <out> <seed_index 0/1>`；02 上先导出
-  `LD_LIBRARY_PATH`。10 个任务×2 片=20 片，16 张卡时 4 张卡各跑两片（短任务排第二片）。
-- 到第 300 回合停 RL 没有现成脚本：上一会话用本机脚本每 4 分钟查 W&B 回合数（按 `display_name` 找 run），到了向 tmux 发
-  Ctrl-C，再用 `pgrep -f '[r]un_name=<run>'` 确认进程退出（坑见 experiment-ops.md）。新会话要重写。
+- 02 的 8 卡空着，没有我们的会话与进程；h100 被他人训练占满（10-20 19:18 起）。`/root/data` 用了 69%。
+- 服务器 checkout 在 expo-ft `4b58d63`（含清缓存修复），与远端一致。
+- 保留：`evals_hard_seen/29999/` 各片的 `eval.log`；4 张 Hard 种子表；`rl/rl_cotrain_hard_bbh_1021b`（中途重起过，不作正式
+  结果）。已删：10-21 失败的 3 个 RL 目录、本次的运行日志、环境端日志与 W&B 本地缓存（用户 2026-10-21：服务器上尽量
+  不留命令记录与日志）。
+- 本地看守：每 4 分钟查 W&B 回合数，到 300 回合发 Ctrl-C；环境端报 `cannot create buffer`、learner 退出或环境日志
+  15 分钟不动时停掉会话并用同一命令 `--resume` 重起，最多 3 次，08:30 后不再重起。10-21 的脚本在会话临时目录，新会话要重写。
 
 **已定**
 
@@ -71,29 +67,14 @@
 
 **不做**：人工介入、Real-Time EXPO-FT、分离更新、真机。
 
-### Task: 29999 的 Hard 评测（seen）与选任务
-
-**Change**
-
-- [x] expo-ft `ROBOTWIN_TASK_CONFIG` 与 `ROBOTWIN_INSTRUCTION_TYPE`：选场景配置与指令类型，默认 `demo_clean`、`seen`
-      （2026-10-19，expo-ft `1a9993d`；h100 上 `demo_randomized` 能建场景，reset 约 6.5 s）
-
-**Verification**
-
-1. [ ] 29999 的 Hard（`ROBOTWIN_TASK_CONFIG=demo_randomized`，seen 指令），每个任务 50 回合，10-20 01:00 起。10-19 09:00–10:10
-       用 unseen 评过一部分，按用户要求停了，只作参考（experiments.md）
-
-**Done**
-
-- [ ] 29999 在 10 个任务上的 Hard 成功率写进 [experiments.md](experiments.md)（Easy 已有），按 30–70% 选出做 RL 的任务
-
 ### Task: 联训基座上的 Hard RL
 
 **Change**
 
 - [x] expo-ft `rl_joint.sh` 按任务参数化：`TASK`、`PI05_CONFIG`、`ASSET_ID`，默认仍是 bbh 单任务基座；`robotwin_task.py`
       加 `ROBOTWIN_STEP_LIMIT`（2026-10-19，expo-ft `3338fbf`）
-- [ ] 每个选中任务的 Hard 种子表与步数上限
+- [x] 优先级 4 个任务的 Hard 种子表与步数上限（2026-10-21；pick_dual_bottles、click_alarmclock 做 RL 前再算）
+- [x] 环境端每 `clear_cache_freq` 回合清渲染缓存（2026-10-21，GPU 7 上 Hard 30 次 reset 显存稳定在 8–9 GB；expo-ft `4b58d63`）
 - [x] 单次尝试判定默认关（bbh 配置原先默认开；2026-10-19，expo-ft `1fcffc9`）
 - [ ] 每组：联训 29999、随机种子（种子表）、步数上限、`demo_randomized`、seen 指令、β=0.05、参考默认，跑到第 300 回合
 

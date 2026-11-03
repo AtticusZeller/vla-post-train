@@ -15,8 +15,61 @@
 | `6j0thy2w` | 10-19 | 固定 | 150 步 | 6/10 | 21/40 | 40/50 | 86/100 | 86/100 | 57，1.1 | 95，1.8 | 50–65 | 5.0 h |
 | `hf4w1so7` | 10-19 | 随机（种子表） | 150 步 | 2/10 | 21/40 | 37/50 | 73/100 | 83/100 | 70，1.5 | 74，1.6 | 44–57 | 5.8 h |
 
+| `t6vgpjbe` | 10-21 | Hard 随机（种子表），**联训 29999 基座** | 150 步 | 0/10 | 7/40 | 11/50 | 35/100 | 13/39（到 239 回合） | 没到 | 没到 | 约 42 | 没到 300 |
+
 - 官方 400 步那次跑到 592 回合，第 301–400 回合 97/100，最近 100 回合 94/100；90–95% 出现在 300 回合以后。
 - 单任务标准实验环境（用户 2026-10-19 定）：随机种子 + 150 步，即最后一行的设定。
+- `t6vgpjbe` 是 Hard 场景、联训基座，中途两次因环境端显存耗尽重起（`--resume`），不作正式结果；10-21 晚重跑（用户决定）。
+
+## 2026-10-21 · 联训 29999 的 Hard 评测（seen）与 bbh Hard RL：6 个任务在区间内，RL 被环境端显存泄漏打断
+
+联训 `sft_cotrain10_30k/29999`，Hard（`demo_randomized`），seen 指令。02 8 卡（h100 被他人占满），10-21 01:03–08:45。
+expo-ft `1fcffc9`；清缓存修复（expo-ft `4b58d63`，见 [log.md](log.md)）在这批运行之后才加，这些运行都没用上。
+
+### 1 原始记录
+
+Hard 评测，官方步数上限，两片各 25 回合（种子段 0、1）：
+
+| 任务 | 成功 | 成功回合步数 | 任务 | 成功 | 成功回合步数 |
+|---|---|---|---|---|---|
+| pick_dual_bottles | 35/50（70%） | | click_alarmclock | 15/50（30%） | |
+| place_empty_cup | 29/50（58%） | 135–208 | press_stapler | 13/50（26%） | |
+| stack_blocks_two | 24/50（48%） | 303–385，一次 568 | move_playingcard_away | 8/50（16%） | |
+| place_phone_stand | 20/50（40%） | 123–171 | handover_block | 3/25（12%，只评一片） | |
+| beat_block_hammer | 19/50（38%） | 128–145，另有 157、201、241 | move_can_pot | 3/50（6%） | |
+
+Hard 种子表（`demo_randomized`、seen，10100000 起 600 个候选）：bbh 407、place_empty_cup 462、place_phone_stand 408、
+stack_blocks_two 525 个有效，在 `data/robotwin_seeds/<task>_demo_randomized/train_seeds.json`。
+
+RL：
+
+| 运行（W&B） | 设定 | 结果 |
+|---|---|---|
+| `rl_cotrain_hard_bbh_1021`（`hh0gkn6x`） | bbh，GPU 0–4，`MEM_FRACTION=0.85` | 18 回合 0 成功；02:42 环境端 `cannot create buffer` 后 learner 卡住，手动停 |
+| `rl_cotrain_hard_bbh_1021b`（`t6vgpjbe`） | 同上，`MEM_FRACTION=0.75` | 03:03–08:43，239 回合 66 成功；05:21、07:35 两次同样报错，自动 `--resume` 重起 |
+| `rl_cotrain_hard_cup_1021b`（`3sd4fnnh`） | place_empty_cup，GPU 5–7（1+2），上限 220，0.75 | 9 回合，第一次 update OOM |
+| `rl_cotrain_hard_cup_1021c`（`f1y5y2pe`） | 同上，0.82 | 12 回合 6 成功，第二次 update OOM |
+
+`t6vgpjbe` 每 10 回合：0 3 0 4 0 0 2 4 1 4 1 5 2 3 5 3 5 5 2 4 6 1 4 2（/10，最后一段 /9）。Q 均值 −0.53 → 约 +0.08
+后持平，critic loss 约 1e-4，选中编辑动作的比例 0.95 → 0.73，熵停在约 −259（最大熵附近）。
+
+环境端显存（Hard，bbh，GPU 7 单独测 30 次 reset）：不清渲染缓存时 7.7 → 13.3 GB 线性增长（约 0.2 GB/回合）；每 5 回合
+清一次时稳定在 8.0–9.0 GB，30 次 reset 用时 138 s → 174 s。训练中的环境端同样每回合涨 0.17–0.25 GB。
+
+### 2 结果分析
+
+- **按 30–70%（含端点，用户 2026-10-21 定）选出 6 个任务**：pick_dual_bottles、place_empty_cup、stack_blocks_two、
+  place_phone_stand、bbh、click_alarmclock。
+- **步数上限核对**：bbh 150 截掉 Hard 里 19 次成功中的 3 次；place_empty_cup 220、stack_blocks_two 410 基本不截；
+  place_phone_stand 1.3 倍示教均长取整为 170，截掉一次 171 步的成功，取 180。
+- **bbh Hard RL 没有明显提升**：101–239 回合约 35%，与基座在 150 步上限下的水平（约 32%，由评测回推）相近。Agent 推断：
+  Q 升到正值而成功率不动，可能是 Q 高估；两次重起各丢了最近 checkpoint 之后的 update，也影响曲线；未验证。
+- **显存**：Hard 环境端会持续涨显存，原因是渲染缓存不清；与 learner 同卡时最终 `cannot create buffer`。1+2 布局下
+  更新卡需要接近 0.85 的显存，0.75、0.82 都不够。
+
+### 3 下一步
+
+- 10-21 晚用清缓存修复重跑 Hard RL（用户决定），`MEM_FRACTION` 回到 0.85。
 
 ## 2026-10-19 · 步数上限 150、可以重试：固定种子 1.8 h 到 90%，随机种子也能学
 
