@@ -26,3 +26,7 @@
 	path = methods/rlinf
 	url = https://github.com/AtticusZeller/RLinf.git
 	branch = workspace
+[submodule "methods/aspire"]
+	path = methods/aspire
+	url = https://github.com/AtticusZeller/ASPIRE.git
+	branch = workspace
