@@ -18,6 +18,7 @@
 | `methods/robotwin` | `workspace` | RoboTwin 2.0 双臂仿真 benchmark（benchmark），作为 EXPO-FT 的仿真环境 |
 | `methods/rlinf` | `workspace` | RLinf 具身与智能体强化学习基础设施（framework），参考其 RoboTwin 环境端为 EXPO-FT 提速 |
 | `methods/aspire` | `workspace` | ASPIRE：coding agent 写并迭代机器人控制代码、沉淀 skill 库（method），官方实现，运行在 LIBERO-Pro / Robosuite / BEHAVIOR-1K 与真机 YAM 上 |
+| `methods/rpent` | `workspace` | RPent 递归式物理 agent 框架（framework），在 RLinf 的 Env/VLA 之上加规划、记忆与工具层 |
 
 源码被固定到精确 revision；接入不代表环境、训练、推理或真机流程已经验证。当前证据边界见
 对应的 `docs/<method>/overview.md`。

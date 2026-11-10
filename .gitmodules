@@ -30,3 +30,7 @@
 	path = methods/aspire
 	url = https://github.com/AtticusZeller/ASPIRE.git
 	branch = workspace
+[submodule "methods/rpent"]
+	path = methods/rpent
+	url = https://github.com/AtticusZeller/RPent.git
+	branch = workspace
