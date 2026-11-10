@@ -103,10 +103,8 @@ Repository workflows:
 - `develop-feature` — build a new feature or capability under a human-confirmed plan that then
   governs implementation, external review, gates, and closeout.
 - `add-method` — add, replace, or register a method, framework, benchmark, or backbone submodule.
-- `run-experiment` — validate, smoke-test, launch, repeat, or monitor an experiment configuration.
-- `summarize-experiment` — reconcile evidence, summarize a run, or compare completed runs.
 - `analyze-experiment` — analyze a finished run's W&B data and record it in
-  `docs/<method>/experiments.md`. Use for runs launched outside `./lab experiment`.
+  `docs/<method>/experiments.md`.
 - `write-reproduction-spec` — create or substantially reorganize a paper-reproduction
   specification under `docs/<method>/`. Follow
   [the Skill](.codex/skills/write-reproduction-spec/SKILL.md).
@@ -136,8 +134,7 @@ This repository is the orchestration, documentation, and evidence layer for VLA,
 related embodied-AI research. Algorithm, framework, benchmark, backbone, and reproduction code belongs
 in independent `methods/*` Git submodules.
 
-- Before changing a method, read its own `AGENTS.md` or `CLAUDE.md`. Before running a configured
-  experiment, also read `experiments/<method>/runbook.md` when it exists.
+- Before changing a method, read its own `AGENTS.md` or `CLAUDE.md`.
 - Before launching or monitoring unattended runs on a shared training server, read
   `docs/<method>/experiment-ops.md` when it exists: machine limits, the night routine, monitoring, and
   what the agent may do without the user.
@@ -152,13 +149,13 @@ in independent `methods/*` Git submodules.
   under `/mnt/data/atticux/agent-workspace/` rather than in the checkout.
 - Treat local exit codes and tracebacks as authoritative when they disagree with a tracking service.
   Preserve traceable records for both successful and failed runs.
-- Put deterministic reusable mechanics in `scripts/`. Add or change a repository-local Skill only when
-  the workflow is stable, reusable, and within the approved scope.
+- The root holds no executable code. Method commands and scripts live in each method's own repository.
+  Add or change a repository-local Skill only when the workflow is stable, reusable, and within the
+  approved scope.
 - Prefer a user-controlled fork as `origin` and the official repository as `upstream`; use a private
   mirror for unpublished work that must not enter a public fork.
 
-The root toolchain is Python 3.12 with uv, ruff, ty, and pytest. `lab` is the stable root entry point;
-experiment parameters live in complete YAML configurations when a concrete experiment exists.
+The root has no Python toolchain or launcher. Each method uses its own environment and entry points.
 
 ## 7. Documentation and Language
 

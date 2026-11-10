@@ -24,32 +24,13 @@
 ## 初始化
 
 ```bash
-uv sync --python 3.12 --all-groups
 git submodule update --init --recursive
-./lab doctor
-./lab method status
 ```
 
-根环境只包含 YAML、W&B、Git/进程编排和质量检查工具。各 method 使用自己的依赖环境；
+根仓不含可执行代码，也没有 Python 环境。各 method 使用自己的依赖环境；
 `lerobot-xense` 与 `xense-openpi` 明确共享环境。
 
-## 稳定入口
-
-```bash
-./lab method focus
-./lab method status
-./lab config validate --all
-./lab experiment dry-run <config.yaml>
-./lab experiment run <config.yaml>
-./lab experiment resume <run-id>
-./lab experiment status <run-id>
-./lab experiment summarize <run-id>
-./lab report build <method>
-```
-
-只有形成具体实验事务时才创建 `experiments/<method>/`。完整 YAML 描述实验意图；根仓保留轻量
-运行记录和摘要，大型日志、checkpoint、视频与数据写入
-`/mnt/data/atticux/agent-workspace/<method>/<run-id>/`。
+大型日志、checkpoint、视频与数据写入 `/mnt/data/atticux/agent-workspace/<method>/<run-id>/`。
 
 ## 文档
 

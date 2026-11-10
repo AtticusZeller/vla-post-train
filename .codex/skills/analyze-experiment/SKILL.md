@@ -8,9 +8,8 @@ description: Analyze a finished RL/VLA training run's W&B data and write the res
 Turn one finished run into a durable record. The output is a section in
 `docs/<method>/experiments.md`; the reasoning that produced it is the point, not the metric dump.
 
-This skill covers runs launched **outside** `./lab experiment` (on a robot host, another machine, a
-bare `train_rl.py`). For a run that has a local `experiments/<method>/run.json`, use
-`summarize-experiment` instead — it reconciles local metadata with W&B, which this skill does not.
+This skill covers any finished run, wherever it was launched (a robot host, another machine, a bare
+`train_rl.py`).
 
 ## What the user must provide
 

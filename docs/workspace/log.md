@@ -1,5 +1,13 @@
 # Workspace Log
 
+## 2026-11-10 · 移除根仓 Python 工具链
+
+- **背景与目的：** 根仓不再负责实验启动和配置校验；各 method 在自己的仓库里运行实验，根仓只留接入、文档和证据。
+- **实现思路：** 整体删除 `lab` 启动器及其脚本、测试和 Python 项目元数据；规则、README 与 Skill 中依赖它们的步骤同步移除。
+- **组件变化：** 删除 `lab`、`scripts/`、`tests/`、`pyproject.toml`、`uv.lock`、`.python-version`、`focus.yaml`，以及 `run-experiment`、`summarize-experiment` 两个 Skill；`add-method` 不再登记 `scripts/lab.py`，`analyze-experiment` 不再区分是否经过 `lab` 启动。
+- **主要文件：** `AGENTS.md`（Skill 列表与第 6 节）、`README.md`（初始化）、`docs/workspace/overview.md`。
+- **验证：** 根仓非历史文件中不再引用 `./lab`、`scripts/lab`、`_METHODS` 与已删除的 Skill；`git submodule status` 不变。更早的 log 条目保留原文。
+
 ## 2026-09-29 · 调整现役 method
 
 - **背景与目的：** 退役 FastWAM、TacWAM，接入 EXPO-FT 与 Real-Time EXPO-FT 研究框架。
