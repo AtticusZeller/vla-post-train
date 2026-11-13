@@ -5,7 +5,7 @@
 [submodule "methods/xense-openpi"]
 	path = methods/xense-openpi
 	url = https://github.com/AtticusZeller/xense-openpi.git
-	branch = rl-exp
+	branch = feature/pi-star-0.6
 [submodule "methods/lerobot-xense"]
 	path = methods/lerobot-xense
 	url = https://github.com/AtticusZeller/lerobot-xense.git
