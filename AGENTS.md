@@ -111,6 +111,9 @@ Repository workflows:
 - `write-codebase-doc` — create or update `docs/<method>/codebase.md`, the visual map of a method's
   entry points, files, module responsibilities, and module interactions. Follow
   [the Skill](.codex/skills/write-codebase-doc/SKILL.md).
+- `gh-issue-markdown` — post a local Markdown document with math, images, or relative links as a
+  GitHub issue, pull request, or comment body, and verify it renders. Follow
+  [the Skill](.codex/skills/gh-issue-markdown/SKILL.md).
 
 General workflows used regularly in this repository:
 

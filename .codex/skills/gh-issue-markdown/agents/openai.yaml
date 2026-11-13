@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Issue Markdown"
+  short_description: "Convert local Markdown with LaTeX and images into a GitHub issue body that renders, then verify it in a browser."
+  default_prompt: "Use $gh-issue-markdown to post docs/<area>/<doc>.md as a GitHub issue and verify that its math and images render."
