@@ -4,13 +4,13 @@ GitHub parses Markdown before MathJax sees the math, so plain ``$...$`` and ``$$
 backslash escapes (``\\{`` becomes ``{``), a line ending in ``\\\\`` turns into a hard break, and a
 ``<`` starts an HTML tag that swallows the rest of the formula. GitHub also rejects some macros,
 such as ``\\operatorname``. This script rewrites math into the code-span forms GitHub leaves
-untouched, patches the known breakages, and resolves relative links. Local images become raw URLs
-pinned to a pushed commit, because gh has no API for issue attachments. It never edits the source.
+untouched, patches the known breakages, and resolves relative links. Local images become absolute
+paths listed in an ``.attach`` file, so ``gh ... --attach`` uploads them and rewrites the references to
+GitHub attachment URLs. It never edits the source.
 """
 
 import argparse
 import re
-import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -23,9 +23,9 @@ _INLINE_DOLLAR = re.compile(r"(?<![\\$`\w])\$(?![\s$`])([^$\n]+?)(?<![\s\\])\$(?
 _CODE_SPAN = re.compile(r"(\$`[^`\n]*`\$|`[^`\n]*`)")
 _LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(([^)\s]+)\)")
 _IMAGE = re.compile(r"(!\[[^\]\n]*\]\()([^)\s]+)((?:\s+\"[^\"\n]*\")?\))")
-_HTML_IMG = re.compile(r"(<img\b[^>]*?\bsrc=[\"'])([^\"']+)([\"'])", re.IGNORECASE)
+_HTML_IMG = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+_HTML_ATTR = re.compile(r"\b(src|alt)=[\"']([^\"']*)[\"']", re.IGNORECASE)
 _EXTERNAL = re.compile(r"^([a-z][a-z0-9+.-]*:|#|//)", re.IGNORECASE)
-_GITHUB_REMOTE = re.compile(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$")
 _MACRO_REPLACEMENTS = {r"\operatorname{": r"\mathrm{"}
 
 
@@ -51,95 +51,57 @@ def join_trailing_row_breaks(lines: list[str]) -> list[str]:
     return out
 
 
+def inline_tags(line: str) -> str:
+    """Write ``\\tag{n}`` as a trailing ``(n)``; GitHub lays tagged equations out in a squeezed column."""
+    line = re.sub(r"\\tag\*\{([^{}]*)\}", r"\\qquad \1", line)
+    return re.sub(r"\\tag\{([^{}]*)\}", r"\\qquad (\1)", line)
+
+
 def math_block(body: list[str]) -> list[str]:
     """Render display math as a fenced ``math`` block."""
-    body = join_trailing_row_breaks([fix_math(line) for line in body])
+    body = join_trailing_row_breaks([inline_tags(fix_math(line)) for line in body])
     return ["```math", *body, "```"]
 
 
-def git(cwd: Path, *args: str) -> str:
-    """Run git in ``cwd`` and return its stripped stdout, or raise with git's message."""
-    proc = subprocess.run(["git", "-C", str(cwd), *args], check=False, capture_output=True, text=True)
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or f"git {' '.join(args)} failed")
-    return proc.stdout.strip()
-
-
-class RepoSnapshot:
-    """One GitHub repository pinned to a commit, used to publish files by raw URL."""
-
-    def __init__(self, root: Path, remote: str, rev: str | None):
-        self.root = root
-        url = git(root, "remote", "get-url", remote)
-        match = _GITHUB_REMOTE.search(url)
-        if not match:
-            raise RuntimeError(f"remote {remote} of {root} is not on github.com: {url}")
-        self.slug = match.group(1)
-        ref = rev or f"{remote}/HEAD"
-        try:
-            self.sha = git(root, "rev-parse", "--verify", f"{ref}^{{commit}}")
-        except RuntimeError as e:
-            raise RuntimeError(f"cannot resolve {ref} in {root}; fetch the remote or pass --rev ({e})")
-
-    def raw_url(self, path: Path) -> str:
-        """Raw URL of ``path`` at the pinned commit."""
-        rel = path.relative_to(self.root).as_posix()
-        return f"https://raw.githubusercontent.com/{self.slug}/{self.sha}/{quote(rel)}"
-
-    def problem(self, path: Path) -> str | None:
-        """Why the pinned commit cannot serve ``path`` as it is on disk, or None if it can."""
-        rel = path.relative_to(self.root).as_posix()
-        try:
-            pinned = git(self.root, "rev-parse", f"{self.sha}:{rel}")
-        except RuntimeError:
-            return f"not in {self.slug}@{self.sha[:7]}; commit and push it first"
-        if pinned != git(self.root, "hash-object", str(path)):
-            return f"differs from {self.slug}@{self.sha[:7]}; commit and push the current version"
-        return None
-
-
 class ImageResolver:
-    """Map local image paths in a document to raw URLs and collect the ones that cannot be served."""
+    """Map local image paths to the absolute paths that ``gh --attach`` uploads."""
 
-    def __init__(self, doc_dir: Path, remote: str = "origin", rev: str | None = None):
+    def __init__(self, doc_dir: Path):
         self.doc_dir = doc_dir
-        self.remote = remote
-        self.rev = rev
-        self.snapshots: dict[Path, RepoSnapshot] = {}
+        self.attachments: dict[Path, None] = {}
         self.problems: list[str] = []
 
-    def snapshot(self, path: Path) -> RepoSnapshot:
-        """The pinned repository that contains ``path``; submodules count as their own repository."""
-        root = Path(git(path.parent, "rev-parse", "--show-toplevel"))
-        if root not in self.snapshots:
-            self.snapshots[root] = RepoSnapshot(root, self.remote, self.rev)
-        return self.snapshots[root]
-
     def url(self, target: str) -> str:
-        """URL for an image reference; external URLs pass through unchanged."""
+        """Reference for an image; external URLs pass through, local files become encoded paths.
+
+        gh only rewrites a reference it can parse as a Markdown link destination, so a path with a
+        space must be percent-encoded.
+        """
         if _EXTERNAL.match(target):
             return target
         path = (self.doc_dir / unquote(target)).resolve()
         if not path.is_file():
             self.problems.append(f"{target}: no such file {path}")
             return target
-        try:
-            snap = self.snapshot(path)
-            problem = snap.problem(path)
-        except RuntimeError as e:
-            self.problems.append(f"{target}: {e}")
-            return target
-        if problem:
-            self.problems.append(f"{target}: {problem}")
-        return snap.raw_url(path)
+        self.attachments[path] = None
+        return quote(path.as_posix())
+
+
+def html_img_to_markdown(match: re.Match, images: ImageResolver) -> str:
+    """Turn a local ``<img>`` into a Markdown image; gh --attach leaves HTML ``src`` untouched."""
+    attrs = {k.lower(): v for k, v in _HTML_ATTR.findall(match.group(0))}
+    src = attrs.get("src")
+    if not src or _EXTERNAL.match(src):
+        return match.group(0)
+    return f"![{attrs.get('alt', '')}]({images.url(src)})"
 
 
 def rewrite_images(text: str, images: ImageResolver | None) -> str:
-    """Point Markdown and HTML image references at URLs GitHub can load."""
+    """Point Markdown and HTML image references at files gh can attach."""
     if images is None:
         return text
     text = _IMAGE.sub(lambda m: m.group(1) + images.url(m.group(2)) + m.group(3), text)
-    return _HTML_IMG.sub(lambda m: m.group(1) + images.url(m.group(2)) + m.group(3), text)
+    return _HTML_IMG.sub(lambda m: html_img_to_markdown(m, images), text)
 
 
 def convert_inline(line: str, link_base: str | None, images: ImageResolver | None = None) -> str:
@@ -238,30 +200,26 @@ def main() -> None:
         action="store_true",
         help="remove the leading H1 and print it, for use as the issue title",
     )
-    parser.add_argument(
-        "--remote", default="origin", help="git remote whose GitHub repository serves local images"
-    )
-    parser.add_argument(
-        "--rev",
-        help="commit or ref that image URLs are pinned to; default <remote>/HEAD of each repository",
-    )
     parser.add_argument("--prepend", default="", help="text placed before the body")
     parser.add_argument("--append", default="", help="text placed after the body")
     args = parser.parse_args()
 
     if args.output.resolve() == args.source.resolve():
         sys.exit("refusing to overwrite the source; pick another --output path")
-    images = ImageResolver(args.source.resolve().parent, args.remote, args.rev)
+    images = ImageResolver(args.source.resolve().parent)
     body, title = convert(args.source.read_text(), args.link_base, args.drop_h1, images)
     if images.problems:
         problems = dict.fromkeys(images.problems)
-        print("images GitHub cannot load; nothing written:", *problems, sep="\n  ", file=sys.stderr)
+        print("images that cannot be attached; nothing written:", *problems, sep="\n  ", file=sys.stderr)
         sys.exit(1)
     if args.prepend:
         body = args.prepend.rstrip("\n") + "\n\n" + body
     if args.append:
         body = body.rstrip("\n") + "\n\n" + args.append.rstrip("\n") + "\n"
     args.output.write_text(body)
+    # One ``--attach=<path>`` per line, for ``xargs -d '\n' -a <file> gh ...``; empty without images.
+    attach_file = args.output.with_name(args.output.name + ".attach")
+    attach_file.write_text("".join(f"--attach={path}\n" for path in images.attachments))
     if title is not None:
         print(title)
 
