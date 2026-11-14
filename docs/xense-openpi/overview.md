@@ -20,8 +20,9 @@ xense-openpi 是 Xense 平台的模型侧 OpenPI fork，负责训练配置、模
 
 ## RLT（JAX）
 
-RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)，代码位置与模块关系见 [codebase.md](codebase.md)：`feature/rlt-jax`
-是平铺布局，根仓登记的 `rl-exp` 把同样的模块按层重排并加了带标签评测。代码取自 XenseRobotics-AI 的
+RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)，代码位置与模块关系见 [codebase-rl-exp.md](codebase-rl-exp.md)：`feature/rlt-jax`
+是平铺布局，`rl-exp` 把同样的模块按层重排并加了带标签评测。根仓现在登记的是 `feature/pi-star-0.6`，它的代码组织见
+[codebase.md](codebase.md)。代码取自 XenseRobotics-AI 的
 `feature/rlt-hubo`，逐个 commit 对照规格审查后 cherry-pick，参考代码只作参考，问题在我们的分支上修。
 
 与规格或参考分支的差异：只实现 sliding replay（`replay_stride ≥ 1` 且整除 C），不实现 stride=0 边界 anchor；不接入

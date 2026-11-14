@@ -1,402 +1,231 @@
-# xense-openpi 代码组织
+# xense-openpi 代码组织（`feature/pi-star-0.6`）
 
-快照：`rl-exp` 的 `bbd1c71`，已合入 `feature/rlt-jax` 的 `962f953`。两个分支的训练、推理、机器人端代码相同；RL 模块
-相同、位置不同，带标签评测只在 `rl-exp` 上，对照见第 5 节。
+快照：`feature/pi-star-0.6`（`bb315b4`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
+[codebase-rl-exp.md](codebase-rl-exp.md)。本文只画 RECAP（π*0.6）新增与改动的部分，SFT 训练、serving 与机器人端沿用上游。
+方法定义见 [pi-star-06-spec.md](pi-star-06-spec.md)，可复制的命令见 [cmd.md](cmd.md)。
 
 ## 1 总图
 
 ```mermaid
 flowchart LR
-    DS[("LeRobotDataset")]
+    DS[("LeRobotDataset v3.0")]
+    PRE[("pi05_base · Gemma3-270M 权重")]
     subgraph TRAIN["训练服务器"]
         NS["compute_norm_stats.py"]
-        TR["train.py"]
-        P1["rl/rlt/precompute_prefix.py<br/>rl/rlt/train_token.py"]
-        RL["rl/rlt/train_rl.py"]
-        EV["rl/eval.py"]
+        TR["train.py<br/>advantage 条件的 SFT"]
+        CR["recap/compute_returns.py"]
+        TV["recap/train_value.py"]
+        PV["recap/plot_value.py"]
         NS -- "norm stats" --> TR
-        TR -- "VLA checkpoint" --> P1
-        P1 -- "token checkpoint" --> RL
-        RL -- "actor checkpoint" --> EV
+        CR -- "return 旁路 parquet" --> TV
+        TV -- "留出集预测 parquet" --> PV
     end
     subgraph INFER["推理服务器"]
         SV["serve_policy.py"]
     end
     subgraph ROBOT["机器人主机"]
-        MAIN["bi_flexiv_rizon4_rt<br/>main.py"]
+        MAIN["机器人客户端"]
     end
     DS --> NS
-    TR -- "VLA checkpoint" --> SV
-    RL -- "actor checkpoint" --> SV
+    DS --> CR
+    DS --> TV
+    PRE --> TR
+    PRE --> TV
+    TR -- "策略 checkpoint" --> SV
     SV <== "推理通道" ==> MAIN
-    RL <== "RL 会话通道" ==> MAIN
-    EV <== "RL 会话通道" ==> MAIN
 ```
 
-细线是产物的流向，粗线是运行时的连接。两条通道都由机器人主机拨出，都是 WebSocket 上的 msgpack，区别在谁掌握循环：
+细线是产物的流向，粗线是运行时的连接。策略线（上）与价值线（下）现在互不依赖：第一轮所有帧都标 positive，策略训练不读
+价值模型的输出；价值模型的权重与预测目前只供画图。
 
-| 通道 | 机器人端怎么启动 | 谁发起每一步 | 请求 → 回复 |
+| 连接 | 怎么启动 | 谁发起每一步 | 请求 → 回复 |
 |---|---|---|---|
-| 推理通道 | 默认模式 | 机器人端 | 观测 → action chunk |
-| RL 会话通道 | `--args.rlt` | 服务器 | `reset` / `chunk` 指令 → 实际执行的动作、人工标记、标签 |
+| 推理通道 | 机器人客户端默认模式，与上游相同 | 机器人端 | 观测 → action chunk；prompt 固定带 `Advantage: positive` |
 
 ## 2 启动入口
 
 | 目的 | 机器 | 命令 | 输入 | 输出 |
 |---|---|---|---|---|
-| norm stats | 训练 | `scripts/compute_norm_stats.py --config-name <config>` | TrainConfig、数据集 | `assets/<config>/<repo_id>/` |
-| SFT 训练 | 训练 | `scripts/train.py <config> --exp-name <run>` | TrainConfig、数据集、norm stats、预训练权重 | `checkpoints/<config>/<run>/<step>/`：`params`、`assets`、`train_state` |
-| 推理部署 | 推理 | `scripts/serve_policy.py policy:checkpoint --policy.config <config> --policy.dir <step 目录>` | TrainConfig、checkpoint | 端口 8000 上的策略服务 |
-| 机器人端 | 机器人 | `python -m examples.bi_flexiv_rizon4_rt.main --args.robot-recipe <工位> --args.host <服务器> --args.port <端口>` | recipe、可选 run YAML | 真机执行；`--args.record` 另存数据集 |
-| RLT phase one | 训练 | `scripts/rl/rlt/precompute_prefix.py <rlt config>`<br>`scripts/rl/rlt/train_token.py <rlt config> --exp-name <run>` | RLT 配置、VLA checkpoint、数据集 | `<run>/token/<step>/` |
-| RL 在线训练 | 训练 + 机器人 | 服务器：`scripts/rl/rlt/train_rl.py <rlt config> --exp-name <run>`<br>机器人端加 `--args.rlt --args.pico4-intervention` | RLT 配置、VLA 与 token checkpoint | `<run>/rl/<round>/learner.pkl`、`<run>/transitions/`、W&B |
-| RL actor 部署 | 推理 | `scripts/serve_policy.py policy:rlt --policy.config <rlt config> --policy.exp-name <run>` | 同一个 run 的 VLA、token、actor | 策略服务，机器人端照常连 |
-| 带标签评测 | 训练 + 机器人 | 服务器：`scripts/rl/eval.py <rlt config> --exp-name <run> --arm vla\|rlt --trials N --eval-name <名字>`<br>机器人端同 RL 训练 | RLT 配置、被评的策略 | `<run>/eval/<名字>/trials.jsonl` |
+| 归一化统计 | 训练服务器 | `scripts/compute_norm_stats.py --config-name <config>` | 数据集 | `assets/<config>/<repo_id>/norm_stats.json` |
+| 训练带 advantage 条件的策略 | 训练服务器 | `scripts/train.py <config> --exp-name <run>` | `configs` 下 `advantage_conditioned: true` 的 YAML、norm stats、`pi05_base` | `checkpoints/<config>/<run>/<step>/` |
+| 起策略服务 | 推理服务器 | `scripts/serve_policy.py policy:checkpoint --policy.config <config> --policy.dir <ckpt>` | 策略 checkpoint | WebSocket 服务 |
+| 算 return 标签 | 任意（只读元数据） | `scripts/recap/compute_returns.py --dataset-root <dataset> --output <returns>` | 数据集的 `meta/episodes` | return 旁路 parquet |
+| 训练价值模型 | 训练服务器 | `scripts/recap/train_value.py --repo-id <repo_id>… --returns <returns>… [--init-params <params>] --gemma-params <gemma> --gemma-tokenizer <tok> --output-dir <out> --exp-name <run>` | 数据集视频、return parquet、Gemma3-270M 与 `pi05_base` 权重 | `<out>/<run>/params`、`<out>/<run>/heldout_predictions.parquet` |
+| 画 $V$ 曲线 | 训练服务器 | `scripts/recap/plot_value.py --predictions <out>/<run>/heldout_predictions.parquet --repo-id <repo_id> --output-dir <plots>` | 留出集预测、数据集视频 | 每个 episode 一张 `value_episode_XXXX.png` |
 
-`<run>` 指 `<checkpoint_base_dir>/<rlt config>/<exp-name>/`。
+`<config>` 是 `configs` 下 YAML 的文件名；`<dataset>` 是数据集根目录（含 `meta/`、`data/`）；`<gemma>`、`<tok>` 是
+Gemma3-270M checkpoint 目录与 sentencepiece 模型的本地副本；`<out>`、`<plots>` 是输出目录。
 
-基础策略没有离线评测脚本，也没有单独的带标签评测：`scripts/rl/eval.py` 只接受 RLT 配置，`--arm vla` 评纯 VLA 也要
-这个 run 的 token checkpoint。
+现在没有的入口：读逐帧优势标签的训练（样本里没有 `advantage` 字段时一律当 positive）、用价值模型给数据打优势标签、
+CFG 推理、价值模型的独立推理脚本（只有训练结尾对留出集的一次预测）。
 
 ## 3 文件地图
 
-### 3.1 入口与配置
+入口与配置：
 
 ```text
 scripts/
-  compute_norm_stats.py        算 state / action 的归一化统计
-  train.py                     JAX SFT 训练
-  train_pytorch.py             PyTorch SFT 训练
-  serve_policy.py              策略服务：policy:checkpoint 或 policy:rlt
-  rl/rlt/precompute_prefix.py  phase one 第 1 步：缓存冻结 VLA 的 prefix hidden states
-  rl/rlt/train_token.py        phase one 第 2 步：训练 RL token 编解码器
-  rl/rlt/train_rl.py           phase two：在线 RL 的训练服务器
-  rl/eval.py                   带标签评测的服务器
-  dump_config_to_yaml.py  inspect_checkpoint.py  repair_episodes.py  check_cuda_stack.py    工具
-
-configs/
-  <name>.yaml                  TrainConfig，本机私有，不进 git
-  _examples/<name>.yaml        TrainConfig，共享
-  rl/rlt/<name>.yaml           RLT 配置：引用一个 TrainConfig 和 VLA checkpoint
+├── train.py · compute_norm_stats.py · serve_policy.py   上游入口，未改；经 data_loader / policy_config 用到 advantage 条件
+└── recap/
+    ├── compute_returns.py   读 episode 元数据，写逐帧归一化 return 的旁路 parquet
+    ├── train_value.py       价值模型训练：一个或多个数据集，载入预训练骨干或已有权重，按 episode 留出、存最优权重、早停、写留出集预测
+    └── plot_value.py        留出集预测 + 等间隔帧图，每个 episode 一张图
+configs/_examples/
+└── pi05_base_bi_flexiv_cylinder_stack_recap_h100.yaml   打开 advantage 条件的 π0.5 bi_flexiv 配置
+pyproject.toml               可选依赖组 recap（gemma）
 ```
 
-### 3.2 `src/openpi/` 基础部分
+策略侧（改动的上游文件）：
 
 ```text
 src/openpi/
-  training/
-    config.py            TrainConfig、各机器人的 DataConfig、get_config(name)
-    yaml_loader.py       YAML ↔ TrainConfig
-    registry.py          YAML 里的 type 名 → Python 类
-    data_loader.py       数据集 → 过 transform 链 → batch
-    checkpoints.py       checkpoint 目录的保存、恢复，读 norm stats
-    weight_loaders.py    加载预训练权重
-    optimizer.py         学习率日程与优化器
-    sharding.py          多卡与 FSDP
-  models/
-    model.py             Observation、BaseModel 接口、restore_params
-    pi0_config.py        Pi0Config：π0 / π0.5、LoRA、训练时 RTC 的开关
-    pi0.py               π0 / π0.5：compute_loss、sample_actions、sample_actions_with_prefix
-    pi0_fast.py          π0-FAST
-    gemma.py  siglip.py  vit.py  lora.py  tokenizer.py    骨干与分词
-  models_pytorch/        PyTorch 版模型
-  transforms.py          通用 transform：改列名、归一化、delta 动作、分词、缩放
-  policies/
-    policy.py            Policy：模型 + 输入输出 transform 链 → infer(obs)
-    policy_config.py     create_trained_policy(TrainConfig, checkpoint) → Policy
-    bi_flexiv_policy.py  双臂 Flexiv 的 Inputs / Outputs
-    xtac_umi_policy.py  dobot_nova5_policy.py  droid_policy.py  aloha_policy.py    其他机器人
-  serving/
-    websocket_policy_server.py    把一个 BasePolicy 挂到 WebSocket 端口
-  shared/                norm stats 读写、下载、图像工具、JAX 模块工具
-  rl/                    见 3.4
+├── models/
+│   ├── tokenizer.py     π0.5 prompt 里在 Action 之前插 advantage 文本；标签集合 ADVANTAGE_LABELS
+│   └── pi0_config.py    开关 advantage_conditioned 与丢弃率 advantage_dropout，只被数据链读取
+├── transforms.py        DropAdvantage（按概率去掉条件）；TokenizePrompt 读样本的 advantage 字段
+├── training/
+│   ├── config.py        ModelTransformFactory 把开关传给 TokenizePrompt
+│   └── data_loader.py   transform_dataset 在 model_transforms 之前插 DropAdvantage；RLDS 链不支持时报错
+└── policies/
+    └── policy_config.py 未改；serving 复用 model_transforms，所以不丢弃
 ```
 
-### 3.3 机器人端
+价值侧（新增）：
 
 ```text
-packages/xense-client/src/xense_client/     轻量包，机器人端和服务器端都装
-  base_policy.py              BasePolicy 接口：infer(obs) → dict
-  websocket_client_policy.py  远程策略：一次 infer 就是一次 WebSocket 往返
-  action_chunk_broker.py      同步 broker：一个 chunk 逐步发完再请求下一个
-  rtc_action_chunk_broker.py  RTC broker：后台线程提前推理，新 chunk 接进动作队列
-  action_queue.py  latency_tracker.py    RTC broker 用的队列与延迟统计
-  paced_broker.py             给双线程循环用的定速包装
-  msgpack_numpy.py            numpy 的 msgpack 编解码，两条通道都用
-  image_tools.py              图像缩放补边
-  runtime/
-    environment.py  agent.py  subscriber.py    三个接口
-    runtime.py                单线程控制循环
-    decoupled_runtime.py      观测和动作各一个线程的循环
-    agents/policy_agent.py    把 Policy 包成 Agent
-
-examples/
-  run_config.py          run YAML → 命令行参数的默认值
-  flexiv_recipe.py       recipe YAML → lerobot 的机器人配置
-  bi_flexiv_rizon4_rt/
-    main.py              启动入口：按参数拼出 Environment、broker、Agent、Runtime
-    env.py               Environment 实现：整理观测、缩放图像、下发动作
-    real_env.py          包住 lerobot 的 BiFlexivRizon4RT 驱动
-    recipe.py  recipes/  工位硬件：机械臂、相机、夹爪
-    runs/                启动参数预设
-    intervention.py      Pico4 接管：控制器，以及 Environment 和 Agent 的包装
-    button_edges.py      按键去抖
-    recorder.py          Subscriber：录成 LeRobot 数据集
-    subscribe.py         Subscriber：把观测推给下游机器
-    rlt_mode.py          --args.rlt：RL 会话的机器人端，按键状态机 + 执行 chunk
-  flexiv_rizon4_rt/  tron2_rt/  xtac_umi_bi_flexiv_rizon4_rt/  bi_arx5_real/    其他机器人，结构类似
-```
-
-### 3.4 `src/openpi/rl/`（`rl-exp` 布局）
-
-```text
-src/openpi/rl/
-  env/protocol.py        RemoteEnv：服务器端的机器人连接，协议 openpi-rlt/1
-  env/session.py         RoundSession：一轮的 reset 与 chunk 往返，回报 → 窗口事件
-  vla/frozen.py          FrozenVLA：加载冻结 VLA，给出 transform 和身份指纹
-  vla/action_space.py    ActionSpace：归一化动作 ↔ 机器人绝对动作
-  eval.py                Evaluation 与 Arm 接口：带标签评测
-  run_logger.py          RunLogger：W&B 与 events.jsonl
-  layering_test.py       检查依赖方向
-  algos/rlt/                 RLT 私有
-    config.py            RLTConfig 与 YAML 加载
-    prefix_cache.py      phase one：prefix hidden states 的落盘缓存
-    token_model.py       phase one：RL token 编解码器
-    features.py          FeatureExtractor：观测 → 参考 chunk + RL token
-    mlp_policy.py        actor 与 critic 网络
-    td.py                critic loss 与 actor loss
-    critical_trace.py    窗口内的逐步记录 → transition
-    replay.py            replay buffer
-    learner.py           Learner：出动作、训练、存取 checkpoint
-    collector.py         Collector：一轮采集
-    diagnostics.py       只做统计和落盘的诊断
-    serving.py           RLTPolicy：接到 serve_policy.py policy:rlt
-    eval_arm.py          评测用的 rlt、vla 两个 arm
+src/openpi/recap/
+├── returns.py       逐帧归一化 return 的纯 numpy 计算，按任务取最长 episode
+├── value_model.py   two-hot 目标、期望值、交叉熵；ValueModel（图像 token + 文本 token + CLS → 201 个 bin）
+├── gemma3.py        Gemma3-270M 包一层，接受现成的 embedding；直接用 orbax 读官方 checkpoint
+├── checkpoints.py   价值模型权重的保存与读回，载入前核对名称与形状
+└── value_data.py    episode 留出划分、return 对齐、任务文本 token、补边缩放、ValueFrames 数据集；多数据集的 Split 与等概率采样
 ```
 
 ## 4 模块交互
 
-### 4.1 SFT 训练
+### 4.1 advantage 条件的数据链
+
+训练与 serving 共用 `model_transforms`，丢弃只加在训练链上。虚线框是只在训练时存在的一步。
 
 ```mermaid
 flowchart LR
-    Y["configs 下的 YAML"] --> CFG["training/config.py<br/>TrainConfig"]
-    DS[("LeRobotDataset")] --> NS["compute_norm_stats.py"] --> ST[("norm stats")]
-    CFG --> NS
-    CFG --> TR["train.py"]
-    DS --> DL["training/data_loader.py"]
-    ST --> DL
-    TF["transforms.py<br/>policies/bi_flexiv_policy.py"] --> DL
-    DL -- "batch" --> TR
-    WL["training/weight_loaders.py"] -- "预训练权重" --> TR
-    TR -- "compute_loss" --> MD["models/pi0.py"]
-    TR --> CKP["training/checkpoints.py"] --> OUT[("checkpoint<br/>params · assets · train_state")]
+    CFG["Pi0Config<br/>advantage_conditioned · advantage_dropout"]
+    subgraph TRAINCHAIN["训练：data_loader.transform_dataset"]
+        T1["repack · data_transforms · Normalize"]
+        T2["DropAdvantage"]
+        T3["model_transforms<br/>含 TokenizePrompt"]
+        T1 --> T2 --> T3
+    end
+    subgraph SERVECHAIN["serving：policy_config.create_trained_policy"]
+        S1["data_transforms · Normalize"]
+        S3["model_transforms<br/>含 TokenizePrompt"]
+        S1 --> S3
+    end
+    TOK["PaligemmaTokenizer.tokenize"]
+    CFG -- "丢弃率" --> T2
+    CFG -- "开关" --> T3
+    CFG -- "开关" --> S3
+    T3 -- "prompt · state · advantage" --> TOK
+    S3 -- "prompt · state · advantage" --> TOK
+    style T2 stroke-dasharray: 5 5
 ```
-
-机器人数据和模型之间只有一条 transform 链，训练和部署共用，由 TrainConfig 的 `data.type` 决定：
 
 ```text
-进模型：机器人格式 → 改列名 → 机器人专属 Inputs → DeltaActions → Normalize → 模型专属（缩放、分词、补齐维度）
-出模型：模型输出 → Unnormalize → AbsoluteActions → 机器人专属 Outputs → 机器人格式
+开关打开：  Task: {task}, State: {state};\nAdvantage: positive;\nAction: 
+条件被丢弃：Task: {task}, State: {state};\nAction:                        （与开关关闭时逐字相同）
 ```
-
-双臂 Flexiv：state 和 action 都是 20 维 = 左臂 TCP 9（xyz + rot6d）+ 右臂 TCP 9 + 左右夹爪各 1。模型内部 18 个 TCP 维
-是相对当前 state 的 delta，夹爪是绝对值；机器人端收发的都是绝对动作。
-
-### 4.2 推理部署
-
-```mermaid
-sequenceDiagram
-    box 机器人主机
-        participant RT as Runtime
-        participant EN as Environment
-        participant AG as Agent + broker
-        participant WC as WebsocketClientPolicy
-    end
-    box 推理服务器
-        participant WS as WebsocketPolicyServer
-        participant PO as Policy
-        participant MO as Pi0
-    end
-    loop 每个控制步
-        RT->>EN: get_observation
-        EN-->>RT: state (20,)、images (3, 224, 224)
-        RT->>AG: get_action
-        opt 手里的 chunk 用完了
-            AG->>WC: infer
-            WC->>WS: 观测
-            WS->>PO: infer
-            PO->>MO: 输入 transform 链，然后 sample_actions
-            MO-->>PO: 归一化的 action chunk
-            PO-->>WS: 输出 transform 链，得到绝对动作 (H, 20)
-            WS-->>WC: 回复
-            WC-->>AG: action chunk
-        end
-        AG-->>RT: 这一步的动作
-        RT->>EN: apply_action
-        Note over RT: 把这一步交给 Subscriber（录制、推流）
-    end
-```
-
-- `Environment` 是机器人端唯一接触硬件的接口：`env.py` → `real_env.py` → lerobot 驱动。dry-run 和 Pico4 接管是包在
-  它外面的一层。
-- broker 决定 chunk 怎么用。同步 broker 推理时机器人等待；RTC broker 在后台提前推理，不等。
-- 机器人端发的是整份观测，里面还有给录制用的原始分辨率 `images_raw`，服务端不读它。观测里没有 prompt，由服务端的
-  default prompt 补上。
-
-### 4.3 RL 在线训练
-
-```mermaid
-sequenceDiagram
-    actor OP as 操作员
-    box 机器人主机
-        participant RS as rlt_mode.Session
-    end
-    box 训练服务器
-        participant SE as RemoteEnv + RoundSession
-        participant CO as Collector
-        participant FE as FeatureExtractor
-        participant LE as Learner
-        participant TR as train_rl.py
-    end
-    RS->>SE: 握手：协议名、state 与 action 维度
-    loop 每一轮
-        TR->>CO: run_round
-        CO->>SE: reset
-        SE->>RS: reset
-        OP-->>RS: A 开始
-        RS-->>CO: 首帧观测
-        loop 每个 chunk，直到操作员按 A 结束本轮
-            CO->>FE: 观测
-            FE-->>CO: VLA 参考 chunk、RL token
-            CO->>LE: 取 actor 动作（窗口已开且 replay 已 warm up）
-            CO->>SE: actions (C, 20)、source
-            SE->>RS: chunk
-            OP-->>RS: B 开窗，握柄接管，B / Y 打标签，X 作废
-            RS-->>CO: 各段实际执行的动作、人工标记、窗口状态、标签
-            Note over CO: 带标签的窗口切成 replay 行，留到轮末
-        end
-        CO-->>TR: 本轮的 replay 行与指标
-        TR->>LE: commit，然后 train
-        Note over TR: 记日志，存 checkpoint，机器人归位等待
-    end
-```
-
-「窗口」是操作员用按键划出的一段关键阶段。只有带标签窗口里的数据进 replay，actor 只在窗口内驾驶。评测
-（`rl/eval.py`）用同一张图：`Collector` 换成 `Evaluation`，`Learner` 换成一个冻结的 `Arm`，一个带标签的窗口算一次
-trial，不训练。
-
-RL 会话通道的接口（协议 `openpi-rlt/1`）：
-
-| 请求 | 服务器给 | 机器人回 |
-|---|---|---|
-| `reset` | 接管的位移与转角阈值、窗口内采观测的步长 | 首帧观测 |
-| `chunk` | `actions (C, 20)` 绝对动作；`source` 是 `actor` 或 `vla` | 若干 segment：执行后的观测、实际执行的动作、逐步人工标记、窗口状态、标签、轮结束、作废；另有窗口内采的观测 |
-| `status` | 给操作员看的一行文本 | 不回复 |
-| `close` | 无 | 空回复 |
-
-`rlt_mode.Session` 只通过两个接口接触硬件：`env`（与推理用的同一个 `Environment`）和 `controller`（按键事件、是否在
-接管、接管时的动作）。
-
-### 4.4 RL 模块的依赖
-
-箭头表示「依赖」。算法私有的模块依赖共享模块，共享模块不依赖算法；`rl/` 之外的 openpi 不依赖 `openpi.rl`。
-`layering_test.py` 检查这两条。
-
-```mermaid
-flowchart TB
-    subgraph S["scripts/"]
-        s1["rl/rlt/train_rl.py"]
-        s2["rl/eval.py"]
-        s3["serve_policy.py policy:rlt"]
-        s4["rl/rlt/precompute_prefix.py<br/>rl/rlt/train_token.py"]
-    end
-    subgraph A["rl/algos/rlt/：RLT 私有"]
-        col["collector"]
-        lea["learner"]
-        fea["features"]
-        srv["serving"]
-        arm["eval_arm"]
-        rep["critical_trace · replay"]
-        net["mlp_policy · td"]
-        ph1["prefix_cache · token_model"]
-    end
-    subgraph C["rl/ 共享"]
-        env["env/protocol · env/session"]
-        evl["eval"]
-        vla["vla/frozen · vla/action_space"]
-    end
-    subgraph O["openpi 基础"]
-        base["models/pi0.py · transforms<br/>training/config · training/checkpoints"]
-    end
-    s1 --> col
-    s1 --> lea
-    s2 --> evl
-    s2 --> arm
-    s3 --> srv
-    s4 --> ph1
-    col --> fea
-    col --> lea
-    col --> rep
-    col --> env
-    lea --> net
-    lea --> rep
-    lea --> vla
-    fea --> ph1
-    fea --> vla
-    srv --> fea
-    srv --> lea
-    arm --> srv
-    ph1 --> vla
-    evl --> env
-    evl --> vla
-    vla --> base
-```
-
-图里省略了 `run_logger`（`collector` 和 `eval` 用它记日志）和 `diagnostics`。
-
-每个模块的输入输出：
 
 | 模块 | 输入 | 输出 |
 |---|---|---|
-| `RemoteEnv` | 请求 dict | 回复 dict；断线时报错 |
-| `RoundSession` | `(actions, source)` | 各段执行结果，以及开窗、无标签关窗、标签、作废这些事件 |
-| `FrozenVLA` | TrainConfig 名 + checkpoint | 模型、与部署一致的 transform、身份指纹 |
-| `ActionSpace` | 绝对动作 + state，或归一化动作 + state | 另一种表示（`encode` / `decode`） |
-| `Evaluation` | 一个 `Arm`、目标 trial 数 | `trials.jsonl`、成功率 |
-| `Arm` | 观测、窗口是否开着 | `(chunk, source)` |
-| `FeatureExtractor` | 观测 | RL token、state、归一化的参考 chunk、可直接执行的参考 chunk |
-| `Learner` | 特征；replay 行 | actor 动作；梯度更新；checkpoint |
-| `Collector` | 一轮会话 | replay 行与指标 |
-| `RLTPolicy`（serving） | 观测，可选 `rlt_switch` | `{actions}`，actor 或 VLA 的 |
+| `Pi0Config` | YAML 里的 `advantage_conditioned`、`advantage_dropout` | 两个字段；开关打开而 `discrete_state_input` 关闭时报错 |
+| `DropAdvantage` | 样本、丢弃率 | 以该概率把样本的 `advantage` 置为 `None` |
+| `TokenizePrompt` | 样本的 `prompt`、`state`、`advantage`（缺省 `positive`） | `tokenized_prompt`、`tokenized_prompt_mask`；开关关闭时不读 `advantage` |
+| `PaligemmaTokenizer.tokenize` | 任务文本、离散化前的 state、`positive` / `negative` / `None` | token 与 mask；其他标签或 π0 格式下传入会报错 |
+| `transform_dataset` | 数据集、`DataConfig`、丢弃率 | 套好变换链的数据集；RLDS 加载链在开关打开时报 `NotImplementedError` |
 
-基础代码为 RL 改了四处：`Pi0.sample_actions_with_prefix`、`checkpoints.save_train_state`、`yaml_loader.construct`
-改为公开、`serve_policy.py` 的 `policy:rlt` 分支。
+### 4.2 价值模型的训练与出图
 
-## 5 两个分支的位置对照
+```mermaid
+flowchart LR
+    META["数据集 meta/episodes"]
+    VID["数据集视频<br/>head · left_wrist · right_wrist"]
+    CR["compute_returns.py<br/>returns.dataset_returns"]
+    VD["value_data<br/>Split · BalancedSampler · ValueFrames"]
+    INIT["train_value.init_params"]
+    VM["ValueModel<br/>SigLIP · Gemma3Backbone"]
+    PV["plot_value.py"]
+    META --> CR
+    CR -- "return parquet" --> VD
+    META --> VD
+    VID --> VD
+    VD -- "images · tokens · target" --> VM
+    INIT -- "pi05_base 的 SigLIP<br/>Gemma3-270M" --> VM
+    VM -- "留出集预测" --> PV
+    VID --> PV
+```
 
-| 内容 | `feature/rlt-jax` | `rl-exp` |
+```text
+ValueModel 的序列：[3 路相机的图像 token（经 image_proj 投到 640 维）, 任务文本 token, 可学习的 CLS]
+Gemma3Backbone 是因果的，所以取最后的 CLS 位置 → value_head → 201 个 bin 的 logits
+```
+
+| 模块 | 输入 | 输出 |
 |---|---|---|
-| 机器人连接 | `src/openpi/rlt/env_protocol.py` | `src/openpi/rl/env/protocol.py` |
-| 一轮会话 | 写在 `collector.py` 里 | `src/openpi/rl/env/session.py` |
-| 冻结 VLA、动作表示 | `src/openpi/rlt/vla.py`、`action_space.py` | `src/openpi/rl/vla/` |
-| RLT 其余模块 | `src/openpi/rlt/` | `src/openpi/rl/algos/rlt/` |
-| serving | `src/openpi/policies/rlt_policy.py` | `src/openpi/rl/algos/rlt/serving.py` |
-| 入口脚本 | `scripts/rlt/` | `scripts/rl/rlt/` |
-| 配置 | `configs/rlt/` | `configs/rl/rlt/` |
-| 评测 | 没有 | `src/openpi/rl/eval.py`、`scripts/rl/eval.py` |
-| 机器人端 | `examples/bi_flexiv_rizon4_rt/rlt_mode.py` | 同左 |
+| `returns.dataset_returns` | 每个 episode 的长度、是否成功、任务 | 每个 episode 的逐帧 return，值在 $[-1,0]$ |
+| `compute_returns.py` | 数据集根目录、可选的成功列名 | parquet：`episode_index`、`frame_index`、`return` |
+| `value_data.ValueFrames` | `LeRobotDataset`、全局帧号、对齐后的 return、任务 token | 样本：`images` uint8 (3, 224, 224, 3)、`tokens`、`token_mask`、`target`、`index` |
+| `gemma3.Gemma3Backbone` | 文本 token；或 embedding 序列与 mask | 文本 embedding；或逐位置的隐状态 |
+| `value_model.ValueModel` | 图像 (B, 3, 224, 224, 3)、文本 token 与 mask | logits (B, 201)；`expected_value` 取期望得 $V$ |
+| `train_value.py` | 一个或多个数据集及各自的 return parquet；两份预训练权重，或 `--init-params` 指向的已有 `params` | 留出集指标（多数据集时取各数据集的平均）最优时的 `params`；最优权重的 `heldout_predictions.parquet`（`dataset`、`episode_index`、`frame_index`、`return`、`value`） |
+| `plot_value.py` | 留出集预测、数据集视频 | 每个 episode 一张图：上排帧图，下方 return 与 $V$ 两条曲线 |
 
-## 6 仍带 RLT 假设的接口
+价值模型的数据不走策略的 repack 与归一化链：它只要三路相机和任务文本，不用 state 与 action。
 
-目前只有 RLT 一个算法。加第二个算法之前，下面每一处都要先决定是沿用、放宽还是另写。
+### 4.3 分层
+
+箭头表示 import。
+
+```mermaid
+flowchart TB
+    subgraph ENTRY["入口"]
+        E1["scripts/recap/compute_returns.py"]
+        E2["scripts/recap/train_value.py"]
+        E3["scripts/recap/plot_value.py"]
+    end
+    subgraph RECAP["openpi.recap"]
+        R1["returns"]
+        R2["value_data"]
+        R3["value_model"]
+        R4["gemma3"]
+    end
+    subgraph CORE["上游模块"]
+        C1["models.siglip · models.model"]
+        C2["training.data_loader"]
+        C3["shared.download"]
+    end
+    EXT["gemma 包（可选依赖）"]
+    E1 --> R1
+    E2 --> R2
+    E2 --> R3
+    E2 --> R4
+    E2 --> C1
+    E2 --> C2
+    E2 --> C3
+    E3 --> C2
+    R4 --> EXT
+```
+
+`openpi.recap` 内部五个模块互不 import，由 `train_value.py` 组装；`value_model` 的两个骨干是注入的，单测用小的替身。
+只有 `gemma3` 依赖 `gemma` 包，没装时其余模块与策略侧都能用。
+
+## 5 已知耦合
 
 | 接口 | 现在的假设 | 位置 |
 |---|---|---|
-| 窗口语义 | 机器人只在窗口内采观测，拒绝执行窗口外的 actor 指令 | `rlt_mode.py`、`env/session.py` |
-| 机器人端 | 放在一个机器人的 `examples/` 下，state 和 action 维度写死 20，开关叫 `--args.rlt` | `rlt_mode.py`、`main.py` |
-| 动作表示 | VLA 用 quantile 归一化，恰好一个 `DeltaActions` mask，delta 维度是整数个 xyz + rot6d 臂块 | `vla/action_space.py` |
-| 训练入口与循环 | 每个算法一套脚本；「谁驾驶、何时算特征、何时训练」写在 RLT 的代码里 | `scripts/rl/rlt/`、`collector.py` |
-| 评测入口 | 只接受 RLT 配置，直接构造 RLT 的 arm | `scripts/rl/eval.py` |
-| 模型钩子 | 一次前向只采一个 chunk | `models/pi0.py` |
-| 协议名 | `openpi-rlt/1`，服务器端和机器人端各存一份常量 | `env/protocol.py`、`rlt_mode.py` |
+| 价值模型的相机 | 固定 bi_flexiv 的三路相机列名与顺序 | `value_data.BI_FLEXIV_CAMERA_KEYS` |
+| 价值模型的数据集 | LeRobot v3.0；每个数据集的 episode 编号从 0 连续；多个数据集按相同概率采样，不按帧数 | `train_value.py`、`value_data.load_episode_table`、`value_data.BalancedSampler` |
+| return 归一化 | 按任务文本分组取最长 episode；一个 episode 多条任务文本时按文本集合分组，整条 episode 一起算 | `compute_returns.load_episodes` |
+| 成功标签 | 没有成功列时全部按成功处理 | `compute_returns.py` |
+| advantage 标签来源 | 样本里没有 `advantage` 字段，一律 `positive`；`negative` 只在 tokenizer 层可用 | `transforms.TokenizePrompt` |
+| Gemma3 权重读取 | 绕过 `gm.ckpts.load_params`，依赖官方 checkpoint 的扁平键名与 `gemma` 的私有模块 | `gemma3.py` |
+| 价值模型的保存 | 只存留出集指标最优的一份 `params`，不存优化器状态，不能续训 | `train_value.py` |

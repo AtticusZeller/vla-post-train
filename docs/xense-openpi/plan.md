@@ -261,3 +261,114 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 - [ ] 第 5 项：该窗口的每个 chunk 在服务器日志 / W&B chunk 轴上都是 actor（`use_actor=True`），没有先 VLA 后 actor。
 
 没有覆盖：`precompute_prefix.py`、`train_token.py` 在真实数据上的运行。
+
+## π*0.6 价值模型多任务预训练 $V_{\mathrm{pre}}$（`feature/pi-star-0.6`）
+
+规格见 [pi-star-06-spec.md](pi-star-06-spec.md)。目标任务初始化已收尾（见 [log.md](log.md)）；本事务产出一个多任务预训练的
+价值模型权重，并在 cylinder-stack 上对照"从 $V_{\mathrm{pre}}$ 初始化"与"从头训练"。训练在 `xense-train-01`，环境
+`pi06-recap`。
+
+已确认的决定（用户决定，2026-11-14）：
+
+- 预训练数据是下面 9 个数据集，都是 bi_flexiv、LeRobot v3.0、30 fps，三路相机 head / left_wrist / right_wrist 齐全，
+  全部按成功示范处理：`newbalance_shoe_insole_retrieval_and_packing_0611`、`assemble_box_with_phone_stand0430_merged`、
+  `earbud_case_insertion_teleop_0515_left_right`、`stack-cubes-flexiv-0801`、`whiteboard_inspect_1023`、
+  `pick_up_cube_0713`、`cube-color-sorting-0821`、`unscrew-the-bottle-cap-0821`、`fold-the-towel-0821`（均在 `Xense/` 下，
+  合计约 1119 万帧）。
+- 不用 `insert-ethernet-above-desk-0916`：它的 `info.json` 与 `stats.json` 和 `cylinder-stack-0909` 逐字节相同，放进去会
+  泄漏对照用的留出集。不用 `bi_elite_cs66_rt_egg_carton_relabeled_plus_open_1103`（一个数据集两个任务）。
+- 各数据集按相同概率采样，不按帧数。return 定义不变，按任务各自的 $L_{\max}$。
+- `cylinder-stack-0909` 不进预训练，作为目标任务：用同一批留出 episode（seed 0 的 15 个）比较两种初始化。
+- 训练日志由其他 Agent 持续监控；数据下载完、启动训练前，由子代理过一遍关键代码。
+
+不在本事务：失败数据、advantage 标签、策略训练、多构型数据（bi_elite）。
+
+### Task: 训练脚本支持多数据集与从已有权重初始化
+
+方法仓库 `bb315b4`。
+
+**Change**
+
+- [x] `scripts/recap/train_value.py` 的 `--repo-id` 与 `--returns` 接受多个值，一一对应；每个数据集各自按 episode 留出
+      10%；多个数据集时用 `value_data.BalancedSampler`：先等概率选数据集，再在该数据集内均匀选帧。只有一个数据集时仍走
+      原来的采样器。
+- [x] `--init-params`：从 `train_value.py` 存下的 `params` 初始化全部权重，载入前核对名称与形状
+      （`src/openpi/recap/checkpoints.py`）。`--num-train-steps 0` 加 `--init-params` 就是不训练、只在留出集上预测。
+- [x] 周期验证按数据集分别报告，另报各数据集的平均值；选最优权重与早停用平均值。周期验证的总帧数不变，在数据集之间
+      平分。
+      **与原计划的差异：** 结尾不再默认预测全部留出帧——9 个数据集的留出帧约 110 万，全量预测要一个多小时。新增
+      `--final-episodes <n>`，结尾只对每个数据集前 n 个留出 episode 做整段预测（供画图）；不给时仍是全部。预测文件多一列
+      `dataset`，`plot_value.py` 按 `--repo-id` 过滤。
+
+**Verification**
+
+1. [x] 单测（CPU）：大小为 50 与 5000 的两个数据集采样 1 万次，各占 0.5 ± 0.02，且小数据集的 50 帧全部被抽到；留出
+       episode 的帧不出现在训练索引里，训练与留出合起来正好是全部帧；预测表把全局帧号还原成 `(episode_index, frame_index)`。
+       单数据集时的帧索引由同一个 `frame_indices` 给出，训练采样器没有换。
+2. [x] 权重存盘后读回到一个全零的同结构模板里，每个叶子的值与 dtype 都与存之前相同；缺名字或形状不符时报错。
+       **与原计划的差异：** 比的是权重本身，没有比 logits——权重逐元素相同时 logits 必然相同，而真实模型的前向在本机跑
+       不动。
+3. [x] `src/openpi/recap` 27 passed；ruff 干净；pyright 只有本机没装 `gemma` 导致的 3 个 import 错误（改动前就有）。
+
+**Done**
+
+- [x] 三处 mutation 各让一个测试失败、撤掉后通过：采样改成按帧均匀；读回时用模板的值；训练索引包含全部 episode。
+      第二处一开始没被测试发现，测试改成读回到全零模板后才发现。
+- [ ] 早停与存最优权重的逻辑在一次短跑里触发：日志出现 `new best` 与 `early stop`，`params` 目录的修改时间等于最优
+      那一步。多数据集的整条训练链路也在这次短跑里第一次实际运行。
+
+### Task: 下载 9 个数据集并计算 return
+
+**Change**
+
+- [ ] 在 `xense-train-01` 把 9 个数据集下到 `HF_LEROBOT_HOME`，只取 `meta/`、`data/` 和三路相机的视频，不取触觉视频。
+      下载前先看磁盘余量。
+- [ ] 每个数据集用 `compute_returns.py` 生成旁路 parquet。
+
+**Verification**
+
+1. [ ] 每个数据集的 return 行数等于 `info.json` 的 `total_frames`，末帧 return 都是 0。
+2. [ ] 每个数据集随机抽 3 个 episode，三路相机各解码首、中、末一帧，尺寸与 `info.json` 一致。
+
+**Done**
+
+- [ ] 一张表：每个数据集的 episode 数、帧数、$L_{\max}$、中位长度、占用磁盘。$L_{\max}$ 超过中位长度两倍的数据集单独
+      列出（cylinder-stack 上是 3174 对 1468），是否剔除超长 episode 由用户决定。
+
+### Task: 预训练 $V_{\mathrm{pre}}$
+
+**Change**
+
+- [ ] 子代理审查：多数据集采样、留出划分、return 对齐、`--init-params` 与早停这几处，对照本事务的决定逐项核对，
+      有问题先修再启动。
+- [ ] 从已提交的代码启动 9 数据集的预训练，W&B project `pi06-recap-value`。
+
+**Verification**
+
+1. [ ] 训练按早停结束或跑满步数，日志没有 NaN 与 Traceback。
+2. [ ] 结尾对每个数据集的若干留出 episode 做整段预测（`--final-episodes`），报告各数据集的 MAE 与相关系数。
+
+**Done**
+
+- [ ] W&B run 链接；最优步数；9 个数据集各自的留出 MAE 与相关系数；每步耗时与总时长。
+- [ ] $V_{\mathrm{pre}}$ 的 `params` 路径，以及方法仓库与根仓的 commit。
+
+### Task: 在 cylinder-stack 上对照两种初始化
+
+**Change**
+
+- [ ] 同一份代码、同一划分（seed 0）、相同超参跑两次：从头（SigLIP + Gemma3 预训练权重）与 `--init-params` 指向
+      $V_{\mathrm{pre}}$。两次都开早停。
+- [ ] $V_{\mathrm{pre}}$ 不经微调直接在 cylinder-stack 留出集上预测一次，作为零样本参照。
+
+**Verification**
+
+1. [ ] 两次运行的留出 episode 列表相同（日志打印）。
+2. [ ] 对两次运行各出 15 张留出 episode 的 $V$ 曲线图。
+
+**Done**
+
+- [ ] 一张表并列三行（零样本、从头、从 $V_{\mathrm{pre}}$ 微调）：最优步数、留出 MAE、相关系数、留出交叉熵、最优步时的
+      train MAE。另给两次训练的留出 MAE 与 train MAE 随步数的曲线，用来回答"预训练后是否更不容易过拟合"。
+- [ ] 结果记入 [experiments.md](experiments.md) 的预训练一节；图放 `figures/pi-star-06/`。
+- [ ] 用户看图与表判断（人工门禁）：之后每轮迭代用哪种初始化，或两种并列。

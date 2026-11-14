@@ -1,5 +1,36 @@
 # xense-openpi Log
 
+## 2026-11-14 · π*0.6 目标任务初始化：advantage 文本条件、return 标签与价值模型（`feature/pi-star-0.6`）
+
+- **背景与目的：** RECAP 第二阶段需要两样东西：能读 advantage 文本条件的策略，和从示范数据训练的价值模型 $V_\ell^0$。
+  本次在测试数据集 `Xense/cylinder-stack-0909` 上把这两条链路做出来。
+- **实现思路：** 策略侧只改数据链，不改模型：prompt 在 `Action:` 之前插 `Advantage: positive|negative`，训练时由单独的
+  变换以 30% 概率丢弃，serving 复用同一条 `model_transforms` 所以从不丢弃；开关关闭时 token 与原 π0.5 格式逐元素相同。
+  价值模型是 SigLIP So400m 加 Gemma3-270M 的单个 transformer，在 CLS 位置读出 201 个 bin；return 写在数据集外的旁路
+  parquet，不改原数据集。价值模型直接读 `LeRobotDataset`，不走 bi_flexiv repack 链。
+- **组件变化：** 新增 `src/openpi/recap/`（return、价值模型、Gemma3 骨干、价值数据）与 `scripts/recap/`（算 return、训练、
+  画 $V$ 曲线）；`Pi0Config` 新增 `advantage_conditioned`、`advantage_dropout`；`pyproject.toml` 新增可选依赖组 `recap`
+  （`gemma==4.0.1`）。`codebase.md` 改为描述本分支，`rl-exp` 的那份另存为 `codebase-rl-exp.md`。
+- **主要文件：** `src/openpi/models/tokenizer.py`、`src/openpi/transforms.py`（条件与丢弃）；
+  `src/openpi/recap/value_model.py`、`scripts/recap/train_value.py`；结构见 [codebase.md](codebase.md)，命令见
+  [cmd.md](cmd.md)，数字见 [experiments.md](experiments.md)。
+- **验证：** 条件链 8 个单测通过，三处 mutation 各自让测试失败；全数据集 prompt 最长 116 token（上限 128）。return
+  226,975 行与数据集一一对应。价值模型 750 步后在留出的 15 个 episode 上 MAE 0.0149、相关系数 0.962，$V$ 曲线上升并在
+  末帧到 0。
+  **没有做：** 策略的 smoke 训练（用户决定降低优先级；试跑时 loss 发散，重算的 norm stats 里左夹爪一维
+  `q01 = q99`，用户判断是该数据集的已知问题）；训练脚本里的早停与存最优权重没有实际跑过，留给预训练事务验证。
+
+## 2026-11-14 · π*0.6 规格记入参考实现核对与目标任务初始化的决定
+
+- **背景与目的：** 开始实现目标任务初始化之前，把 Evo-RL、PiStar、RLinf、RECAP on YAM 的做法与规格里的待定项对齐。
+- **实现思路：** 子代理静态阅读四份参考实现与 Robometer，未运行；结论与用户讨论后定稿。规格区分论文原文、参考实现
+  做法与本复现的选择。
+- **组件变化：** `pi-star-06-spec.md` 新增参考实现核对表、return 归一化的几种口径与数值例子（本复现先用 Evo-RL
+  `legacy`）、价值模型的构成与选择、prompt 格式、第一轮全 positive 与 $V$ 曲线门禁、Robometer 不作为价值来源、数据集
+  按轮编号。原先"除以 $L_{\max}$"的公式改标为用户推测，论文没有给出公式。
+- **主要文件：** [pi-star-06-spec.md](pi-star-06-spec.md)；未完成的实现见 [plan.md](plan.md)。
+- **验证：** 表中数值手算核对；参考实现的结论没有通过运行验证。
+
 ## 2026-10-15 · `expo-ft` 分支：EXPO-FT 的多样本采样与 RoboTwin SFT 配置
 
 - **背景与目的：** EXPO-FT 的 learner 改用 xense-openpi（见 [expo-ft/plan.md](../expo-ft/plan.md)），需要每个观测一次

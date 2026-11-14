@@ -130,6 +130,10 @@ output, plans and proposals, method formulas, and copyable commands with prerequ
 Update it in the same task that adds, moves, or renames an entry point, module, config location, or
 protocol it describes, or that changes the registered branch.
 
+When a method has several branches in active use, `codebase.md` describes the branch registered in
+`.gitmodules`; keep each other branch in its own `codebase-<branch>.md`, with the branch named in the
+title.
+
 ## Understanding Notes
 
 `overview.md` and topic notes may preserve conclusions from researcher-agent discussions. Keep:
