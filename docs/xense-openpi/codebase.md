@@ -1,6 +1,6 @@
 # xense-openpi 代码组织（`feature/pi-star-0.6`）
 
-快照：`feature/pi-star-0.6`（`bb315b4`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
+快照：`feature/pi-star-0.6`（`ed0e224`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
 [codebase-rl-exp.md](codebase-rl-exp.md)。本文只画 RECAP（π*0.6）新增与改动的部分，SFT 训练、serving 与机器人端沿用上游。
 方法定义见 [pi-star-06-spec.md](pi-star-06-spec.md)，可复制的命令见 [cmd.md](cmd.md)。
 

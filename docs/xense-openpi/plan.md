@@ -270,18 +270,19 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 已确认的决定（用户决定，2026-11-14）：
 
-- 预训练数据是下面 9 个数据集，都是 bi_flexiv、LeRobot v3.0、30 fps，三路相机 head / left_wrist / right_wrist 齐全，
-  全部按成功示范处理：`newbalance_shoe_insole_retrieval_and_packing_0611`、`assemble_box_with_phone_stand0430_merged`、
+- 预训练数据是下面 10 个数据集，都是 LeRobot v3.0、30 fps，三路相机 head / left_wrist / right_wrist 齐全，全部按成功
+  示范处理。9 个 bi_flexiv：`newbalance_shoe_insole_retrieval_and_packing_0611`、`assemble_box_with_phone_stand0430_merged`、
   `earbud_case_insertion_teleop_0515_left_right`、`stack-cubes-flexiv-0801`、`whiteboard_inspect_1023`、
   `pick_up_cube_0713`、`cube-color-sorting-0821`、`unscrew-the-bottle-cap-0821`、`fold-the-towel-0821`（均在 `Xense/` 下，
-  合计约 1119 万帧）。
+  合计约 1119 万帧）；1 个 bi_elite：`bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed`（122 个 episode、338,599 帧，一条完整的
+  任务文本；用户决定，2026-11-15 追加）。价值模型不输入 state 与 action，构型不同不影响输入。
 - 不用 `insert-ethernet-above-desk-0916`：它的 `info.json` 与 `stats.json` 和 `cylinder-stack-0909` 逐字节相同，放进去会
   泄漏对照用的留出集。不用 `bi_elite_cs66_rt_egg_carton_relabeled_plus_open_1103`（一个数据集两个任务）。
 - 各数据集按相同概率采样，不按帧数。return 定义不变，按任务各自的 $L_{\max}$。
 - `cylinder-stack-0909` 不进预训练，作为目标任务：用同一批留出 episode（seed 0 的 15 个）比较两种初始化。
 - 训练日志由其他 Agent 持续监控；数据下载完、启动训练前，由子代理过一遍关键代码。
 
-不在本事务：失败数据、advantage 标签、策略训练、多构型数据（bi_elite）。
+不在本事务：失败数据、advantage 标签、策略训练。
 
 ### Task: 训练脚本支持多数据集与从已有权重初始化
 
@@ -296,7 +297,7 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       （`src/openpi/recap/checkpoints.py`）。`--num-train-steps 0` 加 `--init-params` 就是不训练、只在留出集上预测。
 - [x] 周期验证按数据集分别报告，另报各数据集的平均值；选最优权重与早停用平均值。周期验证的总帧数不变，在数据集之间
       平分。
-      **与原计划的差异：** 结尾不再默认预测全部留出帧——9 个数据集的留出帧约 110 万，全量预测要一个多小时。新增
+      **与原计划的差异：** 结尾不再默认预测全部留出帧——预训练各数据集的留出帧合计约 110 万，全量预测要一个多小时。新增
       `--final-episodes <n>`，结尾只对每个数据集前 n 个留出 episode 做整段预测（供画图）；不给时仍是全部。预测文件多一列
       `dataset`，`plot_value.py` 按 `--repo-id` 过滤。
 
@@ -317,11 +318,11 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 - [ ] 早停与存最优权重的逻辑在一次短跑里触发：日志出现 `new best` 与 `early stop`，`params` 目录的修改时间等于最优
       那一步。多数据集的整条训练链路也在这次短跑里第一次实际运行。
 
-### Task: 下载 9 个数据集并计算 return
+### Task: 准备 10 个数据集并计算 return
 
 **Change**
 
-- [ ] 在 `xense-train-01` 把 9 个数据集下到 `HF_LEROBOT_HOME`，只取 `meta/`、`data/` 和三路相机的视频，不取触觉视频。
+- [ ] 在 `xense-train-01` 备齐 10 个数据集：共享缓存里已有的只读使用，其余下到自己的目录，只取 `meta/`、`data/` 和三路相机的视频，不取触觉视频。
       下载前先看磁盘余量。
 - [ ] 每个数据集用 `compute_returns.py` 生成旁路 parquet。
 
@@ -341,7 +342,7 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 - [ ] 子代理审查：多数据集采样、留出划分、return 对齐、`--init-params` 与早停这几处，对照本事务的决定逐项核对，
       有问题先修再启动。
-- [ ] 从已提交的代码启动 9 数据集的预训练，W&B project `pi06-recap-value`。
+- [ ] 从已提交的代码启动 10 个数据集的预训练，W&B project `pi06-recap-value`。
 
 **Verification**
 
@@ -350,7 +351,7 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Done**
 
-- [ ] W&B run 链接；最优步数；9 个数据集各自的留出 MAE 与相关系数；每步耗时与总时长。
+- [ ] W&B run 链接；最优步数；10 个数据集各自的留出 MAE 与相关系数；每步耗时与总时长。
 - [ ] $V_{\mathrm{pre}}$ 的 `params` 路径，以及方法仓库与根仓的 commit。
 
 ### Task: 在 cylinder-stack 上对照两种初始化
