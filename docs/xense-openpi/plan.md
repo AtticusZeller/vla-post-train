@@ -274,7 +274,7 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
   示范处理。9 个 bi_flexiv：`newbalance_shoe_insole_retrieval_and_packing_0611`、`assemble_box_with_phone_stand0430_merged`、
   `earbud_case_insertion_teleop_0515_left_right`、`stack-cubes-flexiv-0801`、`whiteboard_inspect_1023`、
   `pick_up_cube_0713`、`cube-color-sorting-0821`、`unscrew-the-bottle-cap-0821`、`fold-the-towel-0821`（均在 `Xense/` 下，
-  合计约 1119 万帧）；1 个 bi_elite：`bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed`（122 个 episode、338,599 帧，一条完整的
+  合计约 1096 万帧）；1 个 bi_elite：`bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed`（122 个 episode、338,599 帧，一条完整的
   任务文本；用户决定，2026-11-15 追加）。价值模型不输入 state 与 action，构型不同不影响输入。
 - 不用 `insert-ethernet-above-desk-0916`：它的 `info.json` 与 `stats.json` 和 `cylinder-stack-0909` 逐字节相同，放进去会
   泄漏对照用的留出集。不用 `bi_elite_cs66_rt_egg_carton_relabeled_plus_open_1103`（一个数据集两个任务）。
@@ -315,34 +315,68 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 - [x] 三处 mutation 各让一个测试失败、撤掉后通过：采样改成按帧均匀；读回时用模板的值；训练索引包含全部 episode。
       第二处一开始没被测试发现，测试改成读回到全零模板后才发现。
-- [ ] 早停与存最优权重的逻辑在一次短跑里触发：日志出现 `new best` 与 `early stop`，`params` 目录的修改时间等于最优
+- [x] 早停与存最优权重的逻辑在一次短跑里触发：日志出现 `new best` 与 `early stop`，`params` 目录的修改时间等于最优
       那一步。多数据集的整条训练链路也在这次短跑里第一次实际运行。
+      **与原计划的差异：** 触发用的是 cylinder-stack 单数据集从头训练（`value-cylinder-scratch-ed0e224`，代码
+      `ed0e224`）：步 1750 `new best val_mae=0.0155`，步 2500 `early stop`（patience 3），`params` 修改时间 00:59:28 与
+      步 1750 的存盘日志一致。多数据集链路第一次实际运行放到预训练本身。
 
 ### Task: 准备 10 个数据集并计算 return
 
 **Change**
 
-- [ ] 在 `xense-train-01` 备齐 10 个数据集：共享缓存里已有的只读使用，其余下到自己的目录，只取 `meta/`、`data/` 和三路相机的视频，不取触觉视频。
+- [x] 在 `xense-train-01` 备齐 10 个数据集：共享缓存里已有的只读使用，其余下到自己的目录，只取 `meta/`、`data/` 和三路相机的视频，不取触觉视频。
       下载前先看磁盘余量。
-- [ ] 每个数据集用 `compute_returns.py` 生成旁路 parquet。
+      **与原计划的差异：** 触觉视频最终也下了。本机的 LeRobot 在 `DatasetReader._check_cached_episodes_sufficient` 里
+      要求所有视频键的文件都在，缺触觉视频时第一次加载会自动补下整个仓库；触觉视频只占各仓库不到一成。共享缓存里的
+      3 个（shoe、whiteboard、egg carton）所有视频键的文件都在，加载时不会往共享缓存写东西。
+      **数据问题：** `cube-color-sorting-0821` 在 Hub 上多一个旧的 `meta/episodes/chunk-000/file-001.parquet`（12 行，
+      episode 25–36，长度与帧区间和 `file-000` 逐行相同，是早先上传的残留；`info.json` 与 `data/` 都是 101 个
+      episode、143,517 帧）。只在自己的副本里把它移到 `/root/localstorage/pi06/lerobot/stale-meta/`，Hub 未动；
+      重新下载会把它带回来。
+- [x] 每个数据集用 `compute_returns.py` 生成旁路 parquet，在 `/root/localstorage/pi06/data/returns-<数据集>.parquet`。
 
 **Verification**
 
-1. [ ] 每个数据集的 return 行数等于 `info.json` 的 `total_frames`，末帧 return 都是 0。
-2. [ ] 每个数据集随机抽 3 个 episode，三路相机各解码首、中、末一帧，尺寸与 `info.json` 一致。
+1. [x] 每个数据集的 return 行数等于 `info.json` 的 `total_frames`，末帧 return 都是 0。
+2. [x] 每个数据集随机抽 3 个 episode（seed 0），三路相机各解码首、中、末一帧，都是 3×480×640。共享缓存的 3 个
+       在之前的会话里已用于训练，这次只核对了文件齐全。
+3. [x] 任务文本的 Gemma3 token 数（含 BOS）最长 47（pick_up_cube），`--max-token-len 48` 够用。
 
 **Done**
 
-- [ ] 一张表：每个数据集的 episode 数、帧数、$L_{\max}$、中位长度、占用磁盘。$L_{\max}$ 超过中位长度两倍的数据集单独
+- [x] 一张表：每个数据集的 episode 数、帧数、$L_{\max}$、中位长度、占用磁盘。$L_{\max}$ 超过中位长度两倍的数据集单独
       列出（cylinder-stack 上是 3174 对 1468），是否剔除超长 episode 由用户决定。
+
+      | 数据集 | episode | 帧 | $L_{\max}$ | 中位长度 | 磁盘 |
+      |---|---|---|---|---|---|
+      | newbalance_shoe_insole_retrieval_and_packing_0611（共享缓存，旧版本） | 353 | 5,844,491 | 24,884 | 16,298 | 33G |
+      | assemble_box_with_phone_stand0430_merged | 207 | 1,848,306 | 13,903 | 9,012 | 7.2G |
+      | earbud_case_insertion_teleop_0515_left_right | 776 | 1,145,613 | 2,342 | 1,439 | 6.8G |
+      | stack-cubes-flexiv-0801 | 170 | 891,288 | 9,933 | 4,866 | 3.5G |
+      | whiteboard_inspect_1023（共享缓存） | 301 | 709,453 | 3,614 | 2,276 | 2.7G |
+      | bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed（共享缓存） | 122 | 338,599 | 5,053 | 2,716 | 1.4G |
+      | pick_up_cube_0713 | 200 | 208,762 | 4,914 | 997 | 697M |
+      | cube-color-sorting-0821 | 101 | 143,517 | 2,287 | 1,382 | 703M |
+      | unscrew-the-bottle-cap-0821 | 100 | 84,419 | 1,388 | 832 | 333M |
+      | fold-the-towel-0821 | 100 | 80,569 | 1,819 | 753 | 475M |
+
+      合计 11,295,017 帧。超过两倍的三个：pick_up_cube（4.93 倍，只有 episode 168 一条是 4914 帧，次长 1577）、
+      fold-the-towel（2.42 倍，episode 0 是 1819 帧，次长 1441）、stack-cubes（2.04 倍，长尾是渐变的 9122、9324、
+      9933）。预训练没有剔除任何 episode（return 定义不变）；是否剔除由用户决定，待定。
 
 ### Task: 预训练 $V_{\mathrm{pre}}$
 
 **Change**
 
-- [ ] 子代理审查：多数据集采样、留出划分、return 对齐、`--init-params` 与早停这几处，对照本事务的决定逐项核对，
-      有问题先修再启动。
-- [ ] 从已提交的代码启动 10 个数据集的预训练，W&B project `pi06-recap-value`。
+- [x] 子代理审查：多数据集采样、留出划分、return 对齐、`--init-params` 与早停这几处，对照本事务的决定逐项核对，
+      有问题先修再启动。没有阻断问题；补了一处 episode 存储顺序的检查（`ed0e224`）。未改的小问题：验证指标为 NaN
+      时的最优选择没有专门处理；不同组织下同名数据集的 `split.name` 会重名。
+- [x] 从已提交的代码启动 10 个数据集的预训练，W&B project `pi06-recap-value`。方法仓库 `ed0e224`（服务器副本与之
+      逐文件一致），2026-11-15 03:58 启动，`--exp-name value-pretrain-10ds-ed0e224 --num-train-steps 20000
+      --eval-interval 1000 --patience 5 --final-episodes 2 --num-workers 64`，其余超参与 cylinder 对照相同。
+      步数、验证间隔与 patience 是 Agent 选的：每个数据集只分到 1/10 的样本，cylinder 单任务在 1750 步最优，这里放宽到
+      2 万步并靠早停结束。
 
 **Verification**
 
