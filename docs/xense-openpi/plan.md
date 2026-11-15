@@ -261,3 +261,132 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 - [ ] 第 5 项：该窗口的每个 chunk 在服务器日志 / W&B chunk 轴上都是 actor（`use_actor=True`），没有先 VLA 后 actor。
 
 没有覆盖：`precompute_prefix.py`、`train_token.py` 在真实数据上的运行。
+
+## π*0.6 优势标签门禁图、预训练数据检查与 $V_{\mathrm{pre}}$ 重训（`feature/pi-star-0.6`）
+
+规格见 [pi-star-06-spec.md](pi-star-06-spec.md)，上一轮的数字见 [experiments.md](experiments.md)。用户确认本事务并定下
+顺序（2026-11-15）：先做门禁图（不依赖重训，用现有模型），再做数据检查，最后重训 $V_{\mathrm{pre}}$ 并用门禁图的代码
+顺手对比。训练在 `xense-train-01`，环境 `pi06-recap`。
+
+为什么做：
+
+- 上一版 $V_{\mathrm{pre}}$ 的数据没有经过检查，训练时才撞上问题。事后用关节状态量了一遍，确认有问题的 episode
+  （用户逐条看过，2026-11-15）：`pick_up_cube_0713` 168（84% 的帧不动，另一个 agent 已删，干净副本在
+  `xense-train-01:/root/localstorage/pick-up-cube-drop168/drop168`，199 个 episode）；
+  `bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed` 108（整条不动）；`whiteboard_inspect_1023` 70 与
+  `cube-color-sorting-0821` 100（任务做完没有及时按键结束）；`whiteboard_inspect_1023` 0（操作太慢，长度离群，
+  拉大了 $L_{\max}$）。`cube-color-sorting-0821` 的 Hub 仓库另有一个残留的 episode 元数据文件。
+- 只画 $V$ 曲线不够当下游 SFT 的门禁（用户要求，2026-11-15）：要在曲线上标出优势标签的正负，人眼认为标得对，才用
+  这批标签训练策略。
+
+已确认的决定（用户决定，2026-11-15）：
+
+- 要清理的是三类：从头到尾没动的、做完忘记结束的、个别特别长的（如 whiteboard 0）。轻微的长度离群不处理：
+  `fold-the-towel-0821` 的 0、1、9、10 和 `cylinder-stack-0909` 的 86 都保留。cylinder-stack 不动，留出划分与从头基线
+  `m6pytdh3` 继续可比。
+- 检查脚本只标记，不自动删；删哪些由用户看清单后定。删除用 `drop_episodes.py`（只改元数据，不重编码视频），产出
+  新副本，Hub 不动。
+- `earbud_case_insertion_teleop_0515_left_right` 71 被上面那次临时测量报成"静止 19 秒"，用户看过原视频，没有静止这么久。
+  临时判据（每帧关节变化小于量程的 0.2%）会把慢而精细的动作当成静止，正式脚本的判据不能再报这一条。
+- 优势按规格公式往后看 $N=50$ 帧，阈值按任务取，使约 40% 的帧为 positive。
+
+本事务不做：给训练数据生成用于 SFT 的优势标签文件、策略训练、策略侧的 midtrain、修 Hub 上的数据集。
+
+### Task: 带优势标签的 $V$ 曲线图
+
+在现有模型上先做出来。图要回答两个问题：标签落在哪些片段上；价值模型见过的 episode 与没见过的 episode，标签是否
+一样可信。后一个问题的来由：价值模型在训练集上的 MAE 只有 0.0015–0.0024，而成功示范的真实优势恒为 0，所以在它见过
+的 episode 上预测的优势可能只剩噪声（Agent 推断，未验证）；下游 SFT 要标的正是训练数据。
+
+**Change**
+
+- [ ] 新增 `src/openpi/recap/advantage.py`，两个纯函数。`n_step_advantages(returns, values, horizon)`：一条 episode 内
+      $\hat A_t = (R_t - R_{t+N}) + \hat V_{t+N} - \hat V_t$；$t+N$ 超出末帧时 $\hat A_t = R_t - \hat V_t$（终止后价值为
+      0，两式在交界处一致）。奖励和直接取 return 的差，所以失败 episode 的终止惩罚自动算进去。结尾的处理论文没有写，
+      是本实现的选择。`positive_threshold(advantages, positive_fraction)`：取 $1-$`positive_fraction` 分位数。
+- [ ] `scripts/recap/plot_value.py` 加 `--advantage-horizon`（默认 50）与 `--positive-fraction`（默认 0.4）：阈值在
+      预测文件里该数据集的全部帧上取（现有数据集都是一个数据集一个任务）；$V$ 曲线背景按标签着色（positive 绿、
+      negative 红），上排每张帧图的边框用它所在时刻标签的颜色，下方加一栏画 $\hat A_t$ 与阈值线。
+- [ ] `scripts/recap/train_value.py` 加 `--final-train-episodes <n>`（默认 0）：结尾另对每个数据集前 n 个训练 episode
+      整段预测，写 `train_predictions.parquet`。不另写预测脚本，因为模型构建与预测都在这个脚本里，
+      `--num-train-steps 0 --init-params` 已经是"只预测"的入口。
+
+**Verification**
+
+1. [ ] `advantage_test.py`：$\hat V$ 等于真实 return 时成功 episode 的优势全为 0；$\hat V$ 在某一段走平时该段优势为负、
+       追上来的那段为正；末尾 $N$ 帧用终止公式；失败 episode（末帧 return 为 $-0.5$）在两式交界处连续；阈值使正样本
+       比例等于给定值。对公式各做一处 mutation（去掉奖励项、结尾仍然 bootstrap）确认测试会失败。
+2. [ ] 用 `value-cylinder-scratch-ed0e224` 的权重在 cylinder-stack 上跑 `--num-train-steps 0 --final-train-episodes 15`，
+       得到 15 个留出与 15 个训练 episode 的预测；两组各出 15 张图。
+3. [ ] 两组各算：$\hat A_t$ 的标准差、标签每秒翻转次数、positive 片段的中位时长。
+
+**Done**
+
+- [ ] 图放 `docs/xense-openpi/figures/pi-star-06/`，两组数字记入 [experiments.md](experiments.md)，写明训练集内的
+      标签是否退化成噪声。
+- [ ] 用户看图判断（人工门禁）：标签是否落在合理的片段上（negative 对应停顿、犹豫、重试，positive 对应推进快的片段）；
+      若训练集内的标签不可用，是否要改成交叉标注，另开事务。
+
+### Task: 数据检查脚本
+
+**Change**
+
+- [ ] 新增 `scripts/recap/check_dataset.py --dataset-root <root>`，只读、只用 parquet 与文件是否存在，不解码视频。
+      检查项：(1) `meta/episodes` 行数、编号连续且不重复、帧数合计，与 `info.json`、`data/` 三者一致（残留或重复的
+      元数据文件在这里报出来）；(2) 每条 episode 的三路相机视频文件存在；(3) 长度离群，报出与中位长度的比值；
+      (4) 静止：整条里静止帧的比例、结尾连续静止的时长、开头连续静止的时长。输出每个数据集一张可疑清单，注明原因。
+- [ ] 静止的判据在实现时用真实数据定：先看 whiteboard 70、cube-color 100、egg 108、pick_up_cube 168 与 earbud 71 这
+      五条的逐帧关节变化，找到能分开前四条与 earbud 71 的量（候选：同时看 state 与 action；用更严格的"完全不动"阈值
+      只判开头、结尾和整条）。定下的判据与依据写回本条。中段的停顿只报数字，不作为可疑原因。
+- [ ] 把 `drop_episodes.py` 从 `openpi-2stage` 工作区的 `scripts/egg_carton_two_stage/` 原样复制到 `scripts/recap/`，
+      记下来源 commit。不改内容，便于以后两边对照。
+
+**Verification**
+
+1. [ ] 判据里的纯函数有单测：连续静止段的起止与时长、开头 / 结尾静止、长度离群。
+2. [ ] 在训练机现有数据上跑：报出 pick_up_cube 168、egg 108、whiteboard 70、cube-color 100、whiteboard 0，不把
+       earbud 71 报成静止；把 cube-color-sorting 那个残留文件放回一份副本后，第 (1) 项报错。
+
+**Done**
+
+- [ ] 10 个预训练数据集加 cylinder-stack 的可疑清单交给用户；每条附原因、时长数字和首 / 中 / 末三帧 head 相机图。
+
+### Task: 清理数据并重算 return
+
+**Change**
+
+- [ ] 已定要删的：egg 108、whiteboard 0 与 70、cube-color 100；pick_up_cube 直接用已有的干净副本。清单里新增的可疑
+      episode 由用户定。用 `drop_episodes.py` 产出新副本，放 `/root/localstorage/pi06/lerobot-clean/`；共享缓存里的
+      源数据只读。
+- [ ] 对干净副本重算 return。
+
+**Verification**
+
+1. [ ] 干净副本再过一遍检查脚本：第 (1)(2) 项无问题，已删的 episode 不再出现，剩余可疑条目与用户决定保留的一致。
+2. [ ] 每个改过的数据集抽 3 个 episode，三路相机各解码首、中、末一帧；编号变了的 episode 与源数据同一条的帧逐像素
+       相同（删除只改元数据，这一条防编号错位）。
+
+**Done**
+
+- [ ] 一张表：每个数据集清理前后的 episode 数、帧数、$L_{\max}$、中位长度，以及删掉的编号。
+
+### Task: 重训 $V_{\mathrm{pre}}$ 并在 cylinder-stack 上对比
+
+**Change**
+
+- [ ] 子代理按本事务审查前三个 Task 的 diff，问题先核实再修。
+- [ ] 从已提交并推送的代码启动预训练，超参与上一版相同（2 万步、每 1000 步验证、patience 5），数据换成干净副本。
+      `HF_DATASETS_CACHE` 指到大盘。
+- [ ] 新权重在 cylinder-stack 上做零样本与微调，设置与上一版相同（seed 0、5000 步、patience 3）。
+
+**Verification**
+
+1. [ ] 训练早停或跑满，日志无 NaN 与 Traceback；pick_up_cube 的周期验证相关系数不再停在 0.41。
+2. [ ] cylinder-stack 留出 episode 列表与上一版相同。
+
+**Done**
+
+- [ ] [experiments.md](experiments.md) 的对照表加两行（新 $V_{\mathrm{pre}}$ 的零样本与微调），与上一版并列；各数据集的
+      留出指标前后对比。
+- [ ] 用门禁图的代码给从头、旧微调、新微调三个模型在同一批 cylinder-stack 留出 episode 上各出一组带标签的图。
+- [ ] 用户看图与表判断（人工门禁）。
