@@ -441,9 +441,16 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       没有处理、记作已知限制的：只查视频文件存在，不查内容；`observation.state` 里若有一维是纯噪声，静止检测
       会失效（现有数据集的汇总行里静止时长都不为 0，没有这种情况）；`--final-train-episodes` 取的是按当前
       seed 现算的训练划分，权重若来自别的划分，写出的就不是它训练过的 episode。
-- [ ] 从已提交并推送的代码启动预训练，超参与上一版相同（2 万步、每 1000 步验证、patience 5），数据换成干净副本。
+- [x] 从已提交并推送的代码启动预训练，超参与上一版相同（2 万步、每 1000 步验证、patience 5），数据换成干净副本。
       `HF_DATASETS_CACHE` 指到大盘。
+      2026-11-16 00:04 启动：方法仓库 `2b7bb10`，运行名 `value-pretrain-10ds-clean-2b7bb10`，W&B `dhkgxqz9`，
+      tmux 会话 `pi06-pretrain`。数据集顺序与上一版相同；egg、whiteboard、cube-color、stack-cubes、earbud 用
+      `lerobot-clean/` 下的副本，pick_up_cube 用 `drop168`，shoe、assemble_box、unscrew、fold 没变。与上一版相比
+      除了清理还有一处不同：earbud 从 776 条的 `_left_right` 换成 888 条的仓库（删后 886 条）。清理过的数据集
+      episode 数变了，按 seed 现算的留出划分与上一版不是同一批 episode。稳态 0.37 s/步。
 - [ ] 新权重在 cylinder-stack 上做零样本与微调，设置与上一版相同（seed 0、5000 步、patience 3）。
+      已挂接力任务（tmux 会话 `pi06-cyl-vpre-clean`）：预训练退出码为 0 且 8 张 GPU 显存合计低于 2 GB 时依次跑
+      `value-cylinder-zeroshot-vpre-clean` 与 `value-cylinder-finetune-vpre-clean`；否则不跑。结果未出。
 
 **Verification**
 
