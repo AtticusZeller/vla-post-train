@@ -7,7 +7,7 @@
 
 ### 1 原始记录
 
-- **目的：** [plan.md](plan.md) 里价值模型 Task 的耗时与过拟合数字，作为是否做多任务预训练 $V_{\mathrm{pre}}$ 的依据。
+- **目的：** 目标任务初始化事务（已收尾，见 [log.md](log.md)）里价值模型的耗时与过拟合数字，作为是否做多任务预训练 $V_{\mathrm{pre}}$ 的依据。
 - **数据：** `Xense/cylinder-stack-0909`（151 个 episode、226,975 帧，全部按成功处理）。按 episode 留出 10%：训练 136 个
   episode / 203,560 帧，留出 15 个 / 23,415 帧。return 按 [pi-star-06-spec.md](pi-star-06-spec.md) 的定义，$L_{\max}=3174$。
 - **模型与超参：** SigLIP So400m + Gemma3-270M，681.4M 参数全部训练；batch 128，AdamW，峰值学习率 5e-5，warmup 500 步后
@@ -48,7 +48,7 @@
 ### 3 下一步
 
 - 单任务训练到最优只要约 5 分钟的 GPU 时间，瓶颈是 worker 启动与验证的固定开销。
-- 做多任务预训练 $V_{\mathrm{pre}}$（用户决定，2026-11-14），事务见 [plan.md](plan.md)，能验证什么见下一节。
+- 做多任务预训练 $V_{\mathrm{pre}}$（用户决定，2026-11-14），已完成，摘要见 [log.md](log.md)，判据与结果见下一节。
 
 ## 多任务预训练 $V_{\mathrm{pre}}$ 能验证什么
 
@@ -90,8 +90,28 @@ episode 71 这次起点预测准确（约 −0.32，真值 −0.335），误差�
 
 ### 预训练运行 `value-pretrain-10ds-ed0e224`
 
-W&B [gty4r7z9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/gty4r7z9)，方法仓库 `ed0e224`，10 个数据集（表见
-[plan.md](plan.md)），2026-11-15 03:58 启动、07:11 结束，共 3 小时 13 分。每 1000 步验证、patience 5：步 12000 最优
+W&B [gty4r7z9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/gty4r7z9)，方法仓库 `ed0e224`，10 个数据集，
+`--num-train-steps 20000 --eval-interval 1000 --patience 5 --final-episodes 2 --num-workers 64`，其余为默认值。
+2026-11-15 03:58 启动、07:11 结束，共 3 小时 13 分。
+
+数据集都在 `Xense/` 下，LeRobot v3.0、30 fps，全部按成功示范处理，各留出 10% episode（seed 0）：
+
+| 数据集 | episode | 帧 | $L_{\max}$ | 中位长度 |
+|---|---|---|---|---|
+| newbalance_shoe_insole_retrieval_and_packing_0611（训练机共享缓存里的旧版本，Hub 现为 368 个 episode） | 353 | 5,844,491 | 24,884 | 16,298 |
+| assemble_box_with_phone_stand0430_merged | 207 | 1,848,306 | 13,903 | 9,012 |
+| earbud_case_insertion_teleop_0515_left_right | 776 | 1,145,613 | 2,342 | 1,439 |
+| stack-cubes-flexiv-0801 | 170 | 891,288 | 9,933 | 4,866 |
+| whiteboard_inspect_1023 | 301 | 709,453 | 3,614 | 2,276 |
+| bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed（bi_elite） | 122 | 338,599 | 5,053 | 2,716 |
+| pick_up_cube_0713 | 200 | 208,762 | 4,914 | 997 |
+| cube-color-sorting-0821 | 101 | 143,517 | 2,287 | 1,382 |
+| unscrew-the-bottle-cap-0821 | 100 | 84,419 | 1,388 | 832 |
+| fold-the-towel-0821 | 100 | 80,569 | 1,819 | 753 |
+
+合计 11,295,017 帧。**这批数据没有经过数据检查（用户判断，2026-11-15）：** pick_up_cube 的 episode 168 是 4914 帧
+（次长 1577），fold-the-towel 的 episode 0 是 1819 帧（次长 1441），都没有剔除；cube-color-sorting 的 Hub 仓库多一个
+残留的 episode 元数据文件，训练用的副本里移开了。下面的数字属于这版数据，数据检查做好后要重训。每 1000 步验证、patience 5：步 12000 最优
 （各数据集平均 val MAE 0.0209、corr 0.897），步 17000 早停。$V_{\mathrm{pre}}$ 权重在
 `xense-train-01:/root/localstorage/pi06/runs/value-pretrain-10ds-ed0e224/params`。
 
@@ -147,7 +167,9 @@ W&B [gty4r7z9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/gty4r7z9)，
 
 Agent 推断：在只有成功示范、return 按时间定义的条件下，预训练带来的是更快收敛，没有带来更低的误差下限；误差下限
 来自标签本身——首帧看不出 episode 会有多长。要看出预训练的价值，可能得等有失败数据、需要分辨"做对了没有"的时候。
-是否之后每轮都并列两种初始化，等用户看图后决定。
+
+用户判断与决定（2026-11-15）：以上结论的前提是只在纯成功数据上比较；之后每轮两种初始化并列，真正的检验等有失败
+数据。$V$ 曲线图本身还不够当下游 SFT 的门禁，需要在曲线上标出优势标签的正负，做法待定。
 
 ## 2026-10-10 · pi05_base_bi_flexiv_insert_ethernet_0928_h100/test1010-2 — 用成功示教学局部对准，再交给 VLA 插入
 

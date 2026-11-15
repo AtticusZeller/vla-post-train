@@ -1,5 +1,32 @@
 # xense-openpi Log
 
+## 2026-11-15 · π*0.6 价值模型多任务预训练 $V_{\mathrm{pre}}$ 与 cylinder-stack 初始化对照（`feature/pi-star-0.6`）
+
+- **背景与目的：** 单任务价值模型不到半个 epoch 就过拟合，用户决定做多任务预训练，并在 cylinder-stack 的同一批留出
+  episode 上比较"从 $V_{\mathrm{pre}}$ 初始化"与"从头训练"。
+- **实现思路：** 训练脚本接受多个数据集，各数据集等概率采样、各自留出 10% episode，验证指标取数据集平均；按留出 MAE
+  存最优权重并早停；`--init-params` 从已有权重出发，步数为 0 时就是零样本评测。10 个 `Xense/*` 数据集（9 个 bi_flexiv、
+  1 个 bi_elite，1130 万帧）全部按成功示范处理，return 定义不变。cylinder-stack 不进预训练。
+- **组件变化：** `scripts/recap/train_value.py` 支持多数据集、`--init-params`、`--best-metric`、`--patience`、
+  `--final-episodes`；新增 `src/openpi/recap/checkpoints.py`；`value_data.py` 新增 `BalancedSampler`、`Split`，并在
+  episode 表不按顺序首尾相接时报错。方法仓库 `bb315b4`、`ed0e224`。
+- **主要文件：** `scripts/recap/train_value.py`、`src/openpi/recap/value_data.py`、`src/openpi/recap/checkpoints.py`；
+  数字、数据集表与图见 [experiments.md](experiments.md) 的预训练一节。
+- **验证：** `src/openpi/recap` 29 个单测通过，三处 mutation 各让一个测试失败。预训练 `gty4r7z9` 步 12000 最优、步 17000
+  早停，无 NaN 与 Traceback。cylinder-stack 上零样本 MAE 0.0526；从头 0.0156（步 1750）；微调 0.0150（步 750）。结论：
+  预训练让收敛更快，最优精度没有可分辨的差别，这个结论只在纯成功数据上成立（用户判断，2026-11-15）。之后每轮两种
+  初始化并列，真正的检验等有失败数据（用户决定，2026-11-15）。
+- **过程中的问题：**
+  - 预训练前没有数据检查这一环（用户判断，2026-11-15），以下两处都是训练时才撞上的：`cube-color-sorting-0821` 的 Hub
+    仓库多一个残留的 episode 元数据文件（12 行与正式文件重复），只在训练机的副本里移开；`pick_up_cube_0713` 的
+    episode 168 有 4914 帧（中位 997），把该数据集其余 episode 的 return 压到 $-0.16$ 以内，而且落在留出集里。
+    这版 $V_{\mathrm{pre}}$ 用的是没剔除的数据，数据检查做好后重训。
+  - 计划里"不下触觉视频"做不到：这版 LeRobot 加载时要求所有视频键的文件齐全，缺了会补下整个仓库。
+  - 64 个 data worker 的视频解码器缓存只增不减，10 个数据集时涨到约 950G 后持平（上限由视频文件数决定）。
+  - HF `datasets` 的 arrow 缓存默认写在训练机 30G 的根盘，一度用到 98%；本会话产生的条目已删，之后用
+    `HF_DATASETS_CACHE` 指到大盘（见 [cmd.md](cmd.md)）。
+  - 一次并行下载用 `rjob ... -- bash -c "<脚本>"` 启动，引号被拆开，任务日志里打出了完整环境变量；两个日志当即删除。
+
 ## 2026-11-14 · π*0.6 目标任务初始化：advantage 文本条件、return 标签与价值模型（`feature/pi-star-0.6`）
 
 - **背景与目的：** RECAP 第二阶段需要两样东西：能读 advantage 文本条件的策略，和从示范数据训练的价值模型 $V_\ell^0$。

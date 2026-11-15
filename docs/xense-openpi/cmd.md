@@ -84,7 +84,8 @@ $-0.5$。
 用途：在一个或多个数据集上训练价值模型，每个数据集按 episode 留出 10% 做验证。
 
 前提：上面三步已完成；数据集已在 `HF_LEROBOT_HOME` 下或用 `--dataset-root` 指定；GPU 空闲。在 `xense-train-01` 上还要
-`export HF_ENDPOINT=https://huggingface.co`（tmux 会继承镜像地址，走代理时被拒）。
+`export HF_ENDPOINT=https://huggingface.co`（tmux 会继承镜像地址，走代理时被拒），以及
+`export HF_DATASETS_CACHE=<大盘上的目录>`（默认写到只有 30G 的根盘，每加载一个数据集几十到几百 MB；画图同样需要）。
 
 ```bash
 XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python scripts/recap/train_value.py \
