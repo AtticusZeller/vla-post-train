@@ -1,6 +1,6 @@
 # xense-openpi 代码组织（`feature/pi-star-0.6`）
 
-快照：`feature/pi-star-0.6`（`8470c52`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
+快照：`feature/pi-star-0.6`（`2b7bb10`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
 [codebase-rl-exp.md](codebase-rl-exp.md)。本文只画 RECAP（π*0.6）新增与改动的部分，SFT 训练、serving 与机器人端沿用上游。
 方法定义见 [pi-star-06-spec.md](pi-star-06-spec.md)，可复制的命令见 [cmd.md](cmd.md)。
 
@@ -74,8 +74,8 @@ scripts/
 └── recap/
     ├── compute_returns.py   读 episode 元数据，写逐帧归一化 return 的旁路 parquet
     ├── train_value.py       价值模型训练：一个或多个数据集，载入预训练骨干或已有权重，按 episode 留出、存最优权重、早停、写留出集与可选的训练集预测
-    ├── plot_value.py        整条 episode 的预测 + 等间隔帧图，按优势标签着色，每个 episode 一张图
-    ├── check_dataset.py     训练前的数据检查：元数据一致性、视频文件、可疑 episode 清单与帧图，只读
+    ├── plot_value.py        整条 episode 的预测 + 等间隔帧图，按优势标签着色，每个 episode 一张图；`--videos` 另出视频
+    ├── check_dataset.py     训练前的数据检查：元数据一致性、帧的存储顺序、视频文件、可疑 episode 清单与帧图，只读
     └── drop_episodes.py · verify_drop.py   删 episode 产出新副本并核对；从 feat/egg-carton-subtask 原样复制
 configs/_examples/
 └── pi05_base_bi_flexiv_cylinder_stack_recap_h100.yaml   打开 advantage 条件的 π0.5 bi_flexiv 配置
@@ -107,7 +107,8 @@ src/openpi/recap/
 ├── checkpoints.py   价值模型权重的保存与读回，载入前核对名称与形状
 ├── value_data.py    episode 留出划分、return 对齐、任务文本 token、补边缩放、ValueFrames 数据集；多数据集的 Split 与等概率采样
 ├── advantage.py     N 步优势估计、按比例取阈值、标签分段，纯 numpy
-└── dataset_check.py 由机器人状态判静止帧、开头与结尾的静止长度、长度离群，纯 numpy
+├── label_video.py   视频的单帧画法：标签颜色的边框、整条 episode 的标签时间轴与光标，numpy + PIL
+└── dataset_check.py 帧的存储顺序；由机器人状态判静止帧、开头与结尾的静止长度、长度离群，纯 numpy
 ```
 
 ## 4 模块交互
@@ -187,7 +188,7 @@ Gemma3Backbone 是因果的，所以取最后的 CLS 位置 → value_head → 2
 | `value_model.ValueModel` | 图像 (B, 3, 224, 224, 3)、文本 token 与 mask | logits (B, 201)；`expected_value` 取期望得 $V$ |
 | `train_value.py` | 一个或多个数据集及各自的 return parquet；两份预训练权重，或 `--init-params` 指向的已有 `params` | 留出集指标（多数据集时取各数据集的平均）最优时的 `params`；最优权重的 `heldout_predictions.parquet`（`dataset`、`episode_index`、`frame_index`、`return`、`value`） |
 | `advantage.n_step_advantages` | 一条 episode 的逐帧 return 与 $V$、步数 $N$ | 逐帧优势；`positive_threshold` 给出使指定比例为 positive 的阈值 |
-| `plot_value.py` | 整条 episode 的预测、数据集视频 | 每个 episode 一张图：上排帧图，中间 return 与 $V$ 两条曲线，背景按优势标签着色，下栏优势与阈值；日志里有优势标准差、标签每秒翻转次数、positive 片段中位时长 |
+| `plot_value.py` | 整条 episode 的预测、数据集视频 | 每个 episode 一张图：上排帧图，中间 return 与 $V$ 两条曲线，背景按优势标签着色，下栏优势与阈值；日志里有优势标准差、标签每秒翻转次数、positive 片段中位时长。`--videos` 时每个 episode 另出一段视频，画面边框按标签着色 |
 | `dataset_check` | 逐帧 `observation.state`、各维量程、阈值 | 静止帧标记、开头与结尾的静止帧数、长度离群标记 |
 | `check_dataset.py` | 数据集根目录 | `PROBLEM` 与 `SUSPECT` 清单；可选 JSON 报告与每条可疑 episode 的帧图 |
 

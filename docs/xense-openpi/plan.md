@@ -333,8 +333,12 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       若训练集内的标签不可用，是否要改成交叉标注，另开事务。
       用户已看（2026-11-15，对着图回看视频）：positive 集中的片段几乎都是抓取前与放置时，留出与训练两组都有；
       碎是正常的；"标签主要反映模型抖动"的 Agent 推断不准确，已撤回，[experiments.md](experiments.md) 已改。
-      还没有结论的两点：(1) 现在要先看图再去视频里找时间，不方便，图怎么改待讨论；(2) $N$ 与 positive 比例
-      怎么选。夹爪开合时刻的核对：留出组开合前 50 帧内 positive 占 50%（其余帧 34%），训练组 41% 对 39%。
+      夹爪开合时刻的核对：留出组开合前 50 帧内 positive 占 50%（其余帧 34%）；训练组按时间展开也有集中，
+      位置晚约 50 帧。$N$ 与 positive 比例怎么选留到看标的效果时再定。
+- [x] 追加（用户决定，2026-11-15）：门禁的看法定为现在的图加视频。`plot_value.py --videos` 每个 episode 另出一段
+      MP4，画面边框是该帧标签的颜色，底部是整条 episode 的标签时间轴与光标（`7145e7d`，单帧画法在
+      `src/openpi/recap/label_video.py`，8 个单测，3 处故意改错各被测出）。
+- [ ] 用户看视频判断（人工门禁）：从头模型在留出 15 条与训练 15 条上的视频。
 
 ### Task: 数据检查脚本
 
@@ -360,7 +364,8 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Verification**
 
-1. [x] 判据里的纯函数有单测：连续静止段的起止与时长、开头 / 结尾静止、长度离群。
+1. [x] 判据里的纯函数有单测：逐帧的静止标记、开头 / 结尾连续静止的长度、长度离群。原来写的"连续静止段的起止与
+       时长"没有对应的函数：实现只算开头与结尾两段，中段的停顿只进静止帧占比（审查指出，2026-11-15）。
 2. [ ] 在训练机现有数据上跑：报出 pick_up_cube 168、egg 108、whiteboard 70、cube-color 100、whiteboard 0，不把
        earbud 71 报成静止；把 cube-color-sorting 那个残留文件放回一份副本后，第 (1) 项报错。
        已观察到：前五条都报出；残留文件报出 3 条不一致。**earbud 71 仍被报成"结尾静止 18.3 秒"，这一条没有满足。**
@@ -373,9 +378,10 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 [experiments.md](experiments.md) 的可疑清单。Agent 推断：它属于"做完忘记结束"，脚本报出来是对的。需要用户决定：
 上面那条"正式脚本的判据不能再报这一条"是否撤回，以及这两条删不删。
 
-补充（2026-11-15）：用户看的是 `Xense/earbud_case_insertion_teleop_0515`（888 个 episode），预训练用的是
-`Xense/earbud_case_insertion_teleop_0515_left_right`（776 个 episode），同一个编号不是同一条。用户看到"结尾只
-静止几秒"与这里的数字因此不矛盾。待用户在 `_left_right` 仓库里看 71、188、210，并定预训练用哪个仓库。
+已裁决（用户决定，2026-11-15）：用户看的是 `Xense/earbud_case_insertion_teleop_0515`（888 个 episode），上一版
+预训练用的是 `Xense/earbud_case_insertion_teleop_0515_left_right`（776 个 episode），同一个编号不是同一条，两边
+不矛盾，脚本没有问题。这个任务改用 888 条的仓库；脚本在它上面报出的 episode 直接删，用户不再逐条核实。
+"正式脚本的判据不能再报这一条"撤回。
 
 **Done**
 
@@ -392,11 +398,13 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       源数据只读。
       用户决定（2026-11-15）：清单里除 earbud 外的都删，即再加 whiteboard 11、28、73、94，cube-color 0，
       stack-cubes 12、15、27、58。egg、whiteboard、cube-color、stack-cubes 四个副本已产出。**没做完的：** earbud
-      三条待用户定（见上一个 Task 的补充）；whiteboard 删完后新报出原 1 号超长（114.6 秒，中位的 1.51 倍），
-      删不删待用户定。
+      改用 888 条的仓库，脚本报出的都删（用户决定，见上一个 Task）。whiteboard 删完后新报出原 1 号超长
+      （114.6 秒，阈值 113.8 秒，后面紧跟 112.1、111.0 秒的 episode）：按"轻微的长度离群不处理"先保留
+      （Agent 判断，用户未单独确认）。
       与计划不符：`drop_episodes.py` 在 `pi06-recap` 环境（lerobot 0.5.1）里导入失败，`write_info` 与
-      `write_stats` 已从 `lerobot.datasets.utils` 移到 `lerobot.datasets.io_utils`。脚本没有改，运行时把这两个
-      函数挂回原位置再执行。长期怎么处理（改上游分支的导入后重新复制，或一直这样运行）待用户定。
+      `write_stats` 已从 `lerobot.datasets.utils` 移到 `lerobot.datasets.io_utils`。上面四个副本是运行时把这两个
+      函数挂回原位置后产出的。用户决定改上游（2026-11-15）：上游分支 `feat/egg-carton-subtask` 的 `a423c67` 改了
+      导入，重新复制到本分支（`aaee714`），之后直接运行脚本。
 - [ ] 对干净副本重算 return。已算五个：egg、whiteboard、cube-color、stack-cubes、pick_up_cube，在
       `/root/localstorage/pi06/data/clean/`。whiteboard 若再删要重算；earbud 待定。
 
@@ -404,7 +412,8 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 1. [ ] 干净副本再过一遍检查脚本：第 (1)(2) 项无问题，已删的 episode 不再出现，剩余可疑条目与用户决定保留的一致。
        已观察到：五个副本第 (1)(2) 项无问题，`verify_drop.py` 报 OK；egg、cube-color、stack-cubes、pick_up_cube
-       没有可疑 episode。whiteboard 新报出一条（原 1 号超长），不在用户决定保留的名单里，这一项还没有满足。
+       没有可疑 episode。whiteboard 新报出一条（原 1 号超长），不在用户决定保留的名单里，按轻微离群先保留，
+       待用户确认后这一项才算满足。
 2. [x] 每个改过的数据集抽 3 个 episode，三路相机各解码首、中、末一帧；编号变了的 episode 与源数据同一条的帧逐像素
        相同（删除只改元数据，这一条防编号错位）。egg、whiteboard、cube-color、stack-cubes 各 27 帧，像素差最大为 0。
        whiteboard 或 earbud 之后再删，要对新副本重做。
@@ -418,7 +427,19 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Change**
 
-- [ ] 子代理按本事务审查前三个 Task 的 diff，问题先核实再修。
+- [x] 子代理按本事务审查前三个 Task 的 diff，问题先核实再修。审查范围 `ed0e224..7145e7d`，结论：没有会改变训练
+      行为或写错预测的问题。核实后修了四处（`2b7bb10`）：
+      (1) 静止判据的单测只有一维正向运动，改成"只看第 0 维""各维取平均""去掉绝对值"三种错法都测不出；补了两个
+      单测，三种错法各被测出。
+      (2) `check_dataset.py` 不看 `data/` 的行顺序，而训练按行位置取帧；加了全局 `index` 从 0 连续、每条 episode
+      的帧连在一起且按帧号排列的检查（4 个单测；把一个 data 文件倒序后报出 2 条）。10 个数据集与 cylinder-stack
+      现有副本都通过。
+      (3) `check_dataset.py` 有 PROBLEM 时退出码仍是 0，改为 1；元数据行缺视频列时不再崩溃。
+      (4) `plot_value.py` 不核对预测与数据集是否对得上：删过 episode 的副本编号变了，漏给 `--dataset-root` 时曲线
+      和画面会来自不同的 episode。改为预测的每条 episode 帧数必须等于数据集里同号 episode 的帧数，否则报错。
+      没有处理、记作已知限制的：只查视频文件存在，不查内容；`observation.state` 里若有一维是纯噪声，静止检测
+      会失效（现有数据集的汇总行里静止时长都不为 0，没有这种情况）；`--final-train-episodes` 取的是按当前
+      seed 现算的训练划分，权重若来自别的划分，写出的就不是它训练过的 episode。
 - [ ] 从已提交并推送的代码启动预训练，超参与上一版相同（2 万步、每 1000 步验证、patience 5），数据换成干净副本。
       `HF_DATASETS_CACHE` 指到大盘。
 - [ ] 新权重在 cylinder-stack 上做零样本与微调，设置与上一版相同（seed 0、5000 步、patience 3）。

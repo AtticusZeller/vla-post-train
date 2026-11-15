@@ -126,6 +126,9 @@ episode 一张 `value_episode_XXXX.png`，标题里有该 episode 的 MAE 与 po
 `--episodes 42 71`（阈值仍在全部 episode 上取）。数据集不在 LeRobot 默认缓存位置时加 `--dataset-root <数据集根目录>`。
 预测文件要含整条 episode，换成 `train_predictions.parquet` 即画训练 episode。
 
+加 `--videos` 时每个 episode 另写一个同名的 `value_episode_XXXX.mp4`（H.264）：画面边框是该帧标签的颜色，左上角是
+帧号与优势，底部是整条 episode 的标签时间轴和当前位置的光标。要解码整条 episode，一条 1400 帧的约 30 秒、1.6 MB。
+
 ### 训练前检查数据集
 
 用途：找出元数据与数据不一致、相机视频缺失，以及需要人看的可疑 episode（超长、多数时间静止、开头或结尾长时间静止）。
@@ -140,4 +143,4 @@ python scripts/recap/check_dataset.py --dataset-root <数据集根目录> \
 
 预期：不一致打印 `PROBLEM …`，可疑 episode 每条一行 `SUSPECT episode N: <原因> | 时长、静止帧比例、开头与结尾静止秒数`，
 最后一行是问题数与可疑数。加 `--sheet-dir` 时给每条可疑 episode 存一张 6 帧的 head 相机图（要解码视频，也要设
-`HF_DATASETS_CACHE`）；有 `PROBLEM` 时不出图。阈值见 `--help`。
+`HF_DATASETS_CACHE`）；有 `PROBLEM` 时不出图，退出码为 1。阈值见 `--help`。
