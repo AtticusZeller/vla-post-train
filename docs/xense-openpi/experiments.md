@@ -3,6 +3,28 @@
 按时间倒序记录外部启动的实验。每节依次保留原始记录、结果分析和下一步；观测、推断与未验证猜想分开。
 训练契约见 [rlt-spec.md](rlt-spec.md)，已确认工作见 [plan.md](plan.md)。
 
+## π*0.6 价值模型的图：各目录对应哪次实验
+
+图都在 `figures/pi-star-06/` 下。$V$ 曲线图每条 episode 一张：上排是 head 相机等间隔的 8 帧（标题 `t=` 是帧号），
+下面蓝线是模型预测的 $\hat V$，灰虚线是 return（标签），标题里的 MAE 是这条 episode 的平均绝对误差。cylinder-stack 的
+留出 episode 始终是同一批 15 条（42、53、54、68、71、72、88、93、97、100、114、117、119、143、149）。
+
+| 目录 | 哪次实验（W&B run） | 模型与数据 | 正文 |
+|---|---|---|---|
+| `value-cylinder-1114-s750/` | 从头训练，固定 750 步（`cu25wtuk`） | cylinder-stack 留出 15 条的 $V$ 曲线 | [value-cylinder-1114](#2026-11-14--value-cylinder-1114--recap-价值模型在单任务示范上的训练耗时与过拟合) |
+| `value-cylinder-scratch-ed0e224/` | 从头训练，早停，步 1750 最优（`m6pytdh3`），对照用的从头基线 | 同一批 15 条的 $V$ 曲线 | [cylinder-stack 上的对照结果](#cylinder-stack-上的对照结果2026-11-15) |
+| `value-pretrain-10ds-ed0e224/<数据集>/` | 10 个数据集的预训练 $V_{\mathrm{pre}}$（`gty4r7z9`） | 每个预训练数据集 2 条留出 episode 的 $V$ 曲线 | [预训练运行](#预训练运行-value-pretrain-10ds-ed0e224) |
+| `value-cylinder-zeroshot-vpre/` | $V_{\mathrm{pre}}$ 不微调，直接在 cylinder-stack 上预测（`bcmqljyw`） | 同一批 15 条的 $V$ 曲线 | [cylinder-stack 上的对照结果](#cylinder-stack-上的对照结果2026-11-15) |
+| `value-cylinder-finetune-vpre/` | 从 $V_{\mathrm{pre}}$ 微调，步 750 最优（`ygu41ccp`） | 同一批 15 条的 $V$ 曲线 | 同上 |
+| `value-cylinder-mae-curves.png` | `m6pytdh3` 与 `ygu41ccp` 两次训练 | 留出 MAE 与训练 MAE 随步数 | 同上 |
+| `advantage-labels-cylinder-scratch-ed0e224/heldout/` | 从头基线 `m6pytdh3` 的权重，不再训练，只预测（没有 W&B run） | 同一批 15 条留出 episode，带优势标签 | [带优势标签的门禁图](#带优势标签的门禁图留出与训练-episode2026-11-15) |
+| `advantage-labels-cylinder-scratch-ed0e224/train/` | 同上，同一份权重 | 训练集前 15 条（episode 0–14），模型训练时见过，带优势标签 | 同上 |
+| `data-check/<数据集>/episode_XXXX.png` | 预训练数据检查（不是训练） | 被标为可疑的 episode，每条 6 帧 head 相机图，标题写原因与时长数字 | [可疑清单](#预训练数据检查的可疑清单2026-11-15) |
+
+带优势标签的图在 $V$ 曲线图上多三样：曲线背景绿色的帧是 positive、红色是 negative；上排每帧图的边框是该帧标签的
+颜色；最下一栏黑线是优势估计 $\hat A_t$，紫色虚线是阈值，黑线在阈值之上的帧为 positive。$\hat A_t$ 在第 $t$ 帧看的是
+之后 50 帧里 $\hat V$ 涨得比 return 的固定斜率快还是慢，所以绿色段比 $\hat V$ 的上升段早开始，最多早 50 帧（1.7 秒）。
+
 ## 2026-11-14 · value-cylinder-1114 — RECAP 价值模型在单任务示范上的训练耗时与过拟合
 
 ### 1 原始记录
@@ -169,7 +191,7 @@ Agent 推断：在只有成功示范、return 按时间定义的条件下，预�
 来自标签本身——首帧看不出 episode 会有多长。要看出预训练的价值，可能得等有失败数据、需要分辨"做对了没有"的时候。
 
 用户判断与决定（2026-11-15）：以上结论的前提是只在纯成功数据上比较；之后每轮两种初始化并列，真正的检验等有失败
-数据。$V$ 曲线图本身还不够当下游 SFT 的门禁，需要在曲线上标出优势标签的正负，做法待定。
+数据。$V$ 曲线图本身还不够当下游 SFT 的门禁，需要在曲线上标出优势标签的正负，做出来的图见下一节。
 
 ### 带优势标签的门禁图：留出与训练 episode（2026-11-15）
 
@@ -178,7 +200,14 @@ Agent 推断：在只有成功示范、return 按时间定义的条件下，预�
 留出的预测与原运行逐帧相同（最大差 $9\times10^{-8}$）。优势按规格公式往后看 $N=50$ 帧，阈值在每组全部帧上取 60% 分位，
 使 40% 的帧为 positive。图：[留出](figures/pi-star-06/advantage-labels-cylinder-scratch-ed0e224/heldout/)、
 [训练](figures/pi-star-06/advantage-labels-cylinder-scratch-ed0e224/train/)；背景绿色是 positive，红色是 negative，
-下栏是 $\hat A_t$ 与阈值线。
+下栏是 $\hat A_t$ 与阈值线。读图方法见本文件开头的[图的索引](#π06-价值模型的图各目录对应哪次实验)。两张例图，留出 episode 42 与训练 episode 3：
+
+![留出 episode 42](figures/pi-star-06/advantage-labels-cylinder-scratch-ed0e224/heldout/value_episode_0042.png)
+
+![训练 episode 3](figures/pi-star-06/advantage-labels-cylinder-scratch-ed0e224/train/value_episode_0003.png)
+
+分留出与训练两组，是因为下游要标的正是训练数据：模型在见过的 episode 上把 return 几乎背了下来（MAE 0.0014），
+要看它在这些 episode 上给出的标签和在没见过的 episode 上是否一样可信。
 
 | | 留出 15 条 | 训练 15 条 |
 |---|---|---|
@@ -202,8 +231,9 @@ Agent 推断：在只有成功示范、return 按时间定义的条件下，预�
 - **训练 episode 上优势的幅度只有留出的 1/4。** $\hat V$ 贴着 return，35% 的帧离阈值不到 0.001，与训练集 MAE（0.0014）
   同一量级，这些帧的正负由拟合残差决定。片段的时长分布与留出组相近。
 
-再比一次：同一批留出 episode，从头训练的模型与从 $V_{\mathrm{pre}}$ 微调的模型（`ygu41ccp`）都没见过，留出 MAE 相近
-（0.0156 与 0.0150）。两个模型各自打标签：
+换一个模型，标签变不变（计划外加算，只用已有的预测文件）。要回答的问题：标签反映的是这条示范本身，还是这个模型
+自己的误差。如果是前者，两个同样准的模型应当把同一帧标成同一个标签。同一批留出 episode，从头训练的模型与从
+$V_{\mathrm{pre}}$ 微调的模型（`ygu41ccp`）都没见过，留出 MAE 相近（0.0156 与 0.0150）。两个模型各自打标签：
 
 | | 数值 |
 |---|---|
@@ -213,12 +243,38 @@ Agent 推断：在只有成功示范、return 按时间定义的条件下，预�
 | 两个模型 $\hat V-R$ 的相关系数 | 0.828 |
 | 按 episode 的一致率 | 0.54–0.72 |
 
-两个模型对"这条 episode 整体偏高还是偏低"看法一致（残差相关 0.83），对"哪 50 帧推进得快"几乎不一致（优势相关 0.15）。
+两个模型对"这条 episode 整体偏高还是偏低"看法一致（残差相关 0.83），逐帧的优势只有弱相关（0.15）。
 
-Agent 推断：在只有成功示范的 cylinder-stack 上，这批标签主要反映模型自己的抖动，不反映示范里的快慢，换一个同样准的
-模型标签就变了三分之一；现在不能用来筛 SFT 数据。训练集内的标签没有退化成另一种形态，但信号更弱（幅度 1/4，三分之一
-的帧落在拟合残差的量级里），可信度不会比留出组高；它们与"没见过时的标签"差多少没有直接测，要测得用另一个划分再训
-一个模型，对同一条 episode 比较见过与没见过两种标签。待用户看图判断。
+用户判断（2026-11-15，对着图回看视频）：
+
+- 标签碎是正常的，论文里的 $V$ 曲线也很波动。
+- positive 集中的片段几乎都是关键阶段：快要抓取的时候和放置的时候；有小部分抓取阶段没有被标成 positive。留出组与
+  训练组都能看到这个现象。
+- 所以标签与模型抖动的关系不大，上一版"标签主要反映模型自己的抖动"的 Agent 推断不准确，撤回。
+- 现在的看法不方便：要先看图找到 positive 集中的片段，再去视频里找对应的时间。
+
+用夹爪开合时刻核对上面的判断（Agent 加算，2026-11-15）。cylinder-stack 只有右夹爪在动；右夹爪位置在 5 帧内变化超过
+量程的 15% 记为一次开或合。$\hat A_t$ 往后看 50 帧，所以按"之后 50 帧内有没有开合"把帧分成两类，各看 positive 的比例
+（全体是 40%）：
+
+| | 从头模型，留出 | 微调模型，留出 | 从头模型，训练 |
+|---|---|---|---|
+| 之后 50 帧内有开合的帧占全部帧 | 34.8% | 34.8% | 34.4% |
+| 这类帧里 positive 的比例 | 50.4% | 56.1% | 41.4% |
+| 其余帧里 positive 的比例 | 34.4% | 31.4% | 39.3% |
+| 1 秒以上的 positive 片段里，碰到这类帧的 | 114 段中 75 段（66%） | 113 段中 83 段（73%） | 110 段中 63 段（57%） |
+
+- 留出组：抓取与放置前后的帧更容易标成 positive（50% 对 34%，微调模型 56% 对 31%），方向与用户看到的一致。合爪（抓）
+  与开爪（放）两边差不多：从头模型 51.6% 与 48.2%。
+- 训练组：这个量上看不出差别（41% 对 39%）。这与用户在训练组图上看到的现象不一致。夹爪开合只是"关键阶段"的粗略
+  代理，接近和对准的过程不在里面，所以这一条不能否定用户的观察，只说明训练组的集中程度比留出组弱，或者集中的位置
+  不在开合前后。
+- 两个模型的一致率在开合前后没有更高：之后 50 帧内有开合的帧上一致 63.1%，其余帧 66.7%；从头模型标 positive 时
+  微调模型也标 positive 的比例，开合前后是 69.0%，其余帧 47.3%。
+
+Agent 推断（2026-11-15，替换撤回的那条）：留出 episode 上标签有两个成分。一个与任务有关：抓到、放好时画面里的进度
+跳一下，$\hat V$ 在这前后涨得快，标成 positive，两个模型都这样。另一个是各模型自己的，贴着阈值的那部分帧（15% 的帧
+离阈值不到 0.001）由它决定，逐帧一致率因此只有 65%。训练 episode 上第一个成分有多强，现有的量没有测清楚。
 
 ### 预训练数据检查的可疑清单（2026-11-15）
 
@@ -240,31 +296,65 @@ Agent 推断：在只有成功示范的 cylinder-stack 上，这批标签主要�
 | whiteboard_inspect_1023 | 70 | 结尾静止 | 97.1 s（1.28） | 27% | 3.6 s | 19.7 s | 删（用户决定） |
 | whiteboard_inspect_1023 | 0 | 超长 | 120.5 s（1.59） | 7% | 1.9 s | 1.1 s | 删（用户决定） |
 | cube-color-sorting-0821 | 100 | 结尾静止 | 55.0 s（1.19） | 24% | 1.7 s | 11.4 s | 删（用户决定） |
-| earbud_case_insertion_teleop_0515_left_right | 71 | 结尾静止 | 76.9 s（1.60） | 29% | 1.6 s | 18.3 s | 待定 |
-| earbud_case_insertion_teleop_0515_left_right | 188 | 结尾静止 | 66.6 s（1.39） | 30% | 1.4 s | 17.1 s | 待定 |
-| earbud_case_insertion_teleop_0515_left_right | 210 | 结尾静止 | 63.9 s（1.33） | 13% | 1.0 s | 6.2 s | 待定 |
-| stack-cubes-flexiv-0801 | 58 | 结尾静止 | 158.8 s（0.98） | 13% | 3.3 s | 9.5 s | 待定 |
-| whiteboard_inspect_1023 | 94 | 结尾静止 | 80.9 s（1.07） | 16% | 2.2 s | 8.3 s | 待定 |
-| whiteboard_inspect_1023 | 28 | 结尾静止 | 108.2 s（1.43） | 14% | 2.4 s | 6.4 s | 待定 |
-| stack-cubes-flexiv-0801 | 27 | 开头静止 | 158.5 s（0.98） | 10% | 8.4 s | 1.2 s | 待定 |
-| stack-cubes-flexiv-0801 | 15 | 开头静止 | 236.9 s（1.46） | 10% | 5.6 s | 0.0 s | 待定 |
-| stack-cubes-flexiv-0801 | 12 | 开头静止 | 216.0 s（1.33） | 7% | 5.3 s | 0.7 s | 待定 |
-| whiteboard_inspect_1023 | 11 | 开头静止 | 95.4 s（1.26） | 12% | 5.3 s | 0.4 s | 待定 |
-| whiteboard_inspect_1023 | 73 | 开头静止 | 71.7 s（0.95） | 14% | 5.2 s | 1.0 s | 待定 |
-| cube-color-sorting-0821 | 0 | 超长 | 76.2 s（1.65） | 6% | 1.7 s | 2.2 s | 待定 |
+| earbud_case_insertion_teleop_0515_left_right | 71 | 结尾静止 | 76.9 s（1.60） | 29% | 1.6 s | 18.3 s | 待定（见下） |
+| earbud_case_insertion_teleop_0515_left_right | 188 | 结尾静止 | 66.6 s（1.39） | 30% | 1.4 s | 17.1 s | 待定（见下） |
+| earbud_case_insertion_teleop_0515_left_right | 210 | 结尾静止 | 63.9 s（1.33） | 13% | 1.0 s | 6.2 s | 待定（见下） |
+| stack-cubes-flexiv-0801 | 58 | 结尾静止 | 158.8 s（0.98） | 13% | 3.3 s | 9.5 s | 删（用户决定） |
+| whiteboard_inspect_1023 | 94 | 结尾静止 | 80.9 s（1.07） | 16% | 2.2 s | 8.3 s | 删（用户决定） |
+| whiteboard_inspect_1023 | 28 | 结尾静止 | 108.2 s（1.43） | 14% | 2.4 s | 6.4 s | 删（用户决定） |
+| stack-cubes-flexiv-0801 | 27 | 开头静止 | 158.5 s（0.98） | 10% | 8.4 s | 1.2 s | 删（用户决定） |
+| stack-cubes-flexiv-0801 | 15 | 开头静止 | 236.9 s（1.46） | 10% | 5.6 s | 0.0 s | 删（用户决定） |
+| stack-cubes-flexiv-0801 | 12 | 开头静止 | 216.0 s（1.33） | 7% | 5.3 s | 0.7 s | 删（用户决定） |
+| whiteboard_inspect_1023 | 11 | 开头静止 | 95.4 s（1.26） | 12% | 5.3 s | 0.4 s | 删（用户决定） |
+| whiteboard_inspect_1023 | 73 | 开头静止 | 71.7 s（0.95） | 14% | 5.2 s | 1.0 s | 删（用户决定） |
+| cube-color-sorting-0821 | 0 | 超长 | 76.2 s（1.65） | 6% | 1.7 s | 2.2 s | 删（用户决定） |
 | fold-the-towel-0821 | 0 | 超长 | 60.6 s（2.42） | 5% | 0.8 s | 0.5 s | 保留（用户决定） |
 | fold-the-towel-0821 | 1 | 超长 | 48.0 s（1.91） | 5% | 0.6 s | 1.5 s | 保留（用户决定） |
 | fold-the-towel-0821 | 10 | 超长 | 41.6 s（1.66） | 9% | 1.3 s | 0.5 s | 保留（用户决定） |
 | fold-the-towel-0821 | 9 | 超长 | 41.1 s（1.64） | 6% | 0.5 s | 0.4 s | 保留（用户决定） |
 | cylinder-stack-0909 | 86 | 超长 | 105.8 s（2.16） | 2% | 0.9 s | 0.0 s | 保留（用户决定） |
 
-"用户决定"都是 2026-11-15 的。egg 108 在共享缓存的这份副本里还在。
+"用户决定"都是 2026-11-15 的。
 
-`earbud_case_insertion_teleop_0515_left_right` 71 与用户此前的判断不一致。用户看过原视频，认为没有静止这么久
-（2026-11-15）。数据里的情况：最后 18.3 秒 `observation.state` 与 `action` 都不变；head 相机在 61.5 秒拍到
-人的手伸进画面，末帧里耳机盒已被放回起始位置（[图](figures/pi-star-06/data-check/earbud_case_insertion_teleop_0515_left_right/episode_0071.png)）。
-即画面一直在动，机械臂没有动：任务做完后没有结束录制，人在复位场景。188 的图里也是同样的情形。Agent 推断：这两条
-属于"做完忘记结束"一类，待用户确认。
+earbud 的三条还没有定。用户看过视频，认为结尾只静止几秒（2026-11-15），看的是
+[Xense/earbud_case_insertion_teleop_0515](https://huggingface.co/datasets/Xense/earbud_case_insertion_teleop_0515)。
+预训练用的是另一个仓库
+[Xense/earbud_case_insertion_teleop_0515_left_right](https://huggingface.co/datasets/Xense/earbud_case_insertion_teleop_0515_left_right)：
+前者 888 个 episode、1,290,091 帧（Hub 上 2026-10-14 更新），后者 776 个 episode、1,145,613 帧（2026-08-25 更新），
+同一个编号不是同一条 episode。`_left_right` 的 71 号：最后 18.3 秒 `observation.state` 与 `action` 都不变；head 相机
+在 61.5 秒拍到人的手伸进画面，末帧里耳机盒已被放回起始位置
+（[图](figures/pi-star-06/data-check/earbud_case_insertion_teleop_0515_left_right/episode_0071.png)）。188 号的图里是
+同样的情形。Agent 推断：这两条属于"做完忘记结束"，待用户在 `_left_right` 仓库里看过再定；预训练该用两个仓库里的
+哪一个也待用户定。
+
+### 清理结果（2026-11-15）
+
+用 `scripts/recap/drop_episodes.py` 产出新副本，只改元数据，视频是硬链接；源数据与 Hub 都没有改。干净副本在
+`xense-train-01:/root/localstorage/pi06/lerobot-clean/Xense/<数据集>`，重算的 return 在
+`/root/localstorage/pi06/data/clean/returns-<数据集>.parquet`。pick_up_cube 用另一个 agent 已做好的副本
+`/root/localstorage/pick-up-cube-drop168/drop168`。
+
+| 数据集 | 删掉的 episode | episode 前 → 后 | 帧 前 → 后 | $L_{\max}$ 前 → 后 | 中位长度 前 → 后 |
+|---|---|---|---|---|---|
+| bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed | 108 | 122 → 121 | 338,599 → 337,238 | 5053 → 5053 | 2716 → 2717 |
+| whiteboard_inspect_1023 | 0、11、28、70、73、94 | 301 → 295 | 709,453 → 692,240 | 3614 → 3437 | 2276 → 2273 |
+| cube-color-sorting-0821 | 0、100 | 101 → 99 | 143,517 → 139,580 | 2287 → 2097 | 1382 → 1379 |
+| stack-cubes-flexiv-0801 | 12、15、27、58 | 170 → 166 | 891,288 → 868,182 | 9933 → 9933 | 4866.5 → 4866.5 |
+| pick_up_cube_0713 | 168（已有副本） | 200 → 199 | 208,762 → 203,848 | 4914 → 1577 | 997 → 997 |
+
+核对：
+
+- `verify_drop.py` 对四个新副本都报 OK。
+- 检查脚本在五个干净副本上都没有元数据与视频问题。egg、cube-color、stack-cubes、pick_up_cube 没有可疑 episode。
+- whiteboard 的干净副本里新报出一条"超长"：新编号 1（原 1 号），114.6 秒，是中位的 1.51 倍。删掉 0 号（120.5 秒）
+  之后其余 episode 的长度分布变窄，它越过了 $Q_3+3\,\mathrm{IQR}$。whiteboard 的 $L_{\max}$ 因此只从 3614 降到 3437。
+  这一条要不要删待用户定。
+- 每个新副本取 3 条编号变了的 episode（变号的第一条、中间一条、最后一条），三路相机各解码首、中、末帧，与源数据里
+  同一条 episode 比较：每个数据集 27 帧，像素差最大为 0，`observation.state` 相同。
+
+`drop_episodes.py` 在 `pi06-recap` 环境里不能直接运行：它从 `lerobot.datasets.utils` 导入 `write_info` 与
+`write_stats`，lerobot 0.5.1 把这两个函数放在 `lerobot.datasets.io_utils`。这次没有改脚本，运行时把这两个函数挂回原
+位置后再执行它；产物由上面的核对验证。
 
 ## 2026-10-10 · pi05_base_bi_flexiv_insert_ethernet_0928_h100/test1010-2 — 用成功示教学局部对准，再交给 VLA 插入
 

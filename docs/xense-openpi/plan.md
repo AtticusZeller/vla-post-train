@@ -288,7 +288,8 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
   新副本，Hub 不动。
 - `earbud_case_insertion_teleop_0515_left_right` 71 被上面那次临时测量报成"静止 19 秒"，用户看过原视频，没有静止这么久。
   临时判据（每帧关节变化小于量程的 0.2%）会把慢而精细的动作当成静止，正式脚本的判据不能再报这一条。
-- 优势按规格公式往后看 $N=50$ 帧，阈值按任务取，使约 40% 的帧为 positive。
+- 优势按规格公式往后看 $N=50$ 帧，阈值按任务取，使约 40% 的帧为 positive。这两个数是超参数，论文的取值只作
+  起点，最终看标出来的效果再选（用户决定，2026-11-15，已写进规格）。
 
 本事务不做：给训练数据生成用于 SFT 的优势标签文件、策略训练、策略侧的 midtrain、修 Hub 上的数据集。
 
@@ -330,6 +331,10 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       换一个划分再训一个模型。
 - [ ] 用户看图判断（人工门禁）：标签是否落在合理的片段上（negative 对应停顿、犹豫、重试，positive 对应推进快的片段）；
       若训练集内的标签不可用，是否要改成交叉标注，另开事务。
+      用户已看（2026-11-15，对着图回看视频）：positive 集中的片段几乎都是抓取前与放置时，留出与训练两组都有；
+      碎是正常的；"标签主要反映模型抖动"的 Agent 推断不准确，已撤回，[experiments.md](experiments.md) 已改。
+      还没有结论的两点：(1) 现在要先看图再去视频里找时间，不方便，图怎么改待讨论；(2) $N$ 与 positive 比例
+      怎么选。夹爪开合时刻的核对：留出组开合前 50 帧内 positive 占 50%（其余帧 34%），训练组 41% 对 39%。
 
 ### Task: 数据检查脚本
 
@@ -368,6 +373,10 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 [experiments.md](experiments.md) 的可疑清单。Agent 推断：它属于"做完忘记结束"，脚本报出来是对的。需要用户决定：
 上面那条"正式脚本的判据不能再报这一条"是否撤回，以及这两条删不删。
 
+补充（2026-11-15）：用户看的是 `Xense/earbud_case_insertion_teleop_0515`（888 个 episode），预训练用的是
+`Xense/earbud_case_insertion_teleop_0515_left_right`（776 个 episode），同一个编号不是同一条。用户看到"结尾只
+静止几秒"与这里的数字因此不矛盾。待用户在 `_left_right` 仓库里看 71、188、210，并定预训练用哪个仓库。
+
 **Done**
 
 - [x] 10 个预训练数据集加 cylinder-stack 的可疑清单交给用户；每条附原因、时长数字和首 / 中 / 末三帧 head 相机图。
@@ -381,17 +390,29 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 - [ ] 已定要删的：egg 108、whiteboard 0 与 70、cube-color 100；pick_up_cube 直接用已有的干净副本。清单里新增的可疑
       episode 由用户定。用 `drop_episodes.py` 产出新副本，放 `/root/localstorage/pi06/lerobot-clean/`；共享缓存里的
       源数据只读。
-- [ ] 对干净副本重算 return。
+      用户决定（2026-11-15）：清单里除 earbud 外的都删，即再加 whiteboard 11、28、73、94，cube-color 0，
+      stack-cubes 12、15、27、58。egg、whiteboard、cube-color、stack-cubes 四个副本已产出。**没做完的：** earbud
+      三条待用户定（见上一个 Task 的补充）；whiteboard 删完后新报出原 1 号超长（114.6 秒，中位的 1.51 倍），
+      删不删待用户定。
+      与计划不符：`drop_episodes.py` 在 `pi06-recap` 环境（lerobot 0.5.1）里导入失败，`write_info` 与
+      `write_stats` 已从 `lerobot.datasets.utils` 移到 `lerobot.datasets.io_utils`。脚本没有改，运行时把这两个
+      函数挂回原位置再执行。长期怎么处理（改上游分支的导入后重新复制，或一直这样运行）待用户定。
+- [ ] 对干净副本重算 return。已算五个：egg、whiteboard、cube-color、stack-cubes、pick_up_cube，在
+      `/root/localstorage/pi06/data/clean/`。whiteboard 若再删要重算；earbud 待定。
 
 **Verification**
 
 1. [ ] 干净副本再过一遍检查脚本：第 (1)(2) 项无问题，已删的 episode 不再出现，剩余可疑条目与用户决定保留的一致。
-2. [ ] 每个改过的数据集抽 3 个 episode，三路相机各解码首、中、末一帧；编号变了的 episode 与源数据同一条的帧逐像素
-       相同（删除只改元数据，这一条防编号错位）。
+       已观察到：五个副本第 (1)(2) 项无问题，`verify_drop.py` 报 OK；egg、cube-color、stack-cubes、pick_up_cube
+       没有可疑 episode。whiteboard 新报出一条（原 1 号超长），不在用户决定保留的名单里，这一项还没有满足。
+2. [x] 每个改过的数据集抽 3 个 episode，三路相机各解码首、中、末一帧；编号变了的 episode 与源数据同一条的帧逐像素
+       相同（删除只改元数据，这一条防编号错位）。egg、whiteboard、cube-color、stack-cubes 各 27 帧，像素差最大为 0。
+       whiteboard 或 earbud 之后再删，要对新副本重做。
 
 **Done**
 
-- [ ] 一张表：每个数据集清理前后的 episode 数、帧数、$L_{\max}$、中位长度，以及删掉的编号。
+- [ ] 一张表：每个数据集清理前后的 episode 数、帧数、$L_{\max}$、中位长度，以及删掉的编号。五个数据集的表已在
+      [experiments.md](experiments.md) 的"清理结果"；earbud 与 whiteboard 定下来后补齐。
 
 ### Task: 重训 $V_{\mathrm{pre}}$ 并在 cylinder-stack 上对比
 
