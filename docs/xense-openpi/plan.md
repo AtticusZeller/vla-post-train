@@ -393,35 +393,36 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Change**
 
-- [ ] 已定要删的：egg 108、whiteboard 0 与 70、cube-color 100；pick_up_cube 直接用已有的干净副本。清单里新增的可疑
+- [x] 已定要删的：egg 108、whiteboard 0 与 70、cube-color 100；pick_up_cube 直接用已有的干净副本。清单里新增的可疑
       episode 由用户定。用 `drop_episodes.py` 产出新副本，放 `/root/localstorage/pi06/lerobot-clean/`；共享缓存里的
       源数据只读。
       用户决定（2026-11-15）：清单里除 earbud 外的都删，即再加 whiteboard 11、28、73、94，cube-color 0，
-      stack-cubes 12、15、27、58。egg、whiteboard、cube-color、stack-cubes 四个副本已产出。**没做完的：** earbud
-      改用 888 条的仓库，脚本报出的都删（用户决定，见上一个 Task）。whiteboard 删完后新报出原 1 号超长
+      stack-cubes 12、15、27、58。egg、whiteboard、cube-color、stack-cubes 四个副本已产出。earbud 改用 888 条的
+      仓库，脚本报出的都删（用户决定，见上一个 Task）：2026-11-16 下载完，脚本报出 51（超长，78.1 秒，中位的
+      1.65 倍）与 165（结尾静止 6.2 秒），都已删，副本 886 条。whiteboard 删完后新报出原 1 号超长
       （114.6 秒，阈值 113.8 秒，后面紧跟 112.1、111.0 秒的 episode）：按"轻微的长度离群不处理"先保留
       （Agent 判断，用户未单独确认）。
       与计划不符：`drop_episodes.py` 在 `pi06-recap` 环境（lerobot 0.5.1）里导入失败，`write_info` 与
       `write_stats` 已从 `lerobot.datasets.utils` 移到 `lerobot.datasets.io_utils`。上面四个副本是运行时把这两个
       函数挂回原位置后产出的。用户决定改上游（2026-11-15）：上游分支 `feat/egg-carton-subtask` 的 `a423c67` 改了
       导入，重新复制到本分支（`aaee714`），之后直接运行脚本。
-- [ ] 对干净副本重算 return。已算五个：egg、whiteboard、cube-color、stack-cubes、pick_up_cube，在
-      `/root/localstorage/pi06/data/clean/`。whiteboard 若再删要重算；earbud 待定。
+- [x] 对干净副本重算 return。六个：egg、whiteboard、cube-color、stack-cubes、pick_up_cube、earbud，在
+      `/root/localstorage/pi06/data/clean/`。whiteboard 若再删要重算。
 
 **Verification**
 
 1. [ ] 干净副本再过一遍检查脚本：第 (1)(2) 项无问题，已删的 episode 不再出现，剩余可疑条目与用户决定保留的一致。
-       已观察到：五个副本第 (1)(2) 项无问题，`verify_drop.py` 报 OK；egg、cube-color、stack-cubes、pick_up_cube
-       没有可疑 episode。whiteboard 新报出一条（原 1 号超长），不在用户决定保留的名单里，按轻微离群先保留，
+       已观察到：六个副本第 (1)(2) 项无问题，`verify_drop.py` 报 OK；egg、cube-color、stack-cubes、pick_up_cube、
+       earbud 没有可疑 episode。whiteboard 新报出一条（原 1 号超长），不在用户决定保留的名单里，按轻微离群先保留，
        待用户确认后这一项才算满足。
 2. [x] 每个改过的数据集抽 3 个 episode，三路相机各解码首、中、末一帧；编号变了的 episode 与源数据同一条的帧逐像素
-       相同（删除只改元数据，这一条防编号错位）。egg、whiteboard、cube-color、stack-cubes 各 27 帧，像素差最大为 0。
-       whiteboard 或 earbud 之后再删，要对新副本重做。
+       相同（删除只改元数据，这一条防编号错位）。egg、whiteboard、cube-color、stack-cubes、earbud 各 27 帧，像素差
+       最大为 0。whiteboard 之后再删，要对新副本重做。
 
 **Done**
 
-- [ ] 一张表：每个数据集清理前后的 episode 数、帧数、$L_{\max}$、中位长度，以及删掉的编号。五个数据集的表已在
-      [experiments.md](experiments.md) 的"清理结果"；earbud 与 whiteboard 定下来后补齐。
+- [ ] 一张表：每个数据集清理前后的 episode 数、帧数、$L_{\max}$、中位长度，以及删掉的编号。六个数据集的表已在
+      [experiments.md](experiments.md) 的"清理结果"。whiteboard 原 1 号保留与否待用户确认；改了要更新这张表。
 
 ### Task: 重训 $V_{\mathrm{pre}}$ 并在 cylinder-stack 上对比
 

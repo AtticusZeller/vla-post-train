@@ -44,23 +44,26 @@
 | cube-color-sorting-0821 | 0、100 | 101 → 99 | 143,517 → 139,580 | 2287 → 2097 | 1382 → 1379 |
 | stack-cubes-flexiv-0801 | 12、15、27、58 | 170 → 166 | 891,288 → 868,182 | 9933 → 9933 | 4866.5 → 4866.5 |
 | pick_up_cube_0713 | 168（已有副本） | 200 → 199 | 208,762 → 203,848 | 4914 → 1577 | 997 → 997 |
+| earbud_case_insertion_teleop_0515（888 条的仓库） | 51、165 | 888 → 886 | 1,290,091 → 1,285,833 | 2342 → 2205 | 1419 → 1418.5 |
 
 核对：
 
-- `verify_drop.py` 对四个新副本都报 OK。
-- 检查脚本在五个干净副本上都没有元数据与视频问题。egg、cube-color、stack-cubes、pick_up_cube 没有可疑 episode。
+- `verify_drop.py` 对五个新副本都报 OK（earbud 是 2026-11-16 补的）。
+- 检查脚本在六个干净副本上都没有元数据与视频问题。egg、cube-color、stack-cubes、pick_up_cube、earbud 没有可疑
+  episode。
 - whiteboard 的干净副本里新报出一条"超长"：新编号 1（原 1 号），114.6 秒，是中位的 1.51 倍。删掉 0 号（120.5 秒）
   之后其余 episode 的长度分布变窄，它越过了 $Q_3+3\,\mathrm{IQR}$。whiteboard 的 $L_{\max}$ 因此只从 3614 降到 3437。
   这一条先保留：它只比阈值（113.8 秒）长 0.8 秒，后面紧跟着 112.1、111.0、108.8、107.2 秒的 episode，是长度分布
   的上沿，不是孤立的一条；再删它 $L_{\max}$ 只降 2%，删后不再有新的超长。按用户"轻微的长度离群不处理"的决定
   归为轻微（Agent 判断，用户未单独确认）。
 - 每个新副本取 3 条编号变了的 episode（变号的第一条、中间一条、最后一条），三路相机各解码首、中、末帧，与源数据里
-  同一条 episode 比较：每个数据集 27 帧，像素差最大为 0，`observation.state` 相同。
+  同一条 episode 比较：每个数据集 27 帧，像素差最大为 0，`observation.state` 相同。earbud 取的是新编号
+  51、468、885（原 52、470、887）。
 
 `drop_episodes.py` 原来从 `lerobot.datasets.utils` 导入 `write_info` 与 `write_stats`，lerobot 0.5.1 把这两个函数
-放在 `lerobot.datasets.io_utils`，在 `pi06-recap` 环境里导入失败。上面五个副本是运行时把这两个函数挂回原位置后
+放在 `lerobot.datasets.io_utils`，在 `pi06-recap` 环境里导入失败。egg、whiteboard、cube-color、stack-cubes 四个副本是运行时把这两个函数挂回原位置后
 产出的，产物由上面的核对验证。之后按用户决定（2026-11-15）在上游分支改了导入（`feat/egg-carton-subtask` 的
-`a423c67`，旧位置作回退）并重新复制（方法仓库 `aaee714`）。
+`a423c67`，旧位置作回退）并重新复制（方法仓库 `aaee714`）；earbud 的副本是用改过的脚本直接产出的。
 
 ### 可疑清单
 
@@ -73,7 +76,7 @@
 长度超过 $Q_3 + 3\,\mathrm{IQR}$。没有被标出的 episode 里，结尾静止最长 4.7 秒，开头最长 4.8 秒，静止帧占比最高 0.28。
 
 `unscrew-the-bottle-cap-0821`、`assemble_box_with_phone_stand0430_merged`、`newbalance_shoe_insole_retrieval_and_packing_0611`
-没有可疑 episode。其余 22 条，每条 6 帧 head 相机图在 [figures/pi-star-06/data-check/](figures/pi-star-06/data-check/)：
+没有可疑 episode。其余 24 条（含 2026-11-16 在 888 条的 earbud 仓库上报出的 2 条），每条 6 帧 head 相机图在 [figures/pi-star-06/data-check/](figures/pi-star-06/data-check/)：
 
 | 数据集 | episode | 原因 | 时长（÷中位） | 静止帧 | 开头静止 | 结尾静止 | 处理 |
 |---|---|---|---|---|---|---|---|
@@ -82,9 +85,11 @@
 | whiteboard_inspect_1023 | 70 | 结尾静止 | 97.1 s（1.28） | 27% | 3.6 s | 19.7 s | 删（用户决定） |
 | whiteboard_inspect_1023 | 0 | 超长 | 120.5 s（1.59） | 7% | 1.9 s | 1.1 s | 删（用户决定） |
 | cube-color-sorting-0821 | 100 | 结尾静止 | 55.0 s（1.19） | 24% | 1.7 s | 11.4 s | 删（用户决定） |
-| earbud_case_insertion_teleop_0515_left_right | 71 | 结尾静止 | 76.9 s（1.60） | 29% | 1.6 s | 18.3 s | 待定（见下） |
-| earbud_case_insertion_teleop_0515_left_right | 188 | 结尾静止 | 66.6 s（1.39） | 30% | 1.4 s | 17.1 s | 待定（见下） |
-| earbud_case_insertion_teleop_0515_left_right | 210 | 结尾静止 | 63.9 s（1.33） | 13% | 1.0 s | 6.2 s | 待定（见下） |
+| earbud_case_insertion_teleop_0515_left_right | 71 | 结尾静止 | 76.9 s（1.60） | 29% | 1.6 s | 18.3 s | 不处理，这个仓库不再用（见下） |
+| earbud_case_insertion_teleop_0515_left_right | 188 | 结尾静止 | 66.6 s（1.39） | 30% | 1.4 s | 17.1 s | 不处理，这个仓库不再用（见下） |
+| earbud_case_insertion_teleop_0515_left_right | 210 | 结尾静止 | 63.9 s（1.33） | 13% | 1.0 s | 6.2 s | 不处理，这个仓库不再用（见下） |
+| earbud_case_insertion_teleop_0515 | 165 | 结尾静止 | 63.9 s（1.35） | 13% | 1.0 s | 6.2 s | 删（用户决定，见下） |
+| earbud_case_insertion_teleop_0515 | 51 | 超长 | 78.1 s（1.65） | 12% | 2.7 s | 4.2 s | 删（用户决定，见下） |
 | stack-cubes-flexiv-0801 | 58 | 结尾静止 | 158.8 s（0.98） | 13% | 3.3 s | 9.5 s | 删（用户决定） |
 | whiteboard_inspect_1023 | 94 | 结尾静止 | 80.9 s（1.07） | 16% | 2.2 s | 8.3 s | 删（用户决定） |
 | whiteboard_inspect_1023 | 28 | 结尾静止 | 108.2 s（1.43） | 14% | 2.4 s | 6.4 s | 删（用户决定） |
@@ -109,6 +114,13 @@ earbud 换仓库（用户决定，2026-11-15）。清单里的三条来自上一
 （888 个 episode、1,290,091 帧，2026-10-14 更新），同一个编号不是同一条 episode，所以看到的"结尾只静止几秒"与
 清单里的数字不矛盾。用户决定：这个任务以 888 条的仓库为准，重训用它；脚本在它上面报出的 episode 直接删，不再
 逐条核实。`_left_right` 不再用于预训练，上表它的三条不用处理。
+
+888 条的仓库上的结果（2026-11-16，方法仓库 `2b7bb10`）：元数据、视频文件、帧的存储顺序都没有问题，报出 2 条
+可疑，都已删。165 号的四个数字（63.9 秒、静止 13%、开头 1.0 秒、结尾 6.2 秒）与 `_left_right` 的 210 号相同，
+应是同一条录制（Agent 推断，没有逐帧比对）。`_left_right` 里结尾静止 18.3 秒与 17.1 秒的 71、188 两条在 888 条
+的仓库里没有对应的报出：没被标出的 episode 结尾静止最长 4.0 秒。两个仓库的 episode 怎么对应没有查。
+51 号只是超长（中位的 1.65 倍，没被标出的最长 1.55 倍），按用户对这个数据集"脚本报出的就删"处理，
+没有套用"轻微的长度离群不处理"。
 
 ## 2026-11-15 · 带优势标签的门禁图：留出与训练 episode
 
