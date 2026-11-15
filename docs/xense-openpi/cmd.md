@@ -104,9 +104,14 @@ XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 python scripts/recap/train_value.py \
 `<runs_dir>/<run>/heldout_predictions.parquet`，是最优权重在留出 episode 上的逐帧预测。启动后要等所有 data worker 起来
 才出第一条训练日志。
 
-### 画留出 episode 的 $V$ 曲线
+只用已有权重做预测、不训练：`--init-params <runs_dir>/<run>/params --num-train-steps 0`，换一个 `--exp-name`。加
+`--final-train-episodes <n>` 时另对每个数据集前 n 个训练 episode 整段预测，写 `train_predictions.parquet`。
 
-用途：把训练写出的留出集预测画成每个 episode 一张图，上排是等间隔的 head 相机帧，下方是 return 与预测值。
+### 画带优势标签的 $V$ 曲线
+
+用途：把训练写出的预测画成每个 episode 一张图：上排是等间隔的 head 相机帧，中间是 return 与预测值，背景按优势标签
+着色（positive 绿、negative 红），下栏是优势与阈值线。优势往后看 `--advantage-horizon` 帧（默认 50），阈值在预测文件里
+该数据集的全部帧上取，使 `--positive-fraction`（默认 0.4）的帧为 positive。
 
 前提：训练已写出 `heldout_predictions.parquet`；环境里有 matplotlib；能读到同一个数据集的视频。不需要 GPU，可加
 `JAX_PLATFORMS=cpu`。
@@ -116,5 +121,23 @@ python scripts/recap/plot_value.py --predictions <runs_dir>/<run>/heldout_predic
   --repo-id <repo_id> --output-dir <plots_dir>
 ```
 
-预期：`<plots_dir>` 下每个留出 episode 一张 `value_episode_XXXX.png`，标题里有该 episode 的 MAE。只画部分 episode 时加
-`--episodes 42 71`。
+预期：日志打印一行 `threshold=… advantage_std=… flips_per_second=… median_positive_run=…s`；`<plots_dir>` 下每个
+episode 一张 `value_episode_XXXX.png`，标题里有该 episode 的 MAE 与 positive 帧的比例。只画部分 episode 时加
+`--episodes 42 71`（阈值仍在全部 episode 上取）。数据集不在 LeRobot 默认缓存位置时加 `--dataset-root <数据集根目录>`。
+预测文件要含整条 episode，换成 `train_predictions.parquet` 即画训练 episode。
+
+### 训练前检查数据集
+
+用途：找出元数据与数据不一致、相机视频缺失，以及需要人看的可疑 episode（超长、多数时间静止、开头或结尾长时间静止）。
+只读，不删任何东西。
+
+前提：数据集在本地，LeRobot v3.0。不需要 GPU，可加 `JAX_PLATFORMS=cpu`。
+
+```bash
+python scripts/recap/check_dataset.py --dataset-root <数据集根目录> \
+  [--sheet-dir <图目录>] [--output <报告.json>]
+```
+
+预期：不一致打印 `PROBLEM …`，可疑 episode 每条一行 `SUSPECT episode N: <原因> | 时长、静止帧比例、开头与结尾静止秒数`，
+最后一行是问题数与可疑数。加 `--sheet-dir` 时给每条可疑 episode 存一张 6 帧的 head 相机图（要解码视频，也要设
+`HF_DATASETS_CACHE`）；有 `PROBLEM` 时不出图。阈值见 `--help`。

@@ -1,6 +1,6 @@
 # xense-openpi 代码组织（`feature/pi-star-0.6`）
 
-快照：`feature/pi-star-0.6`（`ed0e224`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
+快照：`feature/pi-star-0.6`（`8470c52`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
 [codebase-rl-exp.md](codebase-rl-exp.md)。本文只画 RECAP（π*0.6）新增与改动的部分，SFT 训练、serving 与机器人端沿用上游。
 方法定义见 [pi-star-06-spec.md](pi-star-06-spec.md)，可复制的命令见 [cmd.md](cmd.md)。
 
@@ -16,9 +16,10 @@ flowchart LR
         CR["recap/compute_returns.py"]
         TV["recap/train_value.py"]
         PV["recap/plot_value.py"]
+        CD["recap/check_dataset.py<br/>recap/drop_episodes.py"]
         NS -- "norm stats" --> TR
         CR -- "return 旁路 parquet" --> TV
-        TV -- "留出集预测 parquet" --> PV
+        TV -- "预测 parquet" --> PV
     end
     subgraph INFER["推理服务器"]
         SV["serve_policy.py"]
@@ -28,6 +29,7 @@ flowchart LR
     end
     DS --> NS
     DS --> CR
+    DS --> CD
     DS --> TV
     PRE --> TR
     PRE --> TV
@@ -50,14 +52,17 @@ flowchart LR
 | 训练带 advantage 条件的策略 | 训练服务器 | `scripts/train.py <config> --exp-name <run>` | `configs` 下 `advantage_conditioned: true` 的 YAML、norm stats、`pi05_base` | `checkpoints/<config>/<run>/<step>/` |
 | 起策略服务 | 推理服务器 | `scripts/serve_policy.py policy:checkpoint --policy.config <config> --policy.dir <ckpt>` | 策略 checkpoint | WebSocket 服务 |
 | 算 return 标签 | 任意（只读元数据） | `scripts/recap/compute_returns.py --dataset-root <dataset> --output <returns>` | 数据集的 `meta/episodes` | return 旁路 parquet |
-| 训练价值模型 | 训练服务器 | `scripts/recap/train_value.py --repo-id <repo_id>… --returns <returns>… [--init-params <params>] --gemma-params <gemma> --gemma-tokenizer <tok> --output-dir <out> --exp-name <run>` | 数据集视频、return parquet、Gemma3-270M 与 `pi05_base` 权重 | `<out>/<run>/params`、`<out>/<run>/heldout_predictions.parquet` |
-| 画 $V$ 曲线 | 训练服务器 | `scripts/recap/plot_value.py --predictions <out>/<run>/heldout_predictions.parquet --repo-id <repo_id> --output-dir <plots>` | 留出集预测、数据集视频 | 每个 episode 一张 `value_episode_XXXX.png` |
+| 训练价值模型 | 训练服务器 | `scripts/recap/train_value.py --repo-id <repo_id>… --returns <returns>… [--init-params <params>] --gemma-params <gemma> --gemma-tokenizer <tok> --output-dir <out> --exp-name <run>` | 数据集视频、return parquet、Gemma3-270M 与 `pi05_base` 权重 | `<out>/<run>/params`、`<out>/<run>/heldout_predictions.parquet`；加 `--final-train-episodes <n>` 时另有 `train_predictions.parquet` |
+| 画带优势标签的 $V$ 曲线 | 训练服务器 | `scripts/recap/plot_value.py --predictions <out>/<run>/heldout_predictions.parquet --repo-id <repo_id> --output-dir <plots>` | 整条 episode 的预测、数据集视频 | 每个 episode 一张 `value_episode_XXXX.png` |
+| 训练前检查数据集 | 任意（出图时要视频） | `scripts/recap/check_dataset.py --dataset-root <dataset> [--sheet-dir <plots>]` | 数据集的 `meta/`、`data/`、视频文件是否存在 | 不一致与可疑 episode 的清单；可选每条一张帧图 |
+| 删 episode | 任意 | `scripts/recap/drop_episodes.py --src <dataset> --dst <新目录> --episodes <编号>…`，再 `scripts/recap/verify_drop.py` 同样参数 | 数据集 | 重新编号的新副本，视频硬链接 |
 
 `<config>` 是 `configs` 下 YAML 的文件名；`<dataset>` 是数据集根目录（含 `meta/`、`data/`）；`<gemma>`、`<tok>` 是
 Gemma3-270M checkpoint 目录与 sentencepiece 模型的本地副本；`<out>`、`<plots>` 是输出目录。
 
-现在没有的入口：读逐帧优势标签的训练（样本里没有 `advantage` 字段时一律当 positive）、用价值模型给数据打优势标签、
-CFG 推理、价值模型的独立推理脚本（只有训练结尾对留出集的一次预测）。
+现在没有的入口：读逐帧优势标签的训练（样本里没有 `advantage` 字段时一律当 positive）、把优势标签写成训练数据的文件
+（标签只在画图时算）、CFG 推理、价值模型的独立推理脚本（用 `train_value.py --init-params <params> --num-train-steps 0`
+只做结尾的预测）。
 
 ## 3 文件地图
 
@@ -68,8 +73,10 @@ scripts/
 ├── train.py · compute_norm_stats.py · serve_policy.py   上游入口，未改；经 data_loader / policy_config 用到 advantage 条件
 └── recap/
     ├── compute_returns.py   读 episode 元数据，写逐帧归一化 return 的旁路 parquet
-    ├── train_value.py       价值模型训练：一个或多个数据集，载入预训练骨干或已有权重，按 episode 留出、存最优权重、早停、写留出集预测
-    └── plot_value.py        留出集预测 + 等间隔帧图，每个 episode 一张图
+    ├── train_value.py       价值模型训练：一个或多个数据集，载入预训练骨干或已有权重，按 episode 留出、存最优权重、早停、写留出集与可选的训练集预测
+    ├── plot_value.py        整条 episode 的预测 + 等间隔帧图，按优势标签着色，每个 episode 一张图
+    ├── check_dataset.py     训练前的数据检查：元数据一致性、视频文件、可疑 episode 清单与帧图，只读
+    └── drop_episodes.py · verify_drop.py   删 episode 产出新副本并核对；从 feat/egg-carton-subtask 原样复制
 configs/_examples/
 └── pi05_base_bi_flexiv_cylinder_stack_recap_h100.yaml   打开 advantage 条件的 π0.5 bi_flexiv 配置
 pyproject.toml               可选依赖组 recap（gemma）
@@ -98,7 +105,9 @@ src/openpi/recap/
 ├── value_model.py   two-hot 目标、期望值、交叉熵；ValueModel（图像 token + 文本 token + CLS → 201 个 bin）
 ├── gemma3.py        Gemma3-270M 包一层，接受现成的 embedding；直接用 orbax 读官方 checkpoint
 ├── checkpoints.py   价值模型权重的保存与读回，载入前核对名称与形状
-└── value_data.py    episode 留出划分、return 对齐、任务文本 token、补边缩放、ValueFrames 数据集；多数据集的 Split 与等概率采样
+├── value_data.py    episode 留出划分、return 对齐、任务文本 token、补边缩放、ValueFrames 数据集；多数据集的 Split 与等概率采样
+├── advantage.py     N 步优势估计、按比例取阈值、标签分段，纯 numpy
+└── dataset_check.py 由机器人状态判静止帧、开头与结尾的静止长度、长度离群，纯 numpy
 ```
 
 ## 4 模块交互
@@ -153,14 +162,14 @@ flowchart LR
     VD["value_data<br/>Split · BalancedSampler · ValueFrames"]
     INIT["train_value.init_params"]
     VM["ValueModel<br/>SigLIP · Gemma3Backbone"]
-    PV["plot_value.py"]
+    PV["plot_value.py<br/>advantage"]
     META --> CR
     CR -- "return parquet" --> VD
     META --> VD
     VID --> VD
     VD -- "images · tokens · target" --> VM
     INIT -- "pi05_base 的 SigLIP<br/>Gemma3-270M" --> VM
-    VM -- "留出集预测" --> PV
+    VM -- "整条 episode 的预测" --> PV
     VID --> PV
 ```
 
@@ -177,7 +186,10 @@ Gemma3Backbone 是因果的，所以取最后的 CLS 位置 → value_head → 2
 | `gemma3.Gemma3Backbone` | 文本 token；或 embedding 序列与 mask | 文本 embedding；或逐位置的隐状态 |
 | `value_model.ValueModel` | 图像 (B, 3, 224, 224, 3)、文本 token 与 mask | logits (B, 201)；`expected_value` 取期望得 $V$ |
 | `train_value.py` | 一个或多个数据集及各自的 return parquet；两份预训练权重，或 `--init-params` 指向的已有 `params` | 留出集指标（多数据集时取各数据集的平均）最优时的 `params`；最优权重的 `heldout_predictions.parquet`（`dataset`、`episode_index`、`frame_index`、`return`、`value`） |
-| `plot_value.py` | 留出集预测、数据集视频 | 每个 episode 一张图：上排帧图，下方 return 与 $V$ 两条曲线 |
+| `advantage.n_step_advantages` | 一条 episode 的逐帧 return 与 $V$、步数 $N$ | 逐帧优势；`positive_threshold` 给出使指定比例为 positive 的阈值 |
+| `plot_value.py` | 整条 episode 的预测、数据集视频 | 每个 episode 一张图：上排帧图，中间 return 与 $V$ 两条曲线，背景按优势标签着色，下栏优势与阈值；日志里有优势标准差、标签每秒翻转次数、positive 片段中位时长 |
+| `dataset_check` | 逐帧 `observation.state`、各维量程、阈值 | 静止帧标记、开头与结尾的静止帧数、长度离群标记 |
+| `check_dataset.py` | 数据集根目录 | `PROBLEM` 与 `SUSPECT` 清单；可选 JSON 报告与每条可疑 episode 的帧图 |
 
 价值模型的数据不走策略的 repack 与归一化链：它只要三路相机和任务文本，不用 state 与 action。
 
@@ -191,12 +203,15 @@ flowchart TB
         E1["scripts/recap/compute_returns.py"]
         E2["scripts/recap/train_value.py"]
         E3["scripts/recap/plot_value.py"]
+        E4["scripts/recap/check_dataset.py"]
     end
     subgraph RECAP["openpi.recap"]
         R1["returns"]
         R2["value_data"]
         R3["value_model"]
         R4["gemma3"]
+        R5["advantage"]
+        R6["dataset_check"]
     end
     subgraph CORE["上游模块"]
         C1["models.siglip · models.model"]
@@ -211,11 +226,15 @@ flowchart TB
     E2 --> C1
     E2 --> C2
     E2 --> C3
+    E3 --> R5
     E3 --> C2
+    E4 --> R6
+    E4 -.-> C2
     R4 --> EXT
 ```
 
-`openpi.recap` 内部五个模块互不 import，由 `train_value.py` 组装；`value_model` 的两个骨干是注入的，单测用小的替身。
+虚线是只在出帧图时才发生的 import。`drop_episodes.py` 与 `verify_drop.py` 不 import `openpi`，图里没有画。
+`openpi.recap` 内部的模块互不 import，价值模型的五个由 `train_value.py` 组装；`value_model` 的两个骨干是注入的，单测用小的替身。
 只有 `gemma3` 依赖 `gemma` 包，没装时其余模块与策略侧都能用。
 
 ## 5 已知耦合

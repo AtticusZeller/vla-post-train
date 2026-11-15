@@ -300,30 +300,34 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Change**
 
-- [ ] 新增 `src/openpi/recap/advantage.py`，两个纯函数。`n_step_advantages(returns, values, horizon)`：一条 episode 内
+- [x] 新增 `src/openpi/recap/advantage.py`（`e7d0692`），两个纯函数。`n_step_advantages(returns, values, horizon)`：一条 episode 内
       $\hat A_t = (R_t - R_{t+N}) + \hat V_{t+N} - \hat V_t$；$t+N$ 超出末帧时 $\hat A_t = R_t - \hat V_t$（终止后价值为
       0，两式在交界处一致）。奖励和直接取 return 的差，所以失败 episode 的终止惩罚自动算进去。结尾的处理论文没有写，
       是本实现的选择。`positive_threshold(advantages, positive_fraction)`：取 $1-$`positive_fraction` 分位数。
-- [ ] `scripts/recap/plot_value.py` 加 `--advantage-horizon`（默认 50）与 `--positive-fraction`（默认 0.4）：阈值在
+- [x] `scripts/recap/plot_value.py` 加 `--advantage-horizon`（默认 50）与 `--positive-fraction`（默认 0.4）：阈值在
       预测文件里该数据集的全部帧上取（现有数据集都是一个数据集一个任务）；$V$ 曲线背景按标签着色（positive 绿、
       negative 红），上排每张帧图的边框用它所在时刻标签的颜色，下方加一栏画 $\hat A_t$ 与阈值线。
-- [ ] `scripts/recap/train_value.py` 加 `--final-train-episodes <n>`（默认 0）：结尾另对每个数据集前 n 个训练 episode
+- [x] `scripts/recap/train_value.py` 加 `--final-train-episodes <n>`（默认 0）：结尾另对每个数据集前 n 个训练 episode
       整段预测，写 `train_predictions.parquet`。不另写预测脚本，因为模型构建与预测都在这个脚本里，
       `--num-train-steps 0 --init-params` 已经是"只预测"的入口。
 
 **Verification**
 
-1. [ ] `advantage_test.py`：$\hat V$ 等于真实 return 时成功 episode 的优势全为 0；$\hat V$ 在某一段走平时该段优势为负、
+1. [x] `advantage_test.py`：$\hat V$ 等于真实 return 时成功 episode 的优势全为 0；$\hat V$ 在某一段走平时该段优势为负、
        追上来的那段为正；末尾 $N$ 帧用终止公式；失败 episode（末帧 return 为 $-0.5$）在两式交界处连续；阈值使正样本
        比例等于给定值。对公式各做一处 mutation（去掉奖励项、结尾仍然 bootstrap）确认测试会失败。
-2. [ ] 用 `value-cylinder-scratch-ed0e224` 的权重在 cylinder-stack 上跑 `--num-train-steps 0 --final-train-episodes 15`，
+2. [x] 用 `value-cylinder-scratch-ed0e224` 的权重在 cylinder-stack 上跑 `--num-train-steps 0 --final-train-episodes 15`，
        得到 15 个留出与 15 个训练 episode 的预测；两组各出 15 张图。
-3. [ ] 两组各算：$\hat A_t$ 的标准差、标签每秒翻转次数、positive 片段的中位时长。
+3. [x] 两组各算：$\hat A_t$ 的标准差、标签每秒翻转次数、positive 片段的中位时长。
+4. [x] 计划外加算的一项（只用已有的预测文件，没有新训练）：从头与旧微调两个模型在同一批留出 episode 上各自打标签，
+       比标签一致率。两个模型都没见过这批 episode，一致率说明标签有多少取决于模型本身。
 
 **Done**
 
-- [ ] 图放 `docs/xense-openpi/figures/pi-star-06/`，两组数字记入 [experiments.md](experiments.md)，写明训练集内的
-      标签是否退化成噪声。
+- [x] 图放 `docs/xense-openpi/figures/pi-star-06/advantage-labels-cylinder-scratch-ed0e224/`，两组数字记入
+      [experiments.md](experiments.md)。结果：两组标签一样碎（约 0.6 秒翻一次），训练组的优势幅度是留出组的 1/4；
+      两个没见过这批 episode 的模型标签一致率 65.5%（随机 52%）。训练集内与留出的标签差多少没有直接测到，要测得
+      换一个划分再训一个模型。
 - [ ] 用户看图判断（人工门禁）：标签是否落在合理的片段上（negative 对应停顿、犹豫、重试，positive 对应推进快的片段）；
       若训练集内的标签不可用，是否要改成交叉标注，另开事务。
 
@@ -331,25 +335,44 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Change**
 
-- [ ] 新增 `scripts/recap/check_dataset.py --dataset-root <root>`，只读、只用 parquet 与文件是否存在，不解码视频。
+- [x] 新增 `scripts/recap/check_dataset.py --dataset-root <root>`（`8470c52`），只读、只用 parquet 与文件是否存在，不解码视频。
       检查项：(1) `meta/episodes` 行数、编号连续且不重复、帧数合计，与 `info.json`、`data/` 三者一致（残留或重复的
       元数据文件在这里报出来）；(2) 每条 episode 的三路相机视频文件存在；(3) 长度离群，报出与中位长度的比值；
       (4) 静止：整条里静止帧的比例、结尾连续静止的时长、开头连续静止的时长。输出每个数据集一张可疑清单，注明原因。
-- [ ] 静止的判据在实现时用真实数据定：先看 whiteboard 70、cube-color 100、egg 108、pick_up_cube 168 与 earbud 71 这
+      实现时加了可选的 `--sheet-dir`：给每条可疑 episode 解码 6 帧 head 相机图（Done 里要附图）；不给这个参数时
+      仍然不解码视频。
+- [x] 静止的判据在实现时用真实数据定：先看 whiteboard 70、cube-color 100、egg 108、pick_up_cube 168 与 earbud 71 这
       五条的逐帧关节变化，找到能分开前四条与 earbud 71 的量（候选：同时看 state 与 action；用更严格的"完全不动"阈值
       只判开头、结尾和整条）。定下的判据与依据写回本条。中段的停顿只报数字，不作为可疑原因。
-- [ ] 把 `drop_episodes.py` 从 `openpi-2stage` 工作区的 `scripts/egg_carton_two_stage/` 原样复制到 `scripts/recap/`，
-      记下来源 commit。不改内容，便于以后两边对照。
+      定下的判据：一帧算静止，是 `observation.state` 每一维相对上一帧的变化都小于该维量程（全数据集 1%–99% 分位之差）
+      的 0.05%，比临时判据的 0.2% 严 4 倍；可疑条件是结尾或开头连续静止超过 5 秒、静止帧超过一半、长度超过
+      $Q_3+3\,\mathrm{IQR}$。依据：前四条在这个阈值下结尾静止 11.4–45.5 秒，没被标出的 episode 结尾最长 4.7 秒、开头
+      最长 4.8 秒，中间没有重叠。`action` 没有用上：earbud 71 结尾 `state` 与 `action` 同时不变，加上它也分不开。
+      **没有找到能分开 earbud 71 的量，见下面的"与计划不符"。**
+- [x] 把 `drop_episodes.py` 从 `openpi-2stage` 工作区的 `scripts/egg_carton_two_stage/` 原样复制到 `scripts/recap/`，
+      记下来源 commit。不改内容，便于以后两边对照。来源：`feat/egg-carton-subtask` 的 `2f457bf`。同目录的
+      `verify_drop.py` 也原样复制了（计划里没有写）：它核对删除后的副本，下一个 Task 的验证要用。
 
 **Verification**
 
-1. [ ] 判据里的纯函数有单测：连续静止段的起止与时长、开头 / 结尾静止、长度离群。
+1. [x] 判据里的纯函数有单测：连续静止段的起止与时长、开头 / 结尾静止、长度离群。
 2. [ ] 在训练机现有数据上跑：报出 pick_up_cube 168、egg 108、whiteboard 70、cube-color 100、whiteboard 0，不把
        earbud 71 报成静止；把 cube-color-sorting 那个残留文件放回一份副本后，第 (1) 项报错。
+       已观察到：前五条都报出；残留文件报出 3 条不一致。**earbud 71 仍被报成"结尾静止 18.3 秒"，这一条没有满足。**
+
+**与计划不符（待用户裁决）**
+
+计划的前提是 earbud 71 没有静止那么久，是临时判据把慢动作当成了静止。实际数据：这条 episode 最后 18.3 秒
+`observation.state` 与 `action` 逐帧不变，不是慢动作；head 相机拍到人的手伸进画面，末帧里耳机盒已回到起始位置。
+画面一直在动，机械臂没动——任务做完后没有结束录制，人在复位场景。earbud 188 相同（结尾 17.1 秒）。图与数字见
+[experiments.md](experiments.md) 的可疑清单。Agent 推断：它属于"做完忘记结束"，脚本报出来是对的。需要用户决定：
+上面那条"正式脚本的判据不能再报这一条"是否撤回，以及这两条删不删。
 
 **Done**
 
-- [ ] 10 个预训练数据集加 cylinder-stack 的可疑清单交给用户；每条附原因、时长数字和首 / 中 / 末三帧 head 相机图。
+- [x] 10 个预训练数据集加 cylinder-stack 的可疑清单交给用户；每条附原因、时长数字和首 / 中 / 末三帧 head 相机图。
+      清单 22 条，在 [experiments.md](experiments.md)；每条 6 帧图在 `figures/pi-star-06/data-check/`。其中 12 条
+      还没有处理决定。
 
 ### Task: 清理数据并重算 return
 
