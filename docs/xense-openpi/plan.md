@@ -380,30 +380,32 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
 
 **Verification**
 
-1. [ ] 训练按早停结束或跑满步数，日志没有 NaN 与 Traceback。
-2. [ ] 结尾对每个数据集的若干留出 episode 做整段预测（`--final-episodes`），报告各数据集的 MAE 与相关系数。
+1. [x] 步 17000 早停（最优步 12000），日志 0 个 Traceback、0 个 NaN 指标。
+2. [x] 结尾对每个数据集前 2 个留出 episode 整段预测，各数据集 MAE 与相关系数见 experiments.md。
 
 **Done**
 
-- [ ] W&B run 链接；最优步数；10 个数据集各自的留出 MAE 与相关系数；每步耗时与总时长。
-- [ ] $V_{\mathrm{pre}}$ 的 `params` 路径，以及方法仓库与根仓的 commit。
+- [x] W&B [gty4r7z9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/gty4r7z9)；最优步 12000；各数据集留出指标、
+      每步 0.48 s、总时长 3 小时 13 分，见 [experiments.md](experiments.md) 的"预训练运行"一节。
+- [x] $V_{\mathrm{pre}}$：`xense-train-01:/root/localstorage/pi06/runs/value-pretrain-10ds-ed0e224/params`（修改时间
+      06:16:20，等于步 12000 的存盘）；方法仓库 `ed0e224`，根仓 `AtticusZeller/pi06` 分支上记录本结果的提交。
 
 ### Task: 在 cylinder-stack 上对照两种初始化
 
 **Change**
 
-- [ ] 同一份代码、同一划分（seed 0）、相同超参跑两次：从头（SigLIP + Gemma3 预训练权重）与 `--init-params` 指向
-      $V_{\mathrm{pre}}$。两次都开早停。
-- [ ] $V_{\mathrm{pre}}$ 不经微调直接在 cylinder-stack 留出集上预测一次，作为零样本参照。
+- [x] 同一份代码、同一划分（seed 0）、相同超参跑两次：从头（SigLIP + Gemma3 预训练权重）与 `--init-params` 指向
+      $V_{\mathrm{pre}}$。两次都开早停。从头是 `m6pytdh3`（步 1750 最优），微调是 `ygu41ccp`（步 750 最优）。
+- [x] $V_{\mathrm{pre}}$ 不经微调直接在 cylinder-stack 留出集上预测一次，作为零样本参照（`bcmqljyw`）。
 
 **Verification**
 
-1. [ ] 两次运行的留出 episode 列表相同（日志打印）。
-2. [ ] 对两次运行各出 15 张留出 episode 的 $V$ 曲线图。
+1. [x] 三次运行的留出 episode 列表相同（日志打印的 15 个编号逐个一致）。
+2. [x] 三次运行各出 15 张留出 episode 的 $V$ 曲线图。
 
 **Done**
 
-- [ ] 一张表并列三行（零样本、从头、从 $V_{\mathrm{pre}}$ 微调）：最优步数、留出 MAE、相关系数、留出交叉熵、最优步时的
+- [x] 一张表并列三行（零样本、从头、从 $V_{\mathrm{pre}}$ 微调）：最优步数、留出 MAE、相关系数、留出交叉熵、最优步时的
       train MAE。另给两次训练的留出 MAE 与 train MAE 随步数的曲线，用来回答"预训练后是否更不容易过拟合"。
-- [ ] 结果记入 [experiments.md](experiments.md) 的预训练一节；图放 `figures/pi-star-06/`。
+- [x] 结果记入 [experiments.md](experiments.md) 的预训练一节；图放 `figures/pi-star-06/`。
 - [ ] 用户看图与表判断（人工门禁）：之后每轮迭代用哪种初始化，或两种并列。
