@@ -33,6 +33,25 @@ RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)，代码位置与模块关系�
 启动，代码是 `feature/rlt-jax`，记录见 [experiments.md](experiments.md)；`rl-exp` 的真机试跑还没完成，见
 [plan.md](plan.md)。
 
+## π*0.6（RECAP）价值模型
+
+方法规格见 [pi-star-06-spec.md](pi-star-06-spec.md)，代码在 `feature/pi-star-0.6`，位置见 [codebase.md](codebase.md)，
+数字与图见 [experiments.md](experiments.md)。截至 2026-11-16 做到：return 标签、价值模型的单任务与多任务训练、带优势
+标签的图与视频、训练前的数据检查与清理。策略侧的 advantage 文本条件有单测，没有做过 smoke 训练：2026-11-14 在
+cylinder-stack 上试跑时 loss 发散，用户决定降低优先级。
+
+现役的预训练权重是 `value-pretrain-10ds-clean-2b7bb10`（10 个清理过的 `Xense/*` 数据集，步 12000），在 COS 的
+`xense_checkpoints/pi06_recap_value_checkpoints/` 下与 `xense-train-01:/root/localstorage/pi06/runs/`。
+
+验证边界：所有结果都来自纯成功示范。
+
+- 留出 episode 上 MAE 约 0.015，卡在标签本身：return 按剩余时间定义，首帧看不出这条 episode 会有多长。预训练让
+  收敛更快，没有降低这个下限；清理预训练数据也没有（各一个 seed，cylinder-stack 一个任务）。
+- 失败识别没有验证过，要等带失败的 rollout 数据。
+- 优势标签在模型没见过的 episode 上集中在快要抓住、快要放下的时候；在它训练时见过的 episode 上弱得多，不同模型
+  给出的标签接近互不相关。实际要标的是见过的数据，这个问题没有解决。
+- $N$ 与 positive 比例没有选定；等有失败数据混合训练时再定（用户决定，2026-11-16）。
+
 ## 已知限制
 
 当前 tactile 模型分支只是未接完整训练与采样接口的原型，没有可用配置和测试，因此不是可运行

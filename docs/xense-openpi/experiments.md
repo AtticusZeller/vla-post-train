@@ -32,6 +32,9 @@
 
 **当前结论**
 
+- 用户决定（2026-11-16）：本事务到此收尾。现在只有成功数据，目标任务初始化时全部帧标 positive，优势标签用不上，
+  继续探究意义不大。$N$ 与 positive 比例怎么选、训练时见过的数据上标签怎么打（见本节末）、训练与部署的细节，
+  等有失败数据混在一起训练时再讨论。下面的图与数字留作那时的起点。
 - 清理数据后，预训练自己的验证指标变好：各数据集平均 val MAE 从 0.0209 降到 0.0163，相关系数从 0.897 升到 0.968。
   pick_up_cube 的相关系数从 0.41 回到 0.97，原因是 4914 帧的 episode 168 不在留出集里了。
 - 在 cylinder-stack 上没有变好。新微调留出 MAE 0.0164，旧微调 0.0150，从头 0.0156；三者相差约 0.001，只有一个
@@ -50,7 +53,9 @@ W&B [dhkgxqz9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/dhkgxqz9)，
 `gty4r7z9` 相同（`--num-train-steps 20000 --eval-interval 1000 --patience 5 --final-episodes 2 --num-workers 64`）。
 2026-11-16 00:04 启动、03:16 结束，共 3 小时 10 分，退出码 0，日志无 NaN 与 Traceback。步 12000 最优，步 17000 早停
 （上一版也是这两个步数）。稳态 0.37 s/步（上一版 0.48 s）。最优步时 train MAE 0.0020（上一版 0.0019）。权重在
-`xense-train-01:/root/localstorage/pi06/runs/value-pretrain-10ds-clean-2b7bb10/params`。
+`xense-train-01:/root/localstorage/pi06/runs/value-pretrain-10ds-clean-2b7bb10/params`，2026-11-16 另传了一份到 COS：
+`cos://data-1460349206/xense_checkpoints/pi06_recap_value_checkpoints/value-pretrain-10ds-clean-2b7bb10/12000/`（`params/` 与 `heldout_predictions.parquet`，15 个文件、2.1 GB，
+与训练机上逐个文件大小相同）。其余运行的权重只在训练机上。
 
 数据：egg、whiteboard、cube-color、stack-cubes、earbud（888 条的仓库）用清理后的副本，pick_up_cube 用删掉 168 的
 副本，shoe、assemble_box、unscrew、fold 没变；清理前后的数字见[清理结果](#清理结果)。
@@ -268,7 +273,7 @@ Agent 推断（2026-11-16）：价值模型把训练 episode 的 return 背得�
   之后其余 episode 的长度分布变窄，它越过了 $Q_3+3\,\mathrm{IQR}$。whiteboard 的 $L_{\max}$ 因此只从 3614 降到 3437。
   这一条先保留：它只比阈值（113.8 秒）长 0.8 秒，后面紧跟着 112.1、111.0、108.8、107.2 秒的 episode，是长度分布
   的上沿，不是孤立的一条；再删它 $L_{\max}$ 只降 2%，删后不再有新的超长。按用户"轻微的长度离群不处理"的决定
-  归为轻微（Agent 判断，用户未单独确认）。
+  归为轻微，保留（Agent 判断，用户确认，2026-11-16）。
 - 每个新副本取 3 条编号变了的 episode（变号的第一条、中间一条、最后一条），三路相机各解码首、中、末帧，与源数据里
   同一条 episode 比较：每个数据集 27 帧，像素差最大为 0，`observation.state` 相同。earbud 取的是新编号
   51、468、885（原 52、470、887）。
@@ -513,7 +518,7 @@ W&B [gty4r7z9](https://wandb.ai/XenseRobotics/pi06-recap-value/runs/gty4r7z9)，
 
 合计 11,295,017 帧。**这批数据没有经过数据检查（用户判断，2026-11-15）：** pick_up_cube 的 episode 168 是 4914 帧
 （次长 1577），fold-the-towel 的 episode 0 是 1819 帧（次长 1441），都没有剔除；cube-color-sorting 的 Hub 仓库多一个
-残留的 episode 元数据文件，训练用的副本里移开了。下面的数字属于这版数据，数据检查做好后要重训。每 1000 步验证、patience 5：步 12000 最优
+残留的 episode 元数据文件，训练用的副本里移开了。下面的数字属于这版数据；清理后已重训（2026-11-16，见最上面一节）。每 1000 步验证、patience 5：步 12000 最优
 （各数据集平均 val MAE 0.0209、corr 0.897），步 17000 早停。$V_{\mathrm{pre}}$ 权重在
 `xense-train-01:/root/localstorage/pi06/runs/value-pretrain-10ds-ed0e224/params`。
 

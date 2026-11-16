@@ -144,3 +144,35 @@ python scripts/recap/check_dataset.py --dataset-root <数据集根目录> \
 预期：不一致打印 `PROBLEM …`，可疑 episode 每条一行 `SUSPECT episode N: <原因> | 时长、静止帧比例、开头与结尾静止秒数`，
 最后一行是问题数与可疑数。加 `--sheet-dir` 时给每条可疑 episode 存一张 6 帧的 head 相机图（要解码视频，也要设
 `HF_DATASETS_CACHE`）；有 `PROBLEM` 时不出图，退出码为 1。阈值见 `--help`。
+
+### 删 episode 并核对
+
+用途：按检查清单删掉指定的 episode，产出重新编号的新副本。只改元数据，不重编码视频（视频硬链接到源文件）；源数据集
+不动。
+
+前提：LeRobot v3.0 数据集在本地；`<新目录>` 还不存在，并与源数据集在同一个文件系统上（硬链接）。两条命令都在
+`scripts/recap/` 下运行。
+
+```bash
+python drop_episodes.py --src <数据集根目录> --dst <新目录> --episodes 0 70
+python verify_drop.py --src <数据集根目录> --dst <新目录> --episodes 0 70
+```
+
+预期：`verify_drop.py` 最后一行报 OK。新副本再过一遍 `check_dataset.py`，并重算 return（episode 数与 $L_{\max}$ 都变了）；
+训练与画图时用 `--dataset-root <新目录>`。
+
+### 把价值模型权重传到 COS
+
+用途：把一次运行的最优权重存到团队的 COS 桶，供别的机器取用。
+
+前提：在 `xense-train-01` 上，`/root/coscli` 与 `/root/.cos.yaml` 已配置。目录约定是
+`xense_checkpoints/pi06_recap_value_checkpoints/<运行名>/<最优步>/`。
+
+```bash
+/root/coscli --disable-log cp <runs_dir>/<run>/ \
+  cos://data-1460349206/xense_checkpoints/pi06_recap_value_checkpoints/<run>/<step>/ \
+  -r --process-log=false --fail-output=false
+```
+
+预期：`coscli ls <目标> -r` 列出 `params/` 下的全部文件与 `heldout_predictions.parquet`，大小与本地一致。源路径末尾的
+`/` 不能省，否则目录本身会被嵌进目标里多一层。

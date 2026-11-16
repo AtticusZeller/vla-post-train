@@ -1,5 +1,49 @@
 # xense-openpi Log
 
+## 2026-11-16 · π*0.6 优势标签门禁图、预训练数据检查与 $V_{\mathrm{pre}}$ 重训（`feature/pi-star-0.6`）
+
+- **背景与目的：** 上一版 $V_{\mathrm{pre}}$ 的数据没有检查过，训练时才撞上超长与静止的 episode；只画 $V$ 曲线也不够当
+  下游优势标签 SFT 的门禁（用户要求，2026-11-15）。本事务补三样：带优势标签的图与视频、训练前的数据检查与清理、
+  在干净数据上重训 $V_{\mathrm{pre}}$ 并回到 cylinder-stack 对比。
+- **实现思路：** 优势按规格公式往后看 $N$ 帧，阈值取分位数使给定比例的帧为 positive；图在 $V$ 曲线上按标签着色，
+  视频给每帧画面加标签颜色的边框和整条 episode 的标签时间轴。数据检查只读、只标记不删：元数据与数据是否一致、
+  帧的存储顺序、视频文件是否存在、可疑 episode（开头或结尾静止超过 5 秒、静止帧过半、长度超过 $Q_3+3\,\mathrm{IQR}$）；
+  静止的判据是 `observation.state` 每一维的逐帧变化都小于该维量程的 0.05%。删哪些由用户看清单定，删除只改元数据、
+  产出新副本，Hub 上的数据集不动。
+- **组件变化：** 新增 `src/openpi/recap/advantage.py`、`dataset_check.py`、`label_video.py` 与
+  `scripts/recap/check_dataset.py`；`drop_episodes.py`、`verify_drop.py` 从 `feat/egg-carton-subtask` 原样复制
+  （上游 `a423c67` 修了 lerobot 0.5.1 的导入）；`plot_value.py` 加优势标签、`--videos`，并核对预测与数据集的帧数；
+  `train_value.py` 加 `--final-train-episodes`。方法仓库 `e7d0692`、`8470c52`、`7145e7d`、`aaee714`、`2b7bb10`。
+- **主要文件：** 上面几个文件；命令见 [cmd.md](cmd.md)，代码位置见 [codebase.md](codebase.md)，全部数字、可疑清单与图见
+  [experiments.md](experiments.md) 的 2026-11-15、2026-11-16 三节。事务原文（逐项的 Change / Verification / Done）在
+  根仓 `2d0ef50` 的 `plan.md`。
+- **验证：**
+  - 单测覆盖优势公式、静止与离群判据、帧顺序检查、视频单帧画法，故意改错的版本各被测出；子代理按事务审查
+    `ed0e224..7145e7d`，核实后修了四处（`2b7bb10`）。
+  - 清理：egg、whiteboard、cube-color、stack-cubes、earbud（改用 888 条的仓库）五个数据集共删 15 条，pick_up_cube
+    用已有的删掉 168 的副本。副本过检查脚本无问题，`verify_drop.py` 报 OK；编号变了的 episode 抽帧与源数据逐像素
+    相同。whiteboard 删后新报出的原 1 号（114.6 秒，阈值 113.8 秒）保留（用户确认，2026-11-16）。
+  - 重训 `dhkgxqz9`（`value-pretrain-10ds-clean-2b7bb10`）：步 12000 最优、步 17000 早停，无 NaN 与 Traceback。各数据集
+    平均 val MAE 0.0209 → 0.0163，相关系数 0.897 → 0.968；pick_up_cube 的相关系数 0.41 → 0.97。
+  - cylinder-stack 同一批 15 条留出 episode：新微调 MAE 0.0164，旧微调 0.0150，从头 0.0156，差距在单个 seed 的波动内；
+    新零样本 0.0507（旧 0.0526）。
+  - 标签：留出 episode 上 positive 集中在快要抓住、快要放下的时候（用户判断，2026-11-15，夹爪开合时刻的统计方向
+    一致）。训练时见过的 episode 上，优势幅度是留出组的 1/4 到 1/2，两个模型之间标签一致率 55–61%（随机 52%，
+    留出组 64–70%）。
+- **结论与收尾（用户决定，2026-11-16）：** 清理数据改善了预训练自己的指标，没有改善 cylinder-stack 上的微调。现在只有
+  成功数据，初始训练全部标 positive，优势标签用不上；$N$ 与 positive 比例、见过的数据上标签怎么打（交叉标注或用
+  训练步数少的权重，都没做）、训练与部署细节，等有失败数据混合训练时再讨论。新 $V_{\mathrm{pre}}$ 的权重已传 COS：
+  `cos://data-1460349206/xense_checkpoints/pi06_recap_value_checkpoints/value-pretrain-10ds-clean-2b7bb10/12000/`；其余运行留在 `xense-train-01:/root/localstorage/pi06/runs/`。
+- **过程中的问题：**
+  - "标签主要反映模型自己的抖动"是 Agent 的推断，用户对着视频看过后判断不准确，已撤回；换成用夹爪开合时刻核对。
+  - earbud 的 71 号：临时测量报"结尾静止 19 秒"，用户看原视频说没有。原因是两边看的不是同一个仓库（776 条的
+    `_left_right` 与 888 条的仓库编号不对应），脚本没有问题；这个任务改用 888 条的仓库。
+  - `drop_episodes.py` 在 lerobot 0.5.1 下导入失败，先在运行时把函数挂回原位置产出副本，后按用户决定改了上游再复制。
+  - 接力任务用 `bc` 判断 GPU 是否空闲，训练机没有这个命令，预训练结束后接力失败，手动重启；事先的自检
+    `command -v bc paste` 只要有一个存在就通过，没有查出来。
+  - 出图任务的日志里没有等待脚本要找的结束标记，图在 04:19 出完，到用户提醒才发现，耽误了几个小时。
+  - 第一次传 COS 时源路径没带末尾的 `/`，`coscli cp -r` 把目录本身嵌了一层；重传后删掉了嵌套的那份。
+
 ## 2026-11-15 · π*0.6 价值模型多任务预训练 $V_{\mathrm{pre}}$ 与 cylinder-stack 初始化对照（`feature/pi-star-0.6`）
 
 - **背景与目的：** 单任务价值模型不到半个 epoch 就过拟合，用户决定做多任务预训练，并在 cylinder-stack 的同一批留出
