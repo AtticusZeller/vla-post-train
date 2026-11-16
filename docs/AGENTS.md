@@ -31,7 +31,9 @@ retention, write only `当前没有需要长期保留的 method 命令。`.
 ## `plan.md` Contract
 
 `plan.md` contains confirmed, unfinished work only. A chunk is one coherent transaction and may contain
-multiple dependent tasks. Remove the chunk after acceptance and summarize the result in `log.md`.
+multiple dependent tasks. Order chunks by when they were added, newest first; keep tasks within each
+chunk in dependency and execution order. Remove the chunk after acceptance and summarize the result
+in `log.md`.
 
 Each task uses this structure:
 
