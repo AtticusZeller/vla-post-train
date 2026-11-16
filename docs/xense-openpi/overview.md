@@ -41,7 +41,8 @@ RLT 的方法规格见 [rlt-spec.md](rlt-spec.md)，代码位置与模块关系�
 cylinder-stack 上试跑时 loss 发散，用户决定降低优先级。
 
 现役的预训练权重是 `value-pretrain-10ds-clean-2b7bb10`（10 个清理过的 `Xense/*` 数据集，步 12000），在 COS 的
-`xense_checkpoints/pi06_recap_value_checkpoints/` 下与 `xense-train-01:/root/localstorage/pi06/runs/`。
+`xense_checkpoints/pi06_recap_value_checkpoints/` 下与 `xense-train-01:/root/localstorage/pi06/runs/`；它用的六个清理后的
+数据集副本在 COS 的 `xense_data/pi06_recap_clean/` 下，删了哪些 episode 见 [experiments.md](experiments.md) 的清理结果。
 
 验证边界：所有结果都来自纯成功示范。
 

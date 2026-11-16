@@ -33,7 +33,8 @@
 - **结论与收尾（用户决定，2026-11-16）：** 清理数据改善了预训练自己的指标，没有改善 cylinder-stack 上的微调。现在只有
   成功数据，初始训练全部标 positive，优势标签用不上；$N$ 与 positive 比例、见过的数据上标签怎么打（交叉标注或用
   训练步数少的权重，都没做）、训练与部署细节，等有失败数据混合训练时再讨论。新 $V_{\mathrm{pre}}$ 的权重已传 COS：
-  `cos://data-1460349206/xense_checkpoints/pi06_recap_value_checkpoints/value-pretrain-10ds-clean-2b7bb10/12000/`；其余运行留在 `xense-train-01:/root/localstorage/pi06/runs/`。
+  `cos://data-1460349206/xense_checkpoints/pi06_recap_value_checkpoints/value-pretrain-10ds-clean-2b7bb10/12000/`；其余运行留在 `xense-train-01:/root/localstorage/pi06/runs/`。六个清理后的数据集副本与 return 文件传到
+  `cos://data-1460349206/xense_data/pi06_recap_clean/`（1792 个文件、16.06 GiB）。
 - **过程中的问题：**
   - "标签主要反映模型自己的抖动"是 Agent 的推断，用户对着视频看过后判断不准确，已撤回；换成用夹爪开合时刻核对。
   - earbud 的 71 号：临时测量报"结尾静止 19 秒"，用户看原视频说没有。原因是两边看的不是同一个仓库（776 条的

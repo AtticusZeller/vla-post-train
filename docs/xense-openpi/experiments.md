@@ -255,6 +255,11 @@ Agent 推断（2026-11-16）：价值模型把训练 episode 的 return 背得�
 `/root/localstorage/pi06/data/clean/returns-<数据集>.parquet`。pick_up_cube 用另一个 agent 已做好的副本
 `/root/localstorage/pick-up-cube-drop168/drop168`。
 
+2026-11-16 把下表六个干净副本与六个 return 文件传了一份到 COS：`cos://data-1460349206/xense_data/pi06_recap_clean/`，
+每个数据集一个目录，return 在 `returns/` 下，根下的 `README.md` 写了来源与删掉的编号。共 1792 个文件、16.06 GiB，
+文件数与总字节数同训练机一致。预训练里没有改动的四个数据集（shoe、assemble_box、unscrew、fold）没有传。
+训练机上 776 条的 `_left_right` 副本已删（用户决定，2026-11-16）。
+
 | 数据集 | 删掉的 episode | episode 前 → 后 | 帧 前 → 后 | $L_{\max}$ 前 → 后 | 中位长度 前 → 后 |
 |---|---|---|---|---|---|
 | bi_elite_cs66_rt_egg_carton_to_tray_1016_fixed | 108 | 122 → 121 | 338,599 → 337,238 | 5053 → 5053 | 2716 → 2717 |
