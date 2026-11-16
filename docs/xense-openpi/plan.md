@@ -470,4 +470,9 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       从头那组沿用 `advantage-labels-cylinder-scratch-ed0e224/heldout/`；旧微调、新微调各 15 张图加 15 段视频，在
       `figures/pi-star-06/advantage-labels-cylinder-finetune-vpre/` 与 `…-finetune-vpre-clean/`。计划外另出了一组
       新零样本（`…-zeroshot-vpre-clean/`）。
-- [ ] 用户看图与表判断（人工门禁）。
+- [x] 追加（用户要求，2026-11-16）：下游要标的是训练时见过的数据，旧微调与新微调也要出训练 episode 上的图。
+      两个模型各对训练集前 15 条（episode 0–14）整段预测并出图与视频，在各自目录的 `train/` 下；数字在
+      [experiments.md](experiments.md) 的"训练 episode 上的标签"。结果：见过的 episode 上优势幅度是留出组的
+      1/4 到 1/2，两个模型之间标签一致率 55–61%（随机 52%）；旧微调（步 750）保留的开合前集中最多。
+- [ ] 用户看图与表判断（人工门禁）。训练 episode 上的标签够不够用；不够时是否改成交叉标注或用训练步数少的
+      权重来标，另开事务。
