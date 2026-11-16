@@ -448,18 +448,26 @@ replay 行、指标、状态行与每个请求逐项相同，只差墙钟 `times
       `lerobot-clean/` 下的副本，pick_up_cube 用 `drop168`，shoe、assemble_box、unscrew、fold 没变。与上一版相比
       除了清理还有一处不同：earbud 从 776 条的 `_left_right` 换成 888 条的仓库（删后 886 条）。清理过的数据集
       episode 数变了，按 seed 现算的留出划分与上一版不是同一批 episode。稳态 0.37 s/步。
-- [ ] 新权重在 cylinder-stack 上做零样本与微调，设置与上一版相同（seed 0、5000 步、patience 3）。
-      已挂接力任务（tmux 会话 `pi06-cyl-vpre-clean`）：预训练退出码为 0 且 8 张 GPU 显存合计低于 2 GB 时依次跑
-      `value-cylinder-zeroshot-vpre-clean` 与 `value-cylinder-finetune-vpre-clean`；否则不跑。结果未出。
+- [x] 新权重在 cylinder-stack 上做零样本与微调，设置与上一版相同（seed 0、5000 步、patience 3）。
+      预训练 2026-11-16 03:16 结束（退出码 0，步 12000 最优，步 17000 早停）。挂的接力任务一分钟后以退出码 2
+      失败：GPU 空闲检查用了 `bc`，训练机没有这个命令；事先的自检写错了（`command -v bc paste` 只要有一个存在就
+      通过）。确认 8 张 GPU 都是 0 MiB 后，03:19 手动重新启动，去掉这项检查。零样本 `value-cylinder-zeroshot-vpre-clean`
+      （W&B `y22dnkkh`）：留出 MAE 0.0507、相关系数 0.580。微调 `value-cylinder-finetune-vpre-clean`（`r3rdr7gj`）：
+      步 500 最优、步 1250 早停，留出 MAE 0.0164、相关系数 0.953。
 
 **Verification**
 
-1. [ ] 训练早停或跑满，日志无 NaN 与 Traceback；pick_up_cube 的周期验证相关系数不再停在 0.41。
-2. [ ] cylinder-stack 留出 episode 列表与上一版相同。
+1. [x] 训练早停或跑满，日志无 NaN 与 Traceback；pick_up_cube 的周期验证相关系数不再停在 0.41。
+       步 17000 早停，日志无 NaN 与 Traceback；pick_up_cube 的相关系数从步 1000 起在 0.962–0.975。
+2. [x] cylinder-stack 留出 episode 列表与上一版相同。零样本与微调的日志里都是同一批 15 条，23,415 帧。
 
 **Done**
 
-- [ ] [experiments.md](experiments.md) 的对照表加两行（新 $V_{\mathrm{pre}}$ 的零样本与微调），与上一版并列；各数据集的
-      留出指标前后对比。
-- [ ] 用门禁图的代码给从头、旧微调、新微调三个模型在同一批 cylinder-stack 留出 episode 上各出一组带标签的图。
+- [x] [experiments.md](experiments.md) 的对照表加两行（新 $V_{\mathrm{pre}}$ 的零样本与微调），与上一版并列；各数据集的
+      留出指标前后对比。两行已加，各数据集的前后对比在同一文件 2026-11-16 一节。结果：预训练自己的平均 val MAE
+      0.0209 → 0.0163；cylinder-stack 上新微调 0.0164，旧微调 0.0150，从头 0.0156，分不出高下（单个 seed）。
+- [x] 用门禁图的代码给从头、旧微调、新微调三个模型在同一批 cylinder-stack 留出 episode 上各出一组带标签的图。
+      从头那组沿用 `advantage-labels-cylinder-scratch-ed0e224/heldout/`；旧微调、新微调各 15 张图加 15 段视频，在
+      `figures/pi-star-06/advantage-labels-cylinder-finetune-vpre/` 与 `…-finetune-vpre-clean/`。计划外另出了一组
+      新零样本（`…-zeroshot-vpre-clean/`）。
 - [ ] 用户看图与表判断（人工门禁）。
