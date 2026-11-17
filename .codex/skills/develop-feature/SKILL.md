@@ -46,10 +46,20 @@ covers this and the other ways execution drifts away from an agreed plan.
 
 ## 3. Take an external code review against the plan
 
-A fresh session reads the plan as the specification and reviews the diff. Feed its findings back
-here rather than acting on them blindly: verify every claim yourself first, because a reviewer
-without the session's context can misattribute causes even when it correctly spots the symptom.
-Confirmed findings go back into the plan as new items, then get implemented like any other.
+A fresh session takes the plan as the specification and tries to break the feature by running it.
+Give it a writable copy of the code, not just the diff, and ask for failing tests: it lists what the
+feature is meant to do, picks the boundary cases of each main behaviour (empty input, the first and
+last step, two inputs arriving together, an interrupted run, data that does not match), and runs
+each one against real components, faking only what needs hardware. Reading the diff tells the
+reviewer where to aim; a finding counts once a run shows it. Problems that only appear when two
+parts meet, or when a run is cut short, survive a careful read and fall to the first test that
+exercises them.
+
+Feed the findings back here rather than acting on them blindly: reproduce each one yourself first,
+because a reviewer without the session's context can misattribute causes even when it correctly
+spots the symptom. Confirmed findings go back into the plan as new items, then get implemented like
+any other. Keep the tests that guard real behaviour in the repository, and show for each that it
+fails when the code it guards is taken out.
 
 ## 4. Run the gates in order
 
