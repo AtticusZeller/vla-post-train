@@ -1,6 +1,6 @@
 # xense-openpi 代码组织（`feature/pi-star-0.6`）
 
-快照：`feature/pi-star-0.6`（`10639c6`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
+快照：`feature/pi-star-0.6`（`cad7e92`），起点是上游 main（`50c8196`）。这个分支没有 `src/openpi/rl/`；`rl-exp` 与 `feature/rlt-jax` 的 RL 模块见
 [codebase-rl-exp.md](codebase-rl-exp.md)。本文只画 RECAP（π*0.6）新增与改动的部分，SFT 训练与 serving 沿用上游；机器人端只画 bi_flexiv 客户端里采集用到的文件。
 方法定义见 [pi-star-06-spec.md](pi-star-06-spec.md)，可复制的命令见 [cmd.md](cmd.md)。
 
@@ -265,7 +265,7 @@ source：initial（round = 0）与 intervention（is_intervention）强制 posit
 
 | 模块 | 输入 | 输出 |
 |---|---|---|
-| `collection_columns.load_frames` | 数据集根目录 | 每帧的 `episode_index`、`frame_index` 与三列，按存储顺序；没有三列的数据集按初始示范填 |
+| `collection_columns.load_frames` | 数据集根目录 | 每帧的 `episode_index`、`frame_index` 与三列，按存储顺序；缺任何一列就报错 |
 | `advantage.n_step_advantages` | 一条 episode 的逐帧 return 与 $V$、步数 $N$ | 逐帧优势；`positive_threshold` 给出使指定比例为 positive 的阈值 |
 | `advantage.label_frames` | 逐帧优势、是否初始示范、是否介入、positive 比例、阈值做法（`rollout` 或 `all`） | 逐帧标签、来源、阈值；没有按优势打标签的帧时阈值为 NaN |
 | `advantage_labels.build_labels` | 三列、return、预测、$N$、比例、阈值做法 | 标签表与汇总（阈值、各来源的帧数与 positive 占比）；预测缺帧、多帧、重复或与 return 对不上时报错 |
@@ -315,7 +315,8 @@ sequenceDiagram
 |---|---|---|
 | `collection.CollectionController` | Pico4 的 grip、手柄位姿、按键 | 是否接管与遥操作动作（继承自 `intervention`）；按键只交给 `EpisodeControlEnvironment` |
 | `collection.EpisodeControlEnvironment` | 被包住的环境、控制器、`on_label` 回调 | 归位后等 A 才给出第一帧观测；按键结束 episode，B / Y 时回调标签 |
-| `recorder.CollectionRecorderSubscriber` | 每步的观测与动作、轮次、`label_episode` 的标签 | LeRobot 数据集：每帧多 `is_intervention`、`round`、`episode_success`（保存前整条填成同一个值） |
+| `recorder.CollectionRecorderSubscriber` | 每步的观测与动作、轮次、`label_episode` 的标签 | LeRobot 数据集：每帧多 `is_intervention`、`round`、`episode_success`（保存前整条填成同一个值）；作废的 episode 连同它的相机临时图片一起删掉 |
+| `collection.stop_on_sigint` | 运行时、episode 控制、录制器 | SIGINT 的处理函数：第一次让运行时停下并归位，归位时的第二次先关数据集再立刻退出（各模式共用，后两个参数只有采集模式才有） |
 
 ### 4.5 分层
 
@@ -390,7 +391,7 @@ flowchart TB
 | 成功标签 | 读逐帧列 `episode_success`；数据集没有这一列时全部按成功处理 | `compute_returns.load_success` |
 | advantage 标签来源 | 只认数据集里名为 `advantage_positive` 的列；没有这一列时样本里没有 `advantage` 字段，一律 `positive` | `data_loader._advantage_column`、`transforms.TokenizePrompt` |
 | 三列的定义 | 写了两份，必须相同，否则官方合并拒绝：机器人端不装 `openpi` | `recorder.COLLECTION_FEATURES`、`collection_columns.COLLECTION_FEATURES` |
-| 没有三列的数据集 | 打标签与检查时按初始示范处理（全部成功、无介入、`round = 0`） | `collection_columns.load_frames` |
+| 没有三列的数据集 | 打标签与写回标签时报错，不猜成初始示范；检查脚本只做原来的检查，算 return 时全部按成功 | `collection_columns.load_frames`、`check_dataset.py`、`compute_returns.load_success` |
 | 采集录下的视频 | 只录 head 与两个腕部相机，编码默认 h264（bi_flexiv 示范的编码）。官方合并要求两个数据集的 features（含视频编码）完全相同，所以示范要去掉触觉流，示范用别的编码时采集要跟着改 | `main.py` 的 `record_vcodec`、`mark_initial_dataset.py` 的 `--remove-features` |
 | 采集的运行方式 | 只支持同步运行；录制器只能新建数据集，不能往已有的数据集里续录 | `main.py`、`recorder.make_collection_recorder_subscriber` |
 | 写回标签的代价 | 官方 `modify_features` 整份复制视频，每个带标签的数据集都是一份完整副本 | `dataset_edit.add_columns` |

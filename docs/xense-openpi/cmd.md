@@ -10,7 +10,8 @@
 用途：给数据集的每一帧打二值优势标签，作为一次尝试写到数据集外的文件，不改数据集。`round = 0` 的帧（初始示范）与
 `is_intervention` 的帧（人接管）一律 positive；其余帧往后看 `--advantage-horizon` 帧（默认 50）算优势，高于阈值的
 为 positive。阈值使 `--positive-fraction`（默认 0.4）的帧为 positive，取在哪些帧上由 `--threshold-frames` 定：
-`rollout`（默认）只取按优势打标签的那些帧，`all` 取全部帧。数据集没有这三列时全部按初始示范处理。
+`rollout`（默认）只取按优势打标签的那些帧，`all` 取全部帧。数据集缺这三列时报错：rollout 要用采集模式录，初始
+示范先按「给初始示范补标记并与 rollout 合并」补上。
 
 前提：return 文件已算出；$V$ 的预测覆盖数据集的每一帧——`heldout_predictions.parquet` 只有留出 episode，训练
 episode 要用 `--final-train-episodes <训练 episode 数>` 另写 `train_predictions.parquet`，两个文件一起传。不需要
@@ -101,7 +102,8 @@ mamba run -n lerobot-xense python -m examples.bi_flexiv_rizon4_rt.main \
 
 预期：机械臂归位后日志提示按 A；按 A 开始一条 episode。B 以成功结束，Y 以失败结束，X 或中途按 A 作废；握住任一
 grip 并移动手柄超过 5 mm 或 3° 才接管，松开后策略重新推理。按下 B / Y 的那一帧是最后一帧，之后的归位不录。没有标签
-就结束的 episode（X、A、到步数上限、Ctrl+C）不保存，但仍计入 `--args.num-episodes`。录完后用「训练前检查数据集」中的脚本看
+就结束的 episode（X、A、到步数上限、Ctrl+C）不保存，但仍计入 `--args.num-episodes`。Ctrl+C 按一次是停下并归位；
+归位时再按一次是立刻退出、不等归位，已保存的 episode 仍然读得出。录完后用「训练前检查数据集」中的脚本看
 每轮的 episode 数、失败数与介入帧占比。
 
 ### 给初始示范补标记并与 rollout 合并
