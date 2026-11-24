@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xense OpenPI Pipeline"
+  short_description: "Collect-train-infer pipeline for Xense pi0.5 across h100, COS, 03 and elite."
+  default_prompt: "Use $xense-openpi-pipeline to run the requested stage of the Xense data, training, and deployment pipeline."
