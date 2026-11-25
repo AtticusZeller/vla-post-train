@@ -1,5 +1,41 @@
 # xense-openpi Plan
 
+## `pack_iphone_box` 5 段 subtask prompt 训练与真机按键切换
+
+属于根仓分支 `AtticusZeller/subtask-pack-iphone-box` 的 subtask 线，方法见 [subtask-prompt-spec.md](subtask-prompt-spec.md)；
+训练数据来自 `docs/lerobot-xense/plan.md` 的合并数据集。基线分支、起点 checkpoint、训练机器与步数由用户定。
+
+### Task: 训练配置
+
+**Change**
+
+- 新增 Flexiv 双臂 `pack_iphone_box` subtask 训练配置，数据指向合并数据集，prompt 取自数据集 `task`。
+
+**Verification**
+
+1. 用该配置构造 data loader，取一批样本：分界帧前后的 `prompt` 与标注表一致，5 句 prompt 都出现。
+2. norm stats 在合并数据集上重算，检查各维 q01 / q99 没有退化（参考鸡蛋盒第 19 维的问题）。
+
+**Done**
+
+- 上面两项的观察结果；训练启动后 W&B run 正常记录 loss。
+
+### Task: Flexiv 客户端按键切换 prompt
+
+**Change**
+
+- 把 `feat/egg-carton-subtask` 上 Elite 客户端的按键切换（`107f52c`）移植到 Flexiv 客户端：启动时用第 1 段 prompt，
+  按 `1`–`5` 切换到对应 subtask，下一步清掉缓存的 action chunk 后用新 prompt 推理；RTC 模式重新 warmup。
+
+**Verification**
+
+1. 单测：模拟按键序列，下一次推理请求里的 `prompt` 随之切换，缓存的 chunk 被清空。
+2. 真机（用户执行）：每段切换后机器人执行对应动作，切换时没有明显卡顿。
+
+**Done**
+
+- 第 1 项通过；第 2 项用户确认，并在真机上完成一次完整装盒。
+
 ## RL 后训练代码按层重组（`rl-exp`）
 
 RLT 现在平铺在 `src/openpi/rlt/`，按方法组织。后续要在同一仓库复现 EXPO-FT 等真机在线 RL 算法，让它们共用机器人连接、
