@@ -9,7 +9,7 @@
 
 **Change**
 
-- 5 个 agent 并行，按 `docs/annotate.md`（含 `exemplars` 步骤）标注，episode 分组：1–23、24–47、48–70、71–94、95–119
+- 4 个 agent 并行，按 `docs/annotate.md`（含 `exemplars` 步骤）标注，episode 分组：1–28、29–58、59–88、89–119
   （跳过已复核的 0 / 15 / 30 / 45 / 60 / 75 / 90 / 100 / 110 / 120）。
 - 每个 agent 只写自己的文件 `~/.cache/huggingface/lerobot/.xense-viewer/annotate-batch/pack_iphone_box_1119/part-<k>.csv`，
   渲染输出也各用各的目录；`exemplars` 只读共享标注表。
