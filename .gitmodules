@@ -34,3 +34,11 @@
 	path = methods/rpent
 	url = https://github.com/AtticusZeller/RPent.git
 	branch = workspace
+[submodule "methods/lerobot-check"]
+	path = methods/lerobot-check
+	url = https://github.com/AtticusZeller/lerobot-check.git
+	branch = main
+[submodule "methods/xense-lerobot-viewer"]
+	path = methods/xense-lerobot-viewer
+	url = https://github.com/AtticusZeller/xense-lerobot-viewer.git
+	branch = main
