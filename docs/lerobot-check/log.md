@@ -50,6 +50,9 @@
   - 标定解算：合成相机（偏移 18 cm、点选噪声 2 px）下标定 RMS 1.6–1.8 px，偏移误差 < 4 mm。
   - 补采采样：合成标定下补采位置 40/40 落在多边形内。
   - 用户实测标定：右臂 RMS 2.7 px、留一 4.5 px；左臂内点 4.0 px、留一 6.8 px，达到 ≤ 5 / 8 px 的验收线，用户确认可用。
+  - 用户验收（2026-11-25）：DISTRIBUTION 页在 10 条复核数据上"基本 ok"。COLLECTION 页作为补采参考可用，但现场对着导出图片
+    肉眼摆放不实用；改为"目标物体 mask 叠加到实时相机画面"另立
+    [xense-lerobot-viewer#1](https://github.com/AtticusZeller/xense-lerobot-viewer/issues/1)。
   - 测试：lerobot-check 89 项，viewer 721 项。
   - 试用中修复的问题：
     - 标定页切帧时 seek 卡死，点击会记在旧画面上；
