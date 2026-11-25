@@ -424,6 +424,10 @@ T10 合入 fork 本地 main `8995495`（703 项测试）；用临时合成标定
 影响：任务变为 5 个 subtask；已有标注中的 `close_lid` 行（含用户已调整的 episode 0）按新分界拆分，拆出的行记为 `agent` 待复核；
 物体表中 `box_lid` 的事件改为 `move_lid` 的 `grasp`。T7 的代码不依赖 subtask 数量，不受影响。
 
+**结果（2026-11-25）：** task spec 已改为 5 段（每段两臂，分界规则写在 subtask 上方的注释里；旧 spec 与 CSV 已备份）。agent 按腕部相机重切
+5 条样本的 `close_lid`，看图 29 张；`validate` 通过（25 行），其余行逐字节不变；`annotate.md` 补充"subtask 可在 spec 中自带结束规则"（`579a220`，已推送）。
+`move_lid` 结束帧比只看 head 时早约 1.3 s（右腕可见夹爪松开）。`flip_lid` 落盖帧从图上难以精确判断，需用户在 viewer 中复核。
+
 ### 执行方式
 
 T1 由一个 Orca antigravity worker 完成，合入 `main` 后 T2、T3、T4 各派一个 worker 并行（各自分支）。coordinator（Claude）负责任务说明和审查：用能运行的边界用例验证，不只读 diff。
