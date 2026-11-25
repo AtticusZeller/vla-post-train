@@ -30,7 +30,7 @@
 
 **Change**
 
-- `lerobot-check relabel` 按共享标注表逐帧写 `task_index`，输出新数据集（repo id 由用户定）。
+- `lerobot-check relabel` 按共享标注表逐帧写 `task_index`，输出新数据集 `Xense/pack_iphone_box_1119_subtask`（用户定，2026-11-25）。`grasp` 统一取夹爪在物体上闭合的那一帧（用户定，2026-11-25），不影响重标。
 
 **Verification**
 
