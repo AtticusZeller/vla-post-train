@@ -1,5 +1,28 @@
 # lerobot-check Log
 
+## 2026-11-25 · 分界样例消除了 agent 标注的系统性偏差
+
+- **背景与目的：** agent 第一版标注 `pack_iphone_box_1119` 的 5 条 episode，分界平均偏约 1 s，而且偏差有规律：
+  `flip_lid` 结束平均晚 1.7 s（落盖后的对准被算进去），个别抓放段早结束 2–3 s（放下后的调整被划给下一段）。
+  需要验证：用户复核过的分界做样例（`exemplars`）后，agent 能否对上用户的标准。
+- **实现思路：** agent 按 `docs/annotate.md` 标注新的 episode 15 / 45 / 75 / 100 / 110，每放一个分界或 `grasp` 前，
+  先看用户复核过的 3 个样例；样例与文字规则冲突时以样例为准。另存 agent 的原始输出，再与用户复核后的结果逐行比较。
+- **组件变化：** 无代码改动。`annotate.md` 补充：凡是夹持物体的 subtask 都要标 `grasp`（包括 task spec 没有对应物体的
+  `flip_lid`），因为它同时决定轨迹起点。
+- **主要文件：** lerobot-check `docs/annotate.md`；标注表 `.xense-viewer/subtasks/Xense__pack_iphone_box_1119@3a8b398b….csv`
+  现有 10 条 episode、50 行，全部由用户复核。
+- **验证：**
+
+  | 分界 | 第一轮平均误差（s） | 第二轮平均误差（s） |
+  | --- | --- | --- |
+  | `place_insert` → `place_phone` | 1.1 | 0 |
+  | `place_phone` → `move_lid` | 1.2 | 0.08（只有 episode 45 一处：晚 12 帧，手机还没完全落进盒里） |
+  | `move_lid` → `flip_lid` | 0 | 0 |
+  | `flip_lid` → `close_lid` | 1.7 | 0 |
+
+  其余 19 个分界与 20 个 `grasp` 用户都未改动。agent 标 5 条 episode 用了 21 分钟（含看 8 组样例）。
+  结论：两类系统性偏差都消失了。规则写成文字容易有歧义，样例可以消除这种歧义（Agent 推断，基于 5 条样本）。
+
 ## 2026-11-25 · 第二期：分布、标定与补采改为 viewer 原生面板
 
 - **背景与目的：** 用户试用第一期后认为 HTML 报告和 agent 文字建议太长，真正需要的是能在现场执行的补采清单（物体放哪、
