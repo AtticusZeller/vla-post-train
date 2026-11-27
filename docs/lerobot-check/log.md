@@ -1,5 +1,17 @@
 # lerobot-check Log
 
+## 2026-11-26 · `pack_iphone_box_1119` TCP 重标定转换（`xenseflare` → `taccap-rs00`）与公开上传
+
+- **背景与目的：** `Xense/pack_iphone_box_1119`（及 5 段重标版 `pack_iphone_box_1119_subtask`）录制时使用的是错误的 `xenseflare` 工具 TCP 参数，实际生效工具为手动标定的 `taccap-rs00`（左臂偏移 `[-2.80, +24.21, +31.30]` mm，右臂偏移 `[-2.38, -22.26, +26.55]` mm，姿态四元数均为 `[1, 0, 0, 0]`）。腕部旋转会在 50 步动作块上引入最高 54.8 mm 的运动学增量误差，需要将旧数据转换到 `taccap-rs00` 坐标系以便与新采集数据合并训练。
+- **实现思路：** 按刚体右乘 $^{O}T_{\text{new}} = {}^{O}T_{\text{old}}\,({}^{F}T_{\text{old}})^{-1}\,{}^{F}T_{\text{new}}$ 同步转换 `observation.state` 与 `action` 的双臂 TCP 维（支持一般 $SE(3)$，纯平移时位级保留 `r1..r6`），保持 Arrow `fixed_size_list` schema/metadata、夹爪与其余列不变，重算 `meta/episodes` 与 `meta/stats.json` 统计并硬链接视频；同步转换 `.xense-viewer/` 标定侧车并重跑外参标定与分布。运动学转换精确，但旧数据接触段的柔顺与负载动力学差异无法事后还原；下游 `xense-openpi` 必须在新数据集上重算 `norm_stats.json`。
+- **组件变化：** `lerobot-check` 分支 `AtticusZeller/tcp-retarget`（工作树 `~/worktrees/lerobot-check/tcp-retarget`）新增 `tcp_retarget.py` 与 `retarget-tcp`、`verify-tcp` 子命令，以及标定 payload 转换函数 `retarget_calib_payload`。因属低频工具，用户决定（2026-11-26）保留在该分支与工作树，不合入 `lerobot-check` `main`。
+- **主要文件：** `lerobot-check` `src/lerobot_check/tcp_retarget.py`、`src/lerobot_check/cli.py`、`tests/test_tcp_retarget.py`；公开数据集 `Xense/pack_iphone_box_1119_taccap_rs00`（`v3.0` → `5c9229b2`）与 `Xense/pack_iphone_box_1119_taccap_rs00_subtask`（`v3.0` → `b017a723`）；本地侧车 `.xense-viewer/*/*pack_iphone_box_1119_taccap_rs00*`。
+- **验证：**
+  - `lerobot-check` 四项门禁全绿（`pytest` 174 passed、`ruff check`、`ruff format --check`、`ty check src/`）。
+  - 两份 121 episode / 274,083 帧数据集 `verify-tcp` 均输出 `OK`（正逆变换最大位置误差 `5.960e-08` m、旋转误差 `0.0`，`verify-relabel` 等价性校验 `OK`，`LeRobotDatasetMetadata` 正常加载）。
+  - 标定侧车转换后与新数据集最大差 `5.635e-08` m；重跑 `calibrate` 后 $T_{\text{cam}\leftarrow\text{base}}$ 与 RMS 不变（左 2.10 px / 留一 3.22 px，右 1.49 px / 留一 2.58 px），`tool_offset` 分别从 40.90 / 37.83 mm 收缩到 2.86 / 7.29 mm；`validate`（121/121）与 `distribution` 通过。
+  - Hugging Face Hub 匿名读取核验两份仓库均为 `public`、`v3.0` tag 指向最新提交、各含 77 个文件。
+
 ## 2026-11-26 · `pack_iphone_box_1119` 全量标注、结束帧拼图自查与 5 段 prompt 重标
 
 - **背景与目的：** subtask prompt 训练需要 121 条 episode 全部标注。原流程每个分界都要细看，agent 标得慢；用户实际

@@ -65,11 +65,12 @@ uv run lerobot-check calibrate --repo-id $ID
 预期：`calib-frames` 打印各臂新增帧数，已有条目原样保留；`calibrate` 写 `head.json`，每条臂给出 RMS、内点 RMS、留一误差和离群点。
 验收线为每条臂内点 RMS ≤ 5 px、留一误差 ≤ 8 px。
 
-## TCP 重标定转换
+## TCP 重标定转换（仅 `lerobot-check` 分支 `AtticusZeller/tcp-retarget`）
 
-用途：将旧工具参数（如 `xenseflare`）录制的 LeRobot v3.0 数据集按刚体变换转换到新工具参数（如 `taccap-rs00`），写出不覆盖原目录的新副本并全量校验。
+用途：将旧工具参数（如 `xenseflare`）录制的 LeRobot v3.0 数据集按刚体变换转换到新工具参数（如 `taccap-rs00`），写出不覆盖原目录的新副本并全量校验。该命令为低频一次性工具，按用户决定（2026-11-26）保留在 `lerobot-check` 分支 `AtticusZeller/tcp-retarget`（工作树 `~/worktrees/lerobot-check/tcp-retarget`），不合入 `lerobot-check` `main`。
 
 ```bash
+cd ~/worktrees/lerobot-check/tcp-retarget
 OLD=~/.local/share/robot-tool-snapshots/xense-robot-flexiv/xenseflare-2026-11-25T051632.630330Z.json
 NEW=~/.local/share/robot-tool-snapshots/xense-robot-flexiv/taccap-rs00-2026-11-27T035244.808662Z.json
 uv run lerobot-check retarget-tcp --repo-id $ID \

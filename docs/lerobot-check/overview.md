@@ -6,7 +6,7 @@
 
 - `methods/lerobot-check`（`AtticusZeller/lerobot-check`，公开）：Python CLI。读 LeRobot v3.0 数据集，负责标注表校验、
   agent 标注辅助（`info`、按分界找帧的 `window-sheet`、结束帧拼图 `boundary-sheet`、`render`、`exemplars`）、N 段 prompt 重标（`relabel`）、分布计算（`distribution`）、头部相机标定
-  （`calib-frames`、`calibrate`）和补采建议（`suggest`）。
+  （`calib-frames`、`calibrate`）和补采建议（`suggest`）。一次性 TCP 转换工具（`retarget-tcp`、`verify-tcp`）仅保留在独立分支 `AtticusZeller/tcp-retarget`，不合入 `main`（用户决定，2026-11-26）。
 - `methods/xense-lerobot-viewer`（fork `AtticusZeller/xense-lerobot-viewer`）：人工界面。Subtask 面板改分界，DISTRIBUTION、
   CALIBRATION、COLLECTION 三个标签页显示分布、点选标定、画目标区域并导出补采清单。界面通过环境变量 `LEROBOT_CHECK_DIR`
   调用 lerobot-check；未设置时只显示可复制的命令。
@@ -45,7 +45,7 @@
 - **分界样例**：两侧都是 `human` 的分界会成为 `exemplars` 的样例。agent 精标前先看样例，样例与文字规则冲突时以样例为准。
 - **轨迹起终点**：只用于可视化与指标。起点取 `grasp` 帧（没有时取首帧），终点取 `end − 1`，最后一个 subtask 不计终点；
   训练用的分界仍包含接近运动。
-- **位置**：有标定时用工具点 $p_{tcp} + R_{tcp}\,o$（Flexiv 的 TCP 是法兰，比指尖高约 18 cm），否则用原始 TCP，
+- **位置**：有标定时用工具点 $p_{tcp} + R_{tcp}\,o$（补偿录制 TCP 到指尖中点的偏移；例如 `pack_iphone_box_1119` 原 `xenseflare` TCP 残余偏移约 38–41 mm，转换到 `taccap-rs00` 后收缩到约 3–7 mm），否则用原始 TCP，
   `distribution.json` 的 `provenance.position_point` 标明是哪一种；`suggest` 拒绝混用。
 - **标定**：$\pi\big(K,\ T_{cam\leftarrow base}\,(p_{tcp} + R_{tcp}\,o)\big) \approx (u, v)$，每条臂单独求解（solvePnP 初始化，
   鲁棒最小二乘）；残差 > max(3 × 中位数, 15 px) 判为离群。`calib-frames` 只选夹爪闭合（开度 ≤ 0.05，0 为闭合）且 TCP 速度
@@ -53,9 +53,14 @@
 - **补采与测试点**：目标多边形画在头部画面上，可以比现有数据覆盖更大。"数据少"还是"覆盖窄、背轨迹"由真机测试区分：
   补采前后用同一批三类测试点对比成功率。
 
-## 当前数据集：`Xense/pack_iphone_box_1119`
+## 当前数据集：`Xense/pack_iphone_box_1119`（与 `taccap-rs00` 转换版）
 
-`v3.0` → `3a8b398b`，`bi_flexiv_rizon4_rt`，121 个 episode，30 fps。5 个 subtask（用户确认，2026-11-25），全部两臂参与：
+原始录制集 `Xense/pack_iphone_box_1119`（`v3.0` → `3a8b398b`，`bi_flexiv_rizon4_rt`，121 个 episode，274,083 帧，30 fps）使用了错误的 `xenseflare` 工具 TCP。已于 2026-11-26 通过 `lerobot-check retarget-tcp` 转换到现役 `taccap-rs00` TCP 并公开上传至 Hub：
+
+- 原始单任务转换版：`Xense/pack_iphone_box_1119_taccap_rs00`（`v3.0` → `5c9229b2`）
+- 5 段 subtask 重标转换版：`Xense/pack_iphone_box_1119_taccap_rs00_subtask`（`v3.0` → `b017a723`）
+
+5 个 subtask（用户确认，2026-11-25），全部两臂参与：
 
 | subtask | prompt |
 | --- | --- |
@@ -66,5 +71,5 @@
 | `close_lid` | `Close the box lid.` |
 
 头部相机为 RealSense D435（序列号 `346522071766`），640×480，$f_x = 606.016113$、$f_y = 605.505737$、$c_x = 323.207703$、
-$c_y = 244.806580$，畸变全 0。截至 2026-11-25：episode 0 / 15 / 30 / 45 / 60 / 75 / 90 / 100 / 110 / 120 共 50 行，全部由用户复核（`human`）。
-标定结果（`head.json`）：右臂 11 点 RMS 2.7 px、留一误差 4.5 px；左臂 15 点中 13 个内点，内点 RMS 4.0 px、留一误差 6.8 px。
+$c_y = 244.806580$，畸变全 0。截至 2026-11-26：全部 121 条 episode 共 605 行标注完成并通过 `validate`（`human` 86 行、`agent` 519 行）。
+`Xense/pack_iphone_box_1119_taccap_rs00` 标定结果（`head.json`）：左臂 15/15 内点，RMS 2.10 px、留一误差 3.22 px、`tool_offset` 2.9 mm；右臂 13/13 内点，RMS 1.49 px、留一误差 2.58 px、`tool_offset` 7.3 mm。
