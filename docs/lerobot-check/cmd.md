@@ -42,14 +42,26 @@ uv run lerobot-check verify-relabel --repo-id $ID --dst ~/.cache/huggingface/ler
 
 ## 分布与补采
 
-用途：标注变动后手动重算分布；画好目标多边形后生成补采摆放和测试点（viewer 中的按钮做同样的事）。
+用途：从第 0 帧头图计算物体层位姿并出审核拼图、重算含两层位姿的分布、按物体层生成轮廓模板与补采建议/计划（`suggest` 与 `collection-plan` 也可直接在 viewer 中点按钮执行）。前提：已完成头部相机标定（`head.json`），且 `task_spec.yaml` 中各物体已配置 `layout_box`。
 
 ```bash
+# 1. 第 0 帧头图分割计算物体层（个别偏离固定布局的 episode 可重复传 --prompt-box EP:OBJECT=x0,y0,x1,y1；SAM 已缓存时可加 HF_HUB_OFFLINE=1）
+uv run --extra mask-template lerobot-check object-poses --repo-id $ID --device cuda --sheet /tmp/lerobot-check/object-poses-sheets
+
+# 2. 重算分布（自动合入 object-poses 侧车生成 object_layer）
 uv run lerobot-check distribution --repo-id $ID
+
+# 3. 按物体层制作已审核轮廓模板（默认 --layer object，写入 .xense-viewer/mask-templates/<slug>@<rev>/<obj>.json）
+uv run --extra mask-template lerobot-check mask-template --distribution "$DIST" --calib "$HEAD" \
+  --object iphone --episode 0 --frame 0 --box 347 182 400 255 --preview /tmp/lerobot-check/iphone-mask.png \
+  --output "$TEMPLATES_DIR/iphone.json"
+
+# 4. 生成补采建议或按轮补采计划（均默认 --layer object，缺 object_layer 时报错不静默回退；兼容旧流程可传 --layer tool）
 uv run lerobot-check suggest --repo-id $ID -n 10 --csv /tmp/lerobot-check/suggestions.csv
+uv run lerobot-check collection-plan generate --repo-id $ID --rounds 25 --objects-per-round 2
 ```
 
-预期：分别写出 `.xense-viewer/distribution/` 与 `.xense-viewer/suggestions/` 下的 JSON；有 `head.json` 时位置为工具点。
+预期：`object-poses` 写出 `.xense-viewer/object-poses/` 侧车 JSON、输出复核拼图 `object_poses_p*.jpg` 并打印物体坐标系下的末端偏移统计；`distribution` 写出 `.xense-viewer/distribution/` 下带 `object_layer` 的 JSON（有 `head.json` 时末端层位置为工具点）；`suggest` 与 `collection-plan generate` 分别写出 `.xense-viewer/suggestions/` 与 `.xense-viewer/plans/` 下的 JSON，所有模板的 `anchor_layer` 需与所用 `--layer` 一致。
 
 ## 头部相机标定
 
