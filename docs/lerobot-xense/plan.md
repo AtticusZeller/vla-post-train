@@ -27,6 +27,7 @@
 **Change**
 
 - 官方 `merge_datasets` 默认参数，把重标数据集与各补采数据集合并；坏 episode 只改元数据删除，不重编码视频。
+- 合并与下游 `xense-openpi` 训练必须使用同一工具 TCP（`taccap-rs00`）下的数据集（旧数据需先经 `lerobot-check retarget-tcp` 转换，如 `pack_iphone_box_1119_taccap_rs00_subtask`），且训练前必须在转换/合并后的新数据集上重新计算 `norm_stats.json`，禁止复用旧 `xenseflare` TCP 的归一化统计。
 
 **Verification**
 
