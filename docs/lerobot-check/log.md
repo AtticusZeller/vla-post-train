@@ -8,8 +8,8 @@
   - 4 个 agent 按 episode 分组并行初标，各写各的文件，合并时只覆盖 `agent` 行。
   - 新增 `boundary-sheet`：每个分界一张拼图，每条 episode 一格（头部裁剪 + 两个腕部的 `end − 1`）。4 个 agent 各管
     一个分界，循环"看图 → 改 `agent` 行 `end` → 只重渲染改过的 episode"，共改 237 处；`human` 行只报告不改。
-    用户看完整拼图后又改了 13 处（`place_insert` 7 处提前 0.5–1 s，`place_phone` 3 处推后 1 s，`move_lid` 3 处 ±1 s），
-    `flip_lid` 无改动。
+    用户看完整拼图后分两轮改了 13 处，最终相对 agent 结果：`place_insert` 只有 ep80 提前 0.5 s（另 6 条改后又改回），
+    `place_phone` ep50 / 75 / 120 推后 1.5 / 0.5 / 0.5 s，`move_lid` ep2 提前 1.3 s、ep3 / 65 推后 0.7 s；`flip_lid` 无改动。
   - 新增 `window-sheet`，粗扫改为按分界、由粗到细的窗口搜索：每个分界一个 agent，按经验窗口第一轮 4 s 一格、第二轮
     约 0.5 s 一格，8 条 episode 拼一张图，只判断"这一段在这一帧是否已结束"。
   - `grasp` 取夹爪在物体上闭合的那一帧，只在 task spec 有 `event: grasp` 物体的 subtask 上标。
@@ -22,7 +22,7 @@
   `~/.cache/huggingface/lerobot/Xense/pack_iphone_box_1119_subtask`。
 - **验证：**
   - 标注表 `validate` 输出 `605 rows covering 121/121 episodes`；重标后 5 个 task 帧数为
-    65956 / 65342 / 22402 / 67774 / 52609（共 274083 帧），`verify-relabel` 通过。
+    66061 / 65222 / 22393 / 67798 / 52609（共 274083 帧），`verify-relabel` 通过。
   - `window-sheet` 盲测：10 条人工复核 episode，只看画面、不读标注表，与人工 `end` 误差在 1 s 内的条数为 `place_insert`
     8/10、`place_phone` 8/10、`move_lid` 10/10、`flip_lid` 8/10，每个分界约 10 分钟，多数 episode 2–3 轮出图。
     6 条超差中 3 条是搜索误判（含夹爪抬起后又回压，已在 `annotate.md` 加 2 s 后复查一帧），3 条是上面两条规则的歧义。
