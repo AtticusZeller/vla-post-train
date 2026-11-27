@@ -5,7 +5,7 @@
 长程多阶段任务改用 subtask prompt 训练后，需要一张逐 episode、逐 subtask 的标注表，并据此判断补采什么。两个仓库分工：
 
 - `methods/lerobot-check`（`AtticusZeller/lerobot-check`，公开）：Python CLI。读 LeRobot v3.0 数据集，负责标注表校验、
-  agent 标注辅助（`info`、`render`、`exemplars`）、N 段 prompt 重标（`relabel`）、分布计算（`distribution`）、头部相机标定
+  agent 标注辅助（`info`、按分界找帧的 `window-sheet`、结束帧拼图 `boundary-sheet`、`render`、`exemplars`）、N 段 prompt 重标（`relabel`）、分布计算（`distribution`）、头部相机标定
   （`calib-frames`、`calibrate`）和补采建议（`suggest`）。
 - `methods/xense-lerobot-viewer`（fork `AtticusZeller/xense-lerobot-viewer`）：人工界面。Subtask 面板改分界，DISTRIBUTION、
   CALIBRATION、COLLECTION 三个标签页显示分布、点选标定、画目标区域并导出补采清单。界面通过环境变量 `LEROBOT_CHECK_DIR`

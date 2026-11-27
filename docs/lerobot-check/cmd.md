@@ -21,16 +21,24 @@ LEROBOT_CHECK_DIR=$PWD/../lerobot-check bun dev
 
 ## agent 标注
 
-用途：数据集信息、某分界的人工样例、标注后校验。完整流程见 lerobot-check 的 `docs/annotate.md`。
+用途：按分界找帧、出结束帧拼图、校验、重标。完整流程见 lerobot-check 的 `docs/annotate.md`。
 
 ```bash
 uv run lerobot-check info --repo-id $ID
-uv run lerobot-check exemplars --repo-id $ID --boundary flip_lid:close_lid --max-episodes 3 -o /tmp/lerobot-check/exemplars
+# 每个分界一个 agent：第一轮共用窗口，第二轮用 episode_index,lo,hi 的窗口文件
+uv run lerobot-check window-sheet --repo-id $ID --window-s 8:36 --samples 8 --crop head=90,40,550,360 --name b1_r1 -o /tmp/lerobot-check/window
+uv run lerobot-check window-sheet --repo-id $ID --windows /tmp/lerobot-check/b1_windows.csv --samples 8 \
+  --cameras head left_wrist right_wrist --crop head=90,40,550,360 --name b1_r2 -o /tmp/lerobot-check/window
+# 前 N-1 段的结束帧拼图，给人审阅时每段一张整图
+uv run lerobot-check boundary-sheet --repo-id $ID --crop head=90,40,550,360 --per-page 0 --columns 4 -o /tmp/lerobot-check/boundary
 uv run lerobot-check validate --repo-id $ID
+uv run lerobot-check relabel --repo-id $ID --dst ~/.cache/huggingface/lerobot/Xense/pack_iphone_box_1119_subtask
+uv run lerobot-check verify-relabel --repo-id $ID --dst ~/.cache/huggingface/lerobot/Xense/pack_iphone_box_1119_subtask
 ```
 
-预期：`exemplars` 每个样例写一张 PNG，分界帧红框标出；没有人工样例时提示后以 0 退出。`validate` 输出
-`OK: <行数> rows covering <n>/<总数> episodes`，有违规时逐条打印并以非零退出。
+预期：`window-sheet` 每行一条 episode、每格标帧号和秒数；`boundary-sheet` 每条 episode 一格（头部裁剪 + 两个腕部的
+`end − 1`），人工复核行带绿色 `H`；`validate` 输出 `OK: <行数> rows covering <n>/<总数> episodes`；`relabel` 的目标目录
+必须不存在，`verify-relabel` 最后一行为 `OK`。
 
 ## 分布与补采
 

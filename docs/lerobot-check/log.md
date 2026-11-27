@@ -1,5 +1,35 @@
 # lerobot-check Log
 
+## 2026-11-26 · `pack_iphone_box_1119` 全量标注、结束帧拼图自查与 5 段 prompt 重标
+
+- **背景与目的：** subtask prompt 训练需要 121 条 episode 全部标注。原流程每个分界都要细看，agent 标得慢；用户实际
+  验收只看前 4 段的最后一帧（夹爪已松开、回到物体上方空中为对），所以把精度交给"结束帧拼图 + agent 自查"，粗扫只求快。
+- **实现思路：**
+  - 4 个 agent 按 episode 分组并行初标，各写各的文件，合并时只覆盖 `agent` 行。
+  - 新增 `boundary-sheet`：每个分界一张拼图，每条 episode 一格（头部裁剪 + 两个腕部的 `end − 1`）。4 个 agent 各管
+    一个分界，循环"看图 → 改 `agent` 行 `end` → 只重渲染改过的 episode"，共改 237 处；`human` 行只报告不改。
+    用户看完整拼图后又改了 13 处（`place_insert` 7 处提前 0.5–1 s，`place_phone` 3 处推后 1 s，`move_lid` 3 处 ±1 s），
+    `flip_lid` 无改动。
+  - 新增 `window-sheet`，粗扫改为按分界、由粗到细的窗口搜索：每个分界一个 agent，按经验窗口第一轮 4 s 一格、第二轮
+    约 0.5 s 一格，8 条 episode 拼一张图，只判断"这一段在这一帧是否已结束"。
+  - `grasp` 取夹爪在物体上闭合的那一帧，只在 task spec 有 `event: grasp` 物体的 subtask 上标。
+  - 盲测暴露的规则歧义写进 task spec 注释（用户定）：`place_phone` 在右夹爪松开抬起时结束，之后左夹爪的按压归
+    `move_lid`；`flip_lid` 在盖子第一次碰到盒子（边缘先碰也算）时结束。
+- **组件变化：** lerobot-check 新增 `boundary-sheet`、`window-sheet` 两个命令；`docs/annotate.md` 改为四步：窗口搜索初标 →
+  组装标注表 → 结束帧拼图自查 → `validate`。逐分界细看、`exemplars`、`propose` 降为可选工具。
+- **主要文件：** lerobot-check `src/lerobot_check/render.py`（拼图）、`docs/annotate.md`（流程）；标注表
+  `.xense-viewer/subtasks/Xense__pack_iphone_box_1119@3a8b398b….csv`；重标数据集
+  `~/.cache/huggingface/lerobot/Xense/pack_iphone_box_1119_subtask`。
+- **验证：**
+  - 标注表 `validate` 输出 `605 rows covering 121/121 episodes`；重标后 5 个 task 帧数为
+    65956 / 65342 / 22402 / 67774 / 52609（共 274083 帧），`verify-relabel` 通过。
+  - `window-sheet` 盲测：10 条人工复核 episode，只看画面、不读标注表，与人工 `end` 误差在 1 s 内的条数为 `place_insert`
+    8/10、`place_phone` 8/10、`move_lid` 10/10、`flip_lid` 8/10，每个分界约 10 分钟，多数 episode 2–3 轮出图。
+    6 条超差中 3 条是搜索误判（含夹爪抬起后又回压，已在 `annotate.md` 加 2 s 后复查一帧），3 条是上面两条规则的歧义。
+    未达计划的 9/10，用户认可此精度后收尾。
+  - 限制：自查循环曾按"左夹爪仍在按压"推后部分 `place_phone` 结束帧（ep89–119 中多条推后 30–75 帧），按新规则可能
+    偏晚；用户看过整张拼图后只改了 ep50 / 75 / 120，其余未逐条回查。
+
 ## 2026-11-25 · 分界样例消除了 agent 标注的系统性偏差
 
 - **背景与目的：** agent 第一版标注 `pack_iphone_box_1119` 的 5 条 episode，分界平均偏约 1 s，而且偏差有规律：
