@@ -12,6 +12,55 @@
   - 标定侧车转换后与新数据集最大差 `5.635e-08` m；重跑 `calibrate` 后 $T_{\text{cam}\leftarrow\text{base}}$ 与 RMS 不变（左 2.10 px / 留一 3.22 px，右 1.49 px / 留一 2.58 px），`tool_offset` 分别从 40.90 / 37.83 mm 收缩到 2.86 / 7.29 mm；`validate`（121/121）与 `distribution` 通过。
   - Hugging Face Hub 匿名读取核验两份仓库均为 `public`、`v3.0` tag 指向最新提交、各含 77 个文件。
 
+## 2026-11-26 · 分布增加物体层、补采与轮廓改用物体层、viewer 支持两层切换
+
+- **背景与目的：** 原有分布只记录夹爪抓取或释放事件帧处的工具点位姿（末端层）。未被抓取的物体（如 `box_base` 借用
+  `place_insert` 释放插片的点）缺乏稳定锚点，轮廓投影偏约 10 px、15°，只能写拒绝模板、无法进入多物体补采轮次。
+  用户决定（2026-11-26）将分布拆为**物体层**（第 0 帧头图分割得到的物体本身初始位姿）与**末端层**（原有事件帧工具点位姿，
+  保留展示）；补采建议、补采计划和轮廓模板默认改用物体层，矩形朝向按 180° 折叠不分头尾；viewer 的 DISTRIBUTION 页同步支持
+  两层切换。
+- **实现思路：**
+  - **物体层计算（[lerobot-check#12](https://github.com/AtticusZeller/lerobot-check/issues/12)）：** 在 `task_spec.yaml` 中
+    为物体配置第 0 帧头图固定布局框 `layout_box`（可选 `object_plane_z_m`，默认取末端层 `median_z_m`）。`object-poses`
+    每帧做一次 SAM 2.1 图像编码，用框内正点网格与多掩码筛选提取不触框边界的单物体掩码（不依赖亮度阈值，可复用到其他固定布局
+    任务），反投到对应臂基座平面 `z = plane_z_m`，取轮廓质心和最小外接矩形长轴朝向，折叠周期为
+    `yaw_period_deg = min(yaw_symmetry_deg, 180)`（要求对称周期 `>= 180` 或整除 `180`）。支持
+    `--prompt-box EP:OBJECT=x0,y0,x1,y1` 覆盖个别偏离固定布局的 episode，支持 `--sheet` 输出复核拼图，并输出物体坐标系下的
+    末端抓取偏移统计。`distribution` 自动读取侧车写出 `object_layer` 与 `provenance.object_poses_sha256`；无侧车时输出逐字节
+    不变。
+  - **下游改用物体层（[lerobot-check#13](https://github.com/AtticusZeller/lerobot-check/issues/13)）：** `suggest`、
+    `collection-plan generate`、`mask-template` 默认 `--layer object`（可用 `--layer tool` 显式切回末端层）。缺少
+    `object_layer` 时直接报错，不静默回退；模板记录 `anchor_layer`、计划记录 `layer`，`mask-overlays` 与 `collection-plan`
+    拒绝跨层混用。
+  - **viewer 两层切换（[xense-lerobot-viewer#8](https://github.com/AtticusZeller/xense-lerobot-viewer/issues/8)）：**
+    DISTRIBUTION 页存在 `object_layer` 时默认展示物体层，可在物体层与末端层间切换，切换数据集时重置选择；单个物体缺少物体层
+    时该卡片回退展示末端层并提示；180° 周期的物体层朝向以无箭头线段绘制，末端层保持箭头；不含物体层的旧分布文件卡片渲染保持
+    逐字节不变。
+- **组件变化：**
+  - lerobot-check 新增 `object-poses` 命令与 `object-poses/<org>__<name>@<rev>.json` 侧车；`distribution` 增加可选
+    `object_layer`；`suggest`、`collection-plan`、`mask-template` 新增 `--layer object|tool` 并默认 `object`。
+  - viewer 的 DISTRIBUTION 页新增两层切换控件、无箭头轴向绘制与物体层跳过列表。
+- **主要文件：**
+  - lerobot-check：`src/lerobot_check/object_pose.py`（第 0 帧分割、反投与偏移统计）、`segmentation.py`、`analysis.py`、
+    `suggest.py`、`masks.py`、`collection_planner.py`、`docs/distribution.md`、`docs/collection-plan.md`。
+  - viewer：`src/utils/distributionData.ts`、`distributionMetrics.ts`、`src/components/distribution-panel.tsx`、
+    `distribution-object-card.tsx`。
+  - 本地数据：`.xense-viewer/object-poses/`、`.xense-viewer/distribution/`、
+    `.xense-viewer/mask-templates/Xense__pack_iphone_box_1119@3a8b398b…/`（4 个物体按物体层重建，含 `box_base` 真实轮廓；
+    原末端层模板与未采的旧末端层计划备份于 `annotate-batch/pack_iphone_box_1119/`）。
+- **验证：**
+  - 单元测试与静态检查：lerobot-check 327 项 pytest、ruff、ty 全部通过，无侧车 `distribution.json` 与改前逐字节一致；
+    viewer `bun run validate` 742 项测试通过，无物体层老文件卡片渲染逐字节一致。
+  - 真实数据 `Xense/pack_iphone_box_1119`（121 条，CUDA 约 58 s，5 条偏离布局 episode 共 9 处 `--prompt-box`）：
+    484 个物体实例中 483 个识别成功，唯一跳过为 ep43 `box_lid`（第 0 帧被右手腕遮挡，可见尺寸 16.6×13.4 cm 偏离中位数
+    20.2×9.5 cm）。用户审阅 11 页审核拼图与 4 物体模板预览后认可（2026-11-26）。
+  - `box_base` 物体层模板（39 顶点）投影至 15 条其他 episode：轮廓平均误差 0.64 px（最大 1.37 px）、平均 IoU 0.964
+    （最小 0.912）、质心差 0.15 px、朝向差 +0.17°。试生成 25 轮 × 每轮 2 物体的补采计划，`box_base` 进入 13 轮且所有目标
+    均带轮廓。
+  - 物体坐标系下末端抓取点偏移标准差：`paper_insert` 0.83 / 0.94 cm、`iphone` 0.71 / 2.03 cm、`box_lid` 1.90 / 1.28 cm。
+    后两项超过原定 1 cm 指标，系人工抓取位置变化及个别 episode 抓前碰动所致，不能衡量物体层测量精度，用户认可收尾
+    （2026-11-26）。
+
 ## 2026-11-26 · `pack_iphone_box_1119` 全量标注、结束帧拼图自查与 5 段 prompt 重标
 
 - **背景与目的：** subtask prompt 训练需要 121 条 episode 全部标注。原流程每个分界都要细看，agent 标得慢；用户实际
